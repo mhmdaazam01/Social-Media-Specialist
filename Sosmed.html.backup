@@ -15,7 +15,6 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230b0e17'/><path d='M6 22l5-6 4 3 5-7 6 5' stroke='%233dc7b7' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
 <script>
 /* ── Supabase sync stub (standalone/local mode) ──
    File ini menggantikan supabase-sync.js agar app jalan
@@ -26,7 +25,6 @@ window.supabaseReady    = false;
 try{console.log('[Creatorlytics] Local mode — localStorage only.');}catch(e){}
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script>(function(){try{var t=localStorage.getItem('sm-theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <style>
 :root{
   --font:'Manrope',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
@@ -86,11 +84,11 @@ try{console.log('[Creatorlytics] Local mode — localStorage only.');}catch(e){}
 
 [data-theme="dark"]{
   --bg:#0d1117;
-  --bg-page:#0d1020;
+  --bg-page:#0a0d16;
   --bg-hover:rgba(255,255,255,0.055);
   --bg-active:rgba(61,199,183,0.12);
-  --surf:rgba(21,25,38,0.86);
-  --surf2:#1a1f30;
+  --surf:rgba(17,21,35,0.92);
+  --surf2:#141927;
   --b:#252d42;
   --b2:rgba(148,163,184,0.30);
   --t:#eef0ff;
@@ -104,13 +102,10 @@ try{console.log('[Creatorlytics] Local mode — localStorage only.');}catch(e){}
   --purple:#a07cdf;--purple-bg:rgba(160,124,223,0.14);--purple-t:#ccaaff;
   --tt:#3dc7b7;--tt-bg:rgba(61,199,183,0.14);--tt-light:rgba(61,199,183,0.22);
   --ig:#ffb06b;--ig-bg:rgba(255,176,107,0.14);--ig-light:rgba(255,176,107,0.22);
-  --accent:#0e9f8f;
-  --accent-hover:#0bbdaa;
-  --accent-dim:rgba(14,159,143,0.12);
-  --shadow-sm:0 1px 4px rgba(0,0,0,0.22);
-  --shadow:0 6px 16px rgba(0,0,0,0.24);
-  --shadow-md:0 10px 22px rgba(0,0,0,0.28);
-  --shadow-lg:0 16px 36px rgba(0,0,0,0.32);
+  --shadow-sm:0 2px 8px rgba(0,5,20,0.55);
+  --shadow:0 8px 28px rgba(0,5,20,0.65);
+  --shadow-md:0 12px 36px rgba(0,5,20,0.70);
+  --shadow-lg:0 24px 72px rgba(0,5,20,0.80);
   --sidebar-bg:rgba(9,12,22,0.97);
   --sidebar-t:rgba(158,168,200,0.68);
   --sidebar-t-act:#eef0ff;
@@ -123,9 +118,9 @@ try{console.log('[Creatorlytics] Local mode — localStorage only.');}catch(e){}
   --btn-primary:#0e9f8f;
   --btn-primary-hover:#0bbdaa;
   --sp-black:#0a0d16;
-  --sp-card:rgba(21,25,38,0.86);
-  --sp-elevated:#1e2438;
-  --sp-highlight:#252c42;
+  --sp-card:rgba(17,21,35,0.92);
+  --sp-elevated:#161c2e;
+  --sp-highlight:#1e2540;
 }
 
 /* ─ BASE ─ */
@@ -1360,13 +1355,10 @@ a{color:var(--accent);text-decoration:none;}
 
 /* ── Topbar frosted glass ── */
 .topbar{
-  background:transparent;
+  background:rgba(13,16,32,.80);
   backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border-bottom:1px solid var(--b);
   box-shadow:0 1px 0 rgba(255,255,255,.03),0 4px 20px rgba(0,0,0,.2);
-}
-[data-theme="dark"] .topbar{
-  background:rgba(13,16,32,.80);
 }
 
 
@@ -1711,10 +1703,7 @@ a{color:var(--accent);text-decoration:none;}
 
 /* ── Modal ── */
 .modal-ov{
-  background:rgba(0,0,0,.80) !important;
-}
-[data-theme="light"] .modal-ov{
-  background:rgba(0,0,0,.55) !important;
+  background:rgba(0,0,0,.75) !important;
 }
 
 /* ── Prop table ── */
@@ -1731,7 +1720,7 @@ a{color:var(--accent);text-decoration:none;}
 
 
 /* ── Mobile nav glass ── */
-[data-theme="dark"] .mob-nav{
+.mob-nav{
   background:rgba(18,18,18,.9) !important;
   backdrop-filter:blur(20px) !important;
   -webkit-backdrop-filter:blur(20px) !important;
@@ -2148,8 +2137,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{
   gap:10px;
 }
 .rpt-kpi-card{
-  background:var(--surf);
-  border:1px solid var(--b);
+  background:linear-gradient(145deg,rgba(30,30,30,.8),rgba(22,22,22,.9));
+  border:1px solid rgba(255,255,255,.07);
   border-radius:12px;padding:16px 16px 14px;
   position:relative;overflow:hidden;
 }
@@ -2186,8 +2175,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{
   gap:12px;
 }
 .rpt-plt-card{
-  background:var(--surf);
-  border:1px solid var(--b);
+  background:linear-gradient(145deg,rgba(28,28,28,.9),rgba(20,20,20,.95));
+  border:1px solid rgba(255,255,255,.08);
   border-radius:14px;padding:18px;
   position:relative;overflow:hidden;
 }
@@ -2465,8 +2454,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{
 
 .ins-layout{display:flex;flex-direction:column;gap:20px;}
 .ins-section{
-  background:var(--surf);
-  border:1px solid var(--b);border-radius:16px;padding:20px;
+  background:linear-gradient(145deg,rgba(22,22,34,.9),rgba(14,14,22,.95));
+  border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:20px;
 }
 
 .ins-section-head{margin-bottom:14px;}
@@ -2651,17 +2640,148 @@ button:focus-visible,input:focus-visible,select:focus-visible{
 }
 
 
+
+
+/* ══ SPRINT 7: MOBILE POST CARDS ══ */
+function renderMobilePostCards(posts, plt, wk, acc, flw) {
+  if (!posts.length) return `
+    <div class="ct-empty" style="padding:40px 20px;">
+      <div style="font-size:32px;margin-bottom:12px;opacity:.3;">📱</div>
+      <div style="font-size:14px;color:var(--t3);margin-bottom:8px;">Belum ada post</div>
+      <div style="font-size:12px;color:var(--t4);">Ketuk tombol ＋ untuk input post baru</div>
+    </div>`;
+
+  return '<div class="mob-post-cards">' + posts.map((p, i) => {
+    const er = calcER(p, sel.erMode, flw);
+    const lvl = erLevel(er);
+    const pil = pillarOf(p.pillar || '');
+    const score = computeContentScore(p, getAllPosts());
+    const displayName = p.name || p.link?.replace(/^https?:\/\//, '').slice(0,40) || `Post ${i+1}`;
+    const hasAnyData = (p.reach||p.impression||p.like||p.comment||p.share||p.save) > 0;
+    let statusColor = 'var(--t4)', statusLabel = '';
+    if (score >= 80 || er >= 5) { statusColor = 'var(--green)'; statusLabel = '🔥 Viral'; }
+    else if (score >= 60 || er >= 3) { statusColor = 'var(--accent)'; statusLabel = '✅ Normal'; }
+    else if (hasAnyData) { statusColor = 'var(--amber)'; statusLabel = '⚠️ Perhatian'; }
+
+    return `<div class="mob-post-card" data-pid="${p.id}" data-plt="${plt}">
+      <div class="mob-post-card-inner">
+      <div class="mob-post-card-top">
+        <div class="mob-post-card-meta" style="min-width:0;flex:1;">
+          <div class="mob-post-card-name">${displayName}</div>
+          <div class="mob-post-card-date" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+            <span>${p.date || '—'}</span>
+            ${pil.id !== 'other' ? `<span style="color:var(--t4);">·</span><span style="color:${pil.color};font-size:10px;font-weight:700;">${pil.emoji} ${pil.label}</span>` : ''}
+            ${statusLabel ? `<span style="color:var(--t4);">·</span><span style="color:${statusColor};font-size:10px;font-weight:800;">${statusLabel}</span>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          ${er > 0 ? `<span style="font-family:var(--mono);font-size:12px;font-weight:800;color:${lvl.color};background:${lvl.bg};padding:3px 8px;border-radius:8px;">${erStr(er)}</span>` : ''}
+          ${p.link ? `<a href="${p.link}" target="_blank" style="font-size:11px;color:var(--blue);padding:4px 8px;border-radius:6px;background:var(--blue-bg);text-decoration:none;font-weight:700;">↗</a>` : ''}
+        </div>
+      </div>
+      <div class="mob-post-card-metrics" style="grid-template-columns:repeat(5,1fr);gap:6px;">
+        <div class="mob-metric-cell">
+          <span class="mob-metric-val">${fmt(p.like||0)}</span>
+          <span class="mob-metric-lbl">❤️</span>
+        </div>
+        <div class="mob-metric-cell">
+          <span class="mob-metric-val">${fmt(p.comment||0)}</span>
+          <span class="mob-metric-lbl">💬</span>
+        </div>
+        <div class="mob-metric-cell">
+          <span class="mob-metric-val">${fmt(p.share||0)}</span>
+          <span class="mob-metric-lbl">🔁</span>
+        </div>
+        <div class="mob-metric-cell">
+          <span class="mob-metric-val">${fmt(p.save||0)}</span>
+          <span class="mob-metric-lbl">🔖</span>
+        </div>
+        <div class="mob-metric-cell">
+          <span class="mob-metric-val">${fmt(p.reach||p.impression||0)}</span>
+          <span class="mob-metric-lbl">👁</span>
+        </div>
+      </div>
+      <div class="mob-post-card-actions">
+        <button class="mob-post-card-del" onclick="deletePost('${p.id}','${plt}')">🗑</button>
+        <button style="flex:1;padding:7px 10px;border-radius:8px;border:1px solid var(--b2);background:none;color:var(--t2);font-size:12px;font-weight:600;cursor:pointer;"
+          onclick="editPostMobile('${p.id}','${plt}')">✏ Edit Angka</button>
+        ${!hasAnyData ? `<button style="flex:1;padding:7px 10px;border-radius:8px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;"
+          onclick="editPostMobile('${p.id}','${plt}')">+ Input Data</button>` : ''}
+      </div>
+      </div>
+      <div class="mob-swipe-delete" onclick="deletePost('${p.id}','${plt}')">
+        <span style="font-size:20px;">🗑</span>
+        <span>Hapus</span>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+  setTimeout(initSwipeToDelete, 20);
+}
+
+function deletePost(pid, plt) {
+  showConfirm('Hapus Post Ini?', 'Data engagement dan metrik post ini akan hilang permanen.', () => {
+  const stashed = _stashPost(pid);
+  const wk = getW(sel.mid, sel.wid);
+  if (!wk) return;
+  const d = aD(wk, sel.acc);
+  const key = plt + 'Posts';
+  if (!d[key]) return;
+  d[key] = d[key].filter(p => p.id !== pid);
+  scheduleSave(300);
+  if(view==='content')renderContentTimeline();
+  if (view === 'dash') renderDashboard();
+  _qcToastUndo('🗑 Post dihapus.', () => {
+    if (stashed) { _restorePost(stashed); if(view==='content')renderContentTimeline(); if(view==='dash')renderDashboard(); }
+  });
+  }, true);
+}
+
+function editPostMobile(pid, plt) {
+  const wk = getW(sel.mid, sel.wid);
+  if (!wk) return;
+  const d = aD(wk, sel.acc);
+  const key = plt + 'Posts';
+  const p = (d[key]||[]).find(x => x.id === pid);
+  if (!p) return;
+
+  // Open QC modal in EDIT mode
+  openQCModal();
+  // Store edit context BEFORE setTimeout so it's set immediately
+  window._qcEditId  = pid;
+  window._qcEditPlt = plt;
+
+  setTimeout(() => {
+    // Pre-fill all fields from existing post
+    const set = (id, v) => { const el=document.getElementById(id); if(el) el.value=v??''; };
+    set('qc-name',      p.name);
+    set('qc-date',      p.date);
+    set('qc-like',      p.like||0);
+    set('qc-comment',   p.comment||0);
+    set('qc-share',     p.share||0);
+    set('qc-save',      p.save||0);
+    set('qc-reach',     p.reach||0);
+    set('qc-impression',p.impression||0);
+    set('qc-format',    p.format||'');
+    const pillarSel = document.getElementById('qc-pillar');
+    if (pillarSel) pillarSel.value = p.pillar || pillars[0]?.id || '';
+    // Set platform button
+    const pltBtns = document.querySelectorAll('.qc-plt-btn');
+    pltBtns.forEach(btn => btn.classList.toggle('act', btn.dataset?.plt === plt || btn.getAttribute('onclick')?.includes("'"+plt+"'")));
+    _qcPlt = plt;
+    // Update modal title to show edit mode
+    const title = document.querySelector('#m-qc .modal-title, #m-qc .qc-title');
+    if (title) title.textContent = '✏️ Edit Konten';
+  }, 80);
+}
+
 /* ══ SPRINT 7: ONBOARDING ══ */
 .onboarding-ov{
   position:fixed;inset:0;z-index:9999;
-  background:rgba(0,0,0,0.88);
+  background:rgba(0,0,0,0.75);
   backdrop-filter:blur(8px);
   display:flex;align-items:center;justify-content:center;
   padding:20px;
   animation:fadeIn .25s ease;
-}
-[data-theme="light"] .onboarding-ov{
-  background:rgba(0,0,0,0.65);
 }
 .onboarding-ov.hidden{display:none;}
 .onboarding-card{
@@ -2871,10 +2991,7 @@ select.qc-inp{cursor:pointer;}
   border-radius:14px;overflow:hidden;
   transition:background .15s,transform .15s,box-shadow .15s;
 }
-[data-theme="dark"] .timeline-card,
-[data-theme="dark"] .goal-row,
-[data-theme="dark"] .idea-card,
-[data-theme="dark"] .idea-list-item{
+[data-theme="dark"] .timeline-card{
   background:linear-gradient(145deg,#161624,#12121E);
   border-color:rgba(255,255,255,.07);
 }
@@ -2930,12 +3047,9 @@ select.qc-inp{cursor:pointer;}
 /* ══ REVISI 2: First Insight Modal ══ */
 .fi-modal-ov{
   position:fixed;inset:0;z-index:9998;
-  background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);
+  background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);
   display:flex;align-items:center;justify-content:center;padding:20px;
   animation:fadeIn .2s ease;
-}
-[data-theme="light"] .fi-modal-ov{
-  background:rgba(0,0,0,0.60);
 }
 .fi-modal-ov.hidden{display:none;}
 .fi-modal-card{
@@ -3411,6 +3525,7 @@ select.qc-inp{cursor:pointer;}
   transition:background .15s;
 }
 [data-theme="dark"] .goal-row{
+  background:linear-gradient(145deg,#161624,#12121E);
   border-color:rgba(255,255,255,.07);
 }
 .goal-row-ico{
@@ -3465,6 +3580,26 @@ select.qc-inp{cursor:pointer;}
 }
 .content-search-input:focus{border-color:rgba(111,99,255,.55);}
 .content-search-input::placeholder{color:var(--t3);}
+
+/* -- Final polish: teal/coral palette -- */
+[data-theme="dark"]{
+  --bg-page:#0d1020;
+  --surf:rgba(21,25,38,0.86);
+  --surf2:#1a1f30;
+  --sp-card:rgba(21,25,38,0.86);
+  --sp-elevated:#1e2438;
+  --sp-highlight:#252c42;
+  --accent:#0e9f8f;
+  --accent-hover:#0bbdaa;
+  --accent-dim:rgba(14,159,143,0.12);
+  --t2:#9ea8c8;
+  --t3:#6b7594;
+  --shadow-sm:0 1px 5px rgba(4,10,22,0.28);
+  --shadow:0 5px 18px rgba(4,10,22,0.34);
+  --shadow-md:0 9px 24px rgba(4,10,22,0.4);
+  --shadow-lg:0 16px 44px rgba(4,10,22,0.48);
+}
+
 
 
 .main-area{
@@ -3560,6 +3695,20 @@ body{
   --accent-dim:rgba(14,159,143,0.1);
 }
 
+[data-theme="dark"]{
+  --bg-page:#0d1020;
+  --surf:rgba(21,25,38,0.86);
+  --surf2:#1a1f30;
+  --sp-card:rgba(21,25,38,0.86);
+  --sp-elevated:#1e2438;
+  --nav-accent:#3dc7b7;
+  --nav-accent-bg:rgba(61,199,183,0.14);
+  --shadow-sm:0 1px 4px rgba(0,0,0,0.22);
+  --shadow:0 6px 16px rgba(0,0,0,0.24);
+  --shadow-md:0 10px 22px rgba(0,0,0,0.28);
+  --shadow-lg:0 16px 36px rgba(0,0,0,0.32);
+}
+
 .main-area{background:radial-gradient(circle at 70% -10%,rgba(14,159,143,0.10),transparent 38%),radial-gradient(circle at 15% 0%,rgba(255,122,89,0.06),transparent 32%),var(--bg-page)!important;}
 *{text-shadow:none!important;}
 
@@ -3603,6 +3752,7 @@ body{
   cursor:pointer;transition:transform .12s,box-shadow .12s;
   position:relative;
 }
+[data-theme="dark"] .idea-card{background:linear-gradient(145deg,#161624,#12121E);border-color:rgba(255,255,255,.07);}
 .idea-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.25);}
 .idea-card-title{font-size:13px;font-weight:700;color:var(--t);margin-bottom:6px;line-height:1.35;}
 .idea-card-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
@@ -3627,6 +3777,7 @@ body{
   border-radius:12px;padding:14px 16px;margin-bottom:8px;
   cursor:pointer;transition:transform .12s,box-shadow .12s;
 }
+[data-theme="dark"] .idea-list-item{background:linear-gradient(145deg,#161624,#12121E);border-color:rgba(255,255,255,.07);}
 .idea-list-item:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.2);}
 
 /* ── Content Calendar ── */
@@ -3922,7 +4073,7 @@ body{
 :root:not([data-theme="dark"]) .highlight-card { background: var(--surf) !important; border-color: var(--b) !important; }
 
 /* ── Onboarding ── */
-:root:not([data-theme="dark"]) .onboarding-ov { background: rgba(0,0,0,0.65) !important; }
+:root:not([data-theme="dark"]) .onboarding-ov { background: rgba(0,0,0,0.4) !important; }
 :root:not([data-theme="dark"]) .onboarding-card { border-color: var(--b) !important; }
 :root:not([data-theme="dark"]) .ob-dot { background: var(--b) !important; }
 :root:not([data-theme="dark"]) .ob-plt-btn { background: var(--surf2) !important; border-color: var(--b) !important; }
@@ -3943,60 +4094,6 @@ body{
   border-color: var(--b) !important;
 }
 :root:not([data-theme="dark"]) select option { background: #fff !important; color: var(--t) !important; }
-
-/* ══ UTILITY CLASSES ══ */
-.flex { display: flex; }
-.flex-col { display: flex; flex-direction: column; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.gap-8 { gap: 8px; }
-.gap-12 { gap: 12px; }
-.gap-16 { gap: 16px; }
-.p-12 { padding: 12px; }
-.p-16 { padding: 16px; }
-.mt-8 { margin-top: 8px; }
-.mt-16 { margin-top: 16px; }
-.text-sm { font-size: 12px; }
-.text-xs { font-size: 11px; }
-.font-bold { font-weight: 700; }
-.font-800 { font-weight: 800; }
-.color-t2 { color: var(--t2); }
-.color-t3 { color: var(--t3); }
-.color-accent { color: var(--accent); }
-.w-full { width: 100%; }
-.rounded { border-radius: var(--radius); }
-.rounded-lg { border-radius: var(--radius-lg); }
-.border { border: 1px solid var(--b); }
-.bg-surf { background: var(--surf); }
-.bg-hover { background: var(--bg-hover); }
-.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cursor-pointer { cursor: pointer; }
-.flex-shrink-0 { flex-shrink: 0; }
-.flex-1 { flex: 1; min-width: 0; }
-
-/* ══ ERROR STATE ══ */
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 300px;
-  gap: 12px;
-  color: var(--t3);
-  text-align: center;
-  padding: 40px;
-}
-.error-ico { font-size: 48px; opacity: 0.5; }
-.error-title { font-size: 16px; font-weight: 800; color: var(--t2); }
-.error-msg { font-size: 13px; max-width: 320px; line-height: 1.6; }
-
-/* ══ PRINT CSS ══ */
-@media print {
-  .nav-sidebar, .topbar, .mob-nav, .qc-fab, .view:not(.active) { display: none !important; }
-  .main-area { overflow: visible; }
-  .view.active { display: block; overflow: visible; }
-  body { background: white; color: black; }
-}
 
 /* ═══════════════════════════════════════════════════════
    IMPROVEMENT LAYER: Mobile UX, Skeleton, Transitions
@@ -4245,87 +4342,6 @@ body{
 #help-fab:hover { background: var(--surf); color: var(--accent); border-color: var(--accent); transform: scale(1.08); }
 @media(max-width:768px){ #help-fab { bottom: max(env(safe-area-inset-bottom),74px); right: 14px; } }
 
-/* ── P2.1: Utility classes (inline-style reduction) ── */
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.flex-wrap { flex-wrap: wrap; }
-.flex-1 { flex: 1; }
-.flex-1-mw0 { flex: 1; min-width: 0; }
-.flex-center { display: flex; align-items: center; }
-.flex-center-gap6 { display: flex; align-items: center; gap: 6px; }
-.flex-center-gap8 { display: flex; align-items: center; gap: 8px; }
-.gap-4 { gap: 4px; }
-.gap-6 { gap: 6px; }
-.gap-8 { gap: 8px; }
-.gap-10 { gap: 10px; }
-.gap-12 { gap: 12px; }
-.gap-16 { gap: 16px; }
-.grid-full { grid-column: 1 / -1; }
-.text-left { text-align: left; }
-.text-center { text-align: center; }
-.text-right { text-align: right; }
-.text-xs { font-size: 10px; }
-.text-sm { font-size: 11px; }
-.text-12 { font-size: 12px; }
-.text-base { font-size: 14px; }
-.text-lg { font-size: 16px; }
-.text-xl { font-size: 20px; }
-.text-xs-muted { font-size: 10px; color: var(--t3); }
-.text-sm-muted { font-size: 11px; color: var(--t3); }
-.text-sm-muted-semibold { font-size: 11px; color: var(--t3); font-weight: 600; }
-.text-sm-muted-mt2 { font-size: 11px; color: var(--t3); margin-top: 2px; }
-.text-sm-muted-bold { font-size: 11px; font-weight: 700; color: var(--t3); }
-.text-md-bold { font-size: 13px; font-weight: 700; color: var(--t); }
-.text-muted { color: var(--t3); }
-.text-accent { color: var(--accent); }
-.text-mono { font-family: var(--mono); }
-.text-mono-md-bold { font-family: var(--mono); font-size: 14px; font-weight: 800; color: var(--t); }
-.text-uppercase-label { font-size: 11px; font-weight: 700; color: var(--t3); text-transform: uppercase; letter-spacing: .08em; }
-.font-bold { font-weight: 700; }
-.font-semibold { font-weight: 600; }
-.font-800 { font-weight: 800; }
-.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.w-full { width: 100%; }
-.mt-4 { margin-top: 4px; }
-.mt-6 { margin-top: 6px; }
-.mt-8 { margin-top: 8px; }
-.mt-10 { margin-top: 10px; }
-.mt-12 { margin-top: 12px; }
-.mt-16 { margin-top: 16px; }
-.mt-20 { margin-top: 20px; }
-.mb-8 { margin-bottom: 8px; }
-.mb-12 { margin-bottom: 12px; }
-.mb-16 { margin-bottom: 16px; }
-.mb-20 { margin-bottom: 20px; }
-.mb-24 { margin-bottom: 24px; }
-.mb-28 { margin-bottom: 28px; }
-.ml-4 { margin-left: 4px; }
-.ml-6 { margin-left: 6px; }
-.ml-8 { margin-left: 8px; }
-.mr-4 { margin-right: 4px; }
-.p-4 { padding: 4px; }
-.p-6 { padding: 6px; }
-.p-8 { padding: 8px; }
-.p-10 { padding: 10px; }
-.p-12 { padding: 12px; }
-.px-8 { padding-left: 8px; padding-right: 8px; }
-.px-10 { padding-left: 10px; padding-right: 10px; }
-.px-12 { padding-left: 12px; padding-right: 12px; }
-.py-4 { padding-top: 4px; padding-bottom: 4px; }
-.py-6 { padding-top: 6px; padding-bottom: 6px; }
-.py-8 { padding-top: 8px; padding-bottom: 8px; }
-.py-10 { padding-top: 10px; padding-bottom: 10px; }
-.ma-0 { margin: 0; }
-.rounded-6 { border-radius: 6px; }
-.rounded-8 { border-radius: 8px; }
-.rounded-9 { border-radius: 9px; }
-.rounded-10 { border-radius: 10px; }
-.rounded-full { border-radius: 999px; }
-.badge-sm { padding: 6px 12px; border-radius: 9px; font-size: 12px; font-weight: 700; }
-.cell-header-right { padding: 9px 12px; text-align: right; font-size: 10px; font-weight: 800; color: var(--t3); text-transform: uppercase; letter-spacing: .06em; }
-.cell-data-right { padding: 10px 12px; text-align: right; font-family: var(--mono); font-size: 12px; color: var(--t2); }
-.select-native { width: 100%; padding: 9px 12px; border-radius: 9px; font-size: 13px; }
-
 /* ── P2: Click-to-copy feedback ── */
 .copy-chip {
   position: absolute;
@@ -4359,7 +4375,7 @@ body{
 <div class="app">
 
   <!-- ── NAV SIDEBAR ── -->
-  <nav class="nav-sidebar" aria-label="Navigasi utama">
+  <nav class="nav-sidebar">
     <div class="nav-brand">
       <div class="brand-mark" style="display:flex;align-items:center;justify-content:center;">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -4422,22 +4438,22 @@ body{
           <div class="nav-user-name" id="nav-user-name">Creator</div>
           <div class="nav-user-role" id="nav-user-email" style="cursor:pointer;font-size:10px;color:var(--t3);font-weight:500;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" onclick="openSettings()">Tambah email →</div>
         </div>
-        <button class="nav-user-settings" onclick="openSettings()" title="Pengaturan" aria-label="Pengaturan">
+        <button class="nav-user-settings" onclick="openSettings()" title="Pengaturan">
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 9.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.3"/><path d="M12.2 7.5a4.9 4.9 0 0 0-.1-.9l1.4-1.1-1.3-2.2-1.7.6a5 5 0 0 0-1.5-.9L8.7 1.5h-2.4L6 3a5 5 0 0 0-1.5.9L2.8 3.3 1.5 5.5l1.4 1.1a5 5 0 0 0 0 1.8L1.5 9.5l1.3 2.2 1.7-.6c.4.3.9.6 1.5.9l.3 1.5h2.4l.3-1.5c.6-.3 1.1-.6 1.5-.9l1.7.6 1.3-2.2-1.4-1.1c0-.3.1-.6.1-.9z" stroke="currentColor" stroke-width="1.3"/></svg>
         </button>
       </div>
       <div class="nav-verified-badge">
         <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4" stroke="#22C55E" stroke-width="1.2"/><path d="M3.5 5.5L5 7L7.5 4" stroke="#22C55E" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        ✓ Tersimpan
+        Data tersimpan lokal
       </div>
       <div class="nav-footer-tools">
-        <button class="nav-tool-btn" id="theme-btn-nav" onclick="toggleTheme()" title="Toggle tema" aria-label="Toggle dark/light mode">
+        <button class="nav-tool-btn" id="theme-btn-nav" onclick="toggleTheme()" title="Toggle tema">
           <span id="theme-ico-nav"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M12.5 8.5A5.5 5.5 0 0 1 5.5 1.5a5.5 5.5 0 1 0 7 7z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></span>
         </button>
-        <button class="nav-tool-btn" onclick="openModal('m-plt')" title="Tambah Platform" aria-label="Tambah platform baru">
+        <button class="nav-tool-btn" onclick="openModal('m-plt')" title="Tambah Platform">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         </button>
-        <button class="nav-tool-btn" onclick="openModal('m-pillar')" title="Kelola Pilar" aria-label="Kelola pilar konten">
+        <button class="nav-tool-btn" onclick="openModal('m-pillar')" title="Kelola Pilar">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="4" cy="4" r="2.2" stroke="currentColor" stroke-width="1.2"/><circle cx="10" cy="4" r="2.2" stroke="currentColor" stroke-width="1.2"/><circle cx="4" cy="10" r="2.2" stroke="currentColor" stroke-width="1.2"/><circle cx="10" cy="10" r="2.2" stroke="currentColor" stroke-width="1.2"/></svg>
         </button>
       </div>
@@ -4445,27 +4461,27 @@ body{
   </nav>
 
   <!-- ── MAIN AREA ── -->
-  <main class="main-area" id="main-content">
+  <div class="main-area">
 
     <!-- Topbar -->
     <div class="topbar">
       <div>
         <div class="topbar-title" id="topbar-title">Dashboard</div>
       </div>
-      <div class="flex-1"></div>
+      <div style="flex:1;"></div>
       <div id="save-badge" class="save-badge">
         <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style="flex-shrink:0"><path d="M2 5.5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Tersimpan
       </div>
       <!-- Quick Add Post button in topbar -->
-      <button class="topbar-btn" onclick="openQCModal()" title="Input Post Baru" aria-label="Input post baru" style="background:linear-gradient(135deg,rgba(14,159,143,.2),rgba(14,159,143,.08));border:1px solid rgba(14,159,143,.3);color:var(--accent);font-weight:800;font-size:12px;padding:0 12px;gap:5px;display:flex;align-items:center;">
+      <button class="topbar-btn" onclick="openQCModal()" title="Input Post Baru" style="background:linear-gradient(135deg,rgba(14,159,143,.2),rgba(14,159,143,.08));border:1px solid rgba(14,159,143,.3);color:var(--accent);font-weight:800;font-size:12px;padding:0 12px;gap:5px;display:flex;align-items:center;">
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1.5v10M1.5 6.5h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         Post
       </button>
-      <button class="topbar-btn" onclick="refreshView()" title="Refresh" aria-label="Refresh tampilan">
+      <button class="topbar-btn" onclick="refreshView()" title="Refresh">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M12.5 2.5A6 6 0 1 0 13 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M12.5 2.5V5.5h-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <button class="topbar-btn" onclick="toggleTheme()" id="theme-btn" title="Toggle tema" aria-label="Toggle dark/light mode">
+      <button class="topbar-btn" onclick="toggleTheme()" id="theme-btn" title="Toggle tema">
         <svg id="theme-icon-svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v1M7 12v1M1 7H0m13 0h1M2.6 2.6l.7.7M10.7 10.7l.7.7M2.6 11.4l.7-.7M10.7 3.3l.7-.7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="7" cy="7" r="2.8" stroke="currentColor" stroke-width="1.2"/></svg>
       </button>
     </div>
@@ -4542,7 +4558,7 @@ body{
 
 <!-- ── MODALS ── -->
 <!-- Tambah Bulan -->
-<div class="modal-ov hidden" id="m-month" onclick="if(event.target===this)closeModal('m-month')" role="dialog" aria-modal="true">
+<div class="modal-ov hidden" id="m-month" onclick="if(event.target===this)closeModal('m-month')">
   <div class="modal">
     <div class="modal-title">Tambah Bulan</div>
     <div class="modal-fld"><label>Tahun</label><select class="modal-inp" id="mi-year"></select></div>
@@ -4563,7 +4579,7 @@ body{
 </div>
 
 <!-- Tambah Akun -->
-<div class="modal-ov hidden" id="m-acc" onclick="if(event.target===this)closeModal('m-acc')" role="dialog" aria-modal="true">
+<div class="modal-ov hidden" id="m-acc" onclick="if(event.target===this)closeModal('m-acc')">
   <div class="modal">
     <div class="modal-title">Tambah Akun</div>
     <div class="modal-fld">
@@ -4608,7 +4624,7 @@ body{
 </div>
 
 <!-- Tambah Platform -->
-<div class="modal-ov hidden" id="m-plt" onclick="if(event.target===this)closeModal('m-plt')" role="dialog" aria-modal="true">
+<div class="modal-ov hidden" id="m-plt" onclick="if(event.target===this)closeModal('m-plt')">
   <div class="modal">
     <div class="modal-title">Tambah Platform</div>
     <div class="modal-fld">
@@ -4628,7 +4644,7 @@ body{
 </div>
 
 <!-- Edit Goal -->
-<div class="modal-ov hidden" id="m-goal" onclick="if(event.target===this)closeModal('m-goal')" role="dialog" aria-modal="true">
+<div class="modal-ov hidden" id="m-goal" onclick="if(event.target===this)closeModal('m-goal')">
   <div class="modal" style="max-width:420px;">
     <div class="modal-title" id="goal-modal-title">Tambah Goal Baru</div>
     <div class="modal-fld">
@@ -4665,7 +4681,7 @@ body{
 </div>
 
 <!-- Kelola Pilar -->
-<div class="modal-ov hidden" id="m-pillar" onclick="if(event.target===this)closeModal('m-pillar')" role="dialog" aria-modal="true">
+<div class="modal-ov hidden" id="m-pillar" onclick="if(event.target===this)closeModal('m-pillar')">
   <div class="modal" style="min-width:420px;max-width:95vw;">
     <div class="modal-title">🎨 Kelola Content Pillar</div>
     <div id="pillar-list-ui" style="max-height:260px;overflow-y:auto;margin-bottom:4px;"></div>
@@ -4673,7 +4689,7 @@ body{
       <div style="font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Tambah Pilar Baru</div>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
         <input class="modal-inp" id="mi-pil-emoji" placeholder="Emoji" maxlength="4" style="width:60px;text-align:center;font-size:16px;">
-        <input class="modal-inp" id="mi-pil-name" placeholder="Nama pilar..." class="flex-1" onkeydown="if(event.key==='Enter')confirmAddPillar()">
+        <input class="modal-inp" id="mi-pil-name" placeholder="Nama pilar..." style="flex:1;" onkeydown="if(event.key==='Enter')confirmAddPillar()">
       </div>
       <div style="font-size:11px;color:var(--t3);margin-bottom:7px;">Warna pilar:</div>
       <div id="pillar-clr-swatches" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:2px;"></div>
@@ -4722,7 +4738,7 @@ body{
     <div class="ob-step act" id="ob-s1">
       <div class="ob-heading">Hei! Nama brand atau akun kamu?</div>
       <div class="ob-sub">Ini akan jadi nama workspace utama kamu. Bisa diubah kapan saja.</div>
-      <div class="qc-field" class="mb-8">
+      <div class="qc-field" style="margin-bottom:8px;">
         <input class="ob-acc-input" id="ob-acc-name" type="text" placeholder="Contoh: NutriBalance ID, @tokofashion, Studio Kreatif…" maxlength="40"
           onkeydown="if(event.key==='Enter')obNext(1)" style="font-size:15px;padding:12px 14px;">
       </div>
@@ -4778,7 +4794,7 @@ body{
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
       <div>
         <div style="font-size:16px;font-weight:800;color:var(--t);" id="m-idea-title">Content Planner Baru</div>
-        <div class="text-sm-muted-mt2">Simpan ide & link referensi konten</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px;">Simpan ide & link referensi konten</div>
       </div>
       <button onclick="closeModal('m-idea')" style="width:28px;height:28px;border-radius:8px;border:none;background:var(--bg-hover);color:var(--t3);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
     </div>
@@ -4841,7 +4857,7 @@ body{
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--b);">
-      <button onclick="saveIdea()" class="btn-ok" class="flex-1">💾 Simpan</button>
+      <button onclick="saveIdea()" class="btn-ok" style="flex:1;">💾 Simpan</button>
       <button onclick="closeModal('m-idea')" class="btn-c">Batal</button>
     </div>
   </div>
@@ -4853,14 +4869,14 @@ body{
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
       <div>
         <div style="font-size:16px;font-weight:800;color:var(--t);" id="m-calevent-title">Jadwal Konten</div>
-        <div class="text-sm-muted-mt2">Tambah ke content calendar</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:2px;">Tambah ke content calendar</div>
       </div>
       <button onclick="closeModal('m-calevent')" style="width:28px;height:28px;border-radius:8px;border:none;background:var(--bg-hover);color:var(--t3);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
     </div>
     <input type="hidden" id="m-calevent-id">
     <input type="hidden" id="m-calevent-ideaid">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div class="grid-full"><div class="qc-lbl">Judul Konten *</div><input id="calevent-inp-title" class="qc-inp" type="text" placeholder="Judul postingan..."></div>
+      <div style="grid-column:1/-1;"><div class="qc-lbl">Judul Konten *</div><input id="calevent-inp-title" class="qc-inp" type="text" placeholder="Judul postingan..."></div>
       <div><div class="qc-lbl">Platform</div><select id="calevent-inp-plt" class="qc-inp" style="width:100%;"></select></div>
       <div><div class="qc-lbl">Akun</div><select id="calevent-inp-acc" class="qc-inp" style="width:100%;"></select></div>
       <div><div class="qc-lbl">Tanggal Posting</div><input id="calevent-inp-date" class="qc-inp" type="date"></div>
@@ -4874,21 +4890,21 @@ body{
           <option value="idea">💡 Ide</option><option value="in_progress">📋 Content Brief</option>
         </select></div>
       <div><div class="qc-lbl">Pilar</div><select id="calevent-inp-pillar" class="qc-inp" style="width:100%;"></select></div>
-      <div class="grid-full"><div class="qc-lbl">Caption / Notes</div><textarea id="calevent-inp-notes" class="qc-inp" rows="2" placeholder="Caption, hashtag, notes produksi..."></textarea></div>
-      <div class="grid-full">
+      <div style="grid-column:1/-1;"><div class="qc-lbl">Caption / Notes</div><textarea id="calevent-inp-notes" class="qc-inp" rows="2" placeholder="Caption, hashtag, notes produksi..."></textarea></div>
+      <div style="grid-column:1/-1;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-          <div class="qc-lbl" class="ma-0">📋 Brief Konten</div>
+          <div class="qc-lbl" style="margin:0;">📋 Brief Konten</div>
           <span style="font-size:10px;color:var(--t4);">Muncul di Jadwal Mendatang</span>
         </div>
         <textarea id="calevent-inp-brief" class="qc-inp" rows="2" placeholder="Apa angle utama konten ini? Apa yang ingin disampaikan? Apa tujuannya?"></textarea>
       </div>
-      <div class="grid-full">
+      <div style="grid-column:1/-1;">
         <div class="qc-lbl">🪝 Hook / Kalimat Pembuka</div>
         <input id="calevent-inp-hook" class="qc-inp" type="text" placeholder="Contoh: '3 kesalahan yang bikin konten kamu ga viral...'" maxlength="200">
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--b);">
-      <button onclick="saveCalEvent()" class="btn-ok" class="flex-1">💾 Simpan</button>
+      <button onclick="saveCalEvent()" class="btn-ok" style="flex:1;">💾 Simpan</button>
       <button onclick="closeModal('m-calevent')" class="btn-c">Batal</button>
     </div>
   </div>
@@ -4969,28 +4985,28 @@ body{
     <div class="qc-section-label">
       <span>Angka Engagement</span>
     </div>
-    <div class="qc-field-row" class="mb-8">
+    <div class="qc-field-row" style="margin-bottom:8px;">
       <div class="qc-field"><label>❤️ Like</label><input id="qc-like" type="number" min="0" placeholder="0" oninput="if(+this.value<0)this.value=0"></div>
       <div class="qc-field"><label>💬 Komentar</label><input id="qc-comment" type="number" min="0" placeholder="0" oninput="if(+this.value<0)this.value=0"></div>
     </div>
-    <div class="qc-field-row" class="mb-8">
+    <div class="qc-field-row" style="margin-bottom:8px;">
       <div class="qc-field"><label>🔁 Share</label><input id="qc-share" type="number" min="0" placeholder="0" oninput="if(+this.value<0)this.value=0"></div>
       <div class="qc-field"><label>🔖 Save</label><input id="qc-save" type="number" min="0" placeholder="0" oninput="if(+this.value<0)this.value=0"></div>
     </div>
-    <div class="qc-field-row" class="mb-16">
+    <div class="qc-field-row" style="margin-bottom:16px;">
       <div class="qc-field"><label>👁 Reach</label><input id="qc-reach" type="number" min="0" placeholder="0" oninput="if(+this.value<0)this.value=0"></div>
       <div class="qc-field"><label>📺 Impresi</label><input id="qc-impression" type="number" min="0" placeholder="0" oninput="if(+this.value<0)this.value=0"></div>
     </div>
 
-    <div class="qc-field" class="mb-12">
+    <div class="qc-field" style="margin-bottom:12px;">
       <label>🔗 Link Konten <span style="font-weight:400;color:var(--t3);">(opsional)</span></label>
       <input id="qc-link" type="url" placeholder="https://www.tiktok.com/@user/video/...">
     </div>
     <div style="display:flex;gap:8px;">
-      <button class="btn-c" class="flex-1" onclick="closeModal('m-qc')">Batal</button>
+      <button class="btn-c" style="flex:1;" onclick="closeModal('m-qc')">Batal</button>
       <button id="qc-save-btn" class="btn-ok" style="flex:2;" onclick="qcSaveFull()">💾 Simpan Post</button>
     </div>
-    <div class="qc-save-later" onclick="qcSaveLater()" class="mt-10">Simpan tanpa angka (isi nanti di Content)</div>
+    <div class="qc-save-later" onclick="qcSaveLater()" style="margin-top:10px;">Simpan tanpa angka (isi nanti di Content)</div>
   </div>
 </div>
 
@@ -5169,26 +5185,6 @@ function validateAppData(data) {
   return true;
 }
 
-/* ── XSS Safe HTML ── */
-function safeHTML(str) {
-  if (typeof DOMPurify !== 'undefined') {
-    return DOMPurify.sanitize(str, { ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'span', 'br'] });
-  }
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function safeURL(url) {
-  if (!url) return '';
-  try {
-    const u = new URL(url, window.location.origin);
-    return u.protocol === 'http:' || u.protocol === 'https:' ? u.href : '';
-  } catch(e) { return ''; }
-}
-
 /* ── Unified Toast System ── */
 function showToast(msg, type = 'success', duration = 3200) {
   let container = document.getElementById('toast-container');
@@ -5264,7 +5260,7 @@ function showBackupReminder(postCount, days) {
     <span style="font-size:18px;flex-shrink:0;">💾</span>
     <div style="flex:1;color:var(--t2);line-height:1.5;">Kamu punya <strong>${fmt(postCount)} post</strong> — sudah <strong>${days} hari</strong> sejak backup terakhir.</div>
     <button class="notif-bar-btn" onclick="exportJSONBackup();this.closest('#backup-reminder').remove();localStorage.setItem('cl-last-backup',new Date().toISOString())">Backup JSON</button>
-    <button class="notif-bar-dismiss" onclick="this.closest('#backup-reminder').remove();localStorage.setItem('cl-last-backup',new Date().toISOString())" title="Sudah" aria-label="Tutup notifikasi backup">×</button>
+    <button class="notif-bar-dismiss" onclick="this.closest('#backup-reminder').remove();localStorage.setItem('cl-last-backup',new Date().toISOString())" title="Sudah">×</button>
   `;
   const dashMain = document.querySelector('#view-dash .dash-col-main') || document.querySelector('#view-dash');
   if (dashMain) dashMain.prepend(bar);
@@ -5831,23 +5827,14 @@ function highlightCardHTML(h,allPosts){
       </div>
       </div>
       <div class="mob-swipe-delete" onclick="deletePost('${p.id}','${plt}')">
-        <span class="text-xl">🗑</span>
+        <span style="font-size:20px;">🗑</span>
         <span>Hapus</span>
       </div>
     </div>`;
 }
 
-/* ── ALL POSTS (dengan cache) ── */
-let _postsCache = null;
-let _postsCacheDirty = true;
-
-function invalidatePostsCache() {
-  _postsCacheDirty = true;
-  _postsCache = null;
-}
-
+/* ── ALL POSTS ── */
 function getAllPosts(filterFn){
-  if (!filterFn && !_postsCacheDirty && _postsCache !== null) return _postsCache;
   const result=[];
   (months || []).forEach(m=>{
     if (!m) return;
@@ -5866,7 +5853,6 @@ function getAllPosts(filterFn){
       });
     });
   });
-  if (!filterFn) { _postsCache = result; _postsCacheDirty = false; }
   return result;
 }
 
@@ -5992,7 +5978,7 @@ function buildChartData(){
 /* ══ PERSIST ══ */
 const SYNC_META_KEY = KEY + '-meta';
 let saveT=null;
-function scheduleSave(d=700){invalidatePostsCache();clearTimeout(saveT);saveT=setTimeout(()=>{persist();markDirty('dash');markDirty('analytics');markDirty('report');markDirty('goals');markDirty('competitor');},d);}
+function scheduleSave(d=700){clearTimeout(saveT);saveT=setTimeout(()=>{persist();markDirty('dash');markDirty('analytics');markDirty('report');markDirty('goals');markDirty('competitor');},d);}
 async function persist(){
   try{
     const stateObj = {accounts,months,platforms,customGoals,pillars,overviewMetrics,ovAcc,analyticsTopSortBy,userNiche,contentIdeas,calendarPosts,competitors,userProfile,erMode:sel.erMode};
@@ -6167,27 +6153,6 @@ function flash(){
   setTimeout(()=>el.classList.remove('show'),2200);
 }
 
-/* ══ APP CONSTANTS ══ */
-const APP_VERSION = '1.0.0-beta';
-const APP_BUILD_DATE = '2025';
-
-function renderView(renderFn, viewId) {
-  try {
-    renderFn();
-  } catch (error) {
-    console.error('Error rendering ' + viewId + ':', error);
-    const el = document.getElementById(viewId);
-    if (el) {
-      el.innerHTML = '<div class="error-state">' +
-        '<div class="error-ico">⚠️</div>' +
-        '<div class="error-title">Terjadi kesalahan</div>' +
-        '<div class="error-msg">Halaman ini tidak bisa dimuat. Coba refresh browser.</div>' +
-        '<button onclick="location.reload()" class="btn-ok" class="mt-16">Refresh Halaman</button>' +
-      '</div>';
-    }
-  }
-}
-
 /* ══ THEME ══ */
 const SVG_MOON=`<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M12.5 8.5A5.5 5.5 0 0 1 5.5 1.5a5.5 5.5 0 1 0 7 7z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>`;
 const SVG_SUN=`<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v1M7 12v1M1 7H0m13 0h1M2.6 2.6l.7.7M10.7 10.7l.7.7M2.6 11.4l.7-.7M10.7 3.3l.7-.7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="7" cy="7" r="2.8" stroke="currentColor" stroke-width="1.2"/></svg>`;
@@ -6240,14 +6205,14 @@ function switchView(v){
   const tl=document.getElementById('topbar-title');
   if(tl)tl.textContent=VIEW_LABELS[v]||v;
   destroyCharts();
-  if(v==='dash'){if(isDirty('dash')||!_renderedViews.has('dash')){renderView(renderDashboard,'v-dash');clearDirty('dash');_renderedViews.add('dash');}}
-  if(v==='analytics'){if(isDirty('analytics')||!_renderedViews.has('analytics')){renderView(renderAnalytics,'v-analytics');clearDirty('analytics');_renderedViews.add('analytics');}}
-  if(v==='goals'){renderView(renderGoals,'v-goals');clearDirty('goals');_renderedViews.add('goals');}
-  if(v==='report'){if(isDirty('report')||!_renderedViews.has('report')){renderView(renderReport,'v-report');clearDirty('report');_renderedViews.add('report');}}
-  if(v==='content'){renderView(renderContentTimeline,'v-content');_renderedViews.add('content');}
-  if(v==='planner'){renderView(renderPlanner,'v-planner');_renderedViews.add('planner');}
-  if(v==='calendar'){renderView(renderCalendar,'v-calendar');_renderedViews.add('calendar');}
-  if(v==='competitor'){if(isDirty('competitor')||!_renderedViews.has('competitor')){renderView(renderCompetitor,'v-competitor');clearDirty('competitor');_renderedViews.add('competitor');}}
+  if(v==='dash'){if(isDirty('dash')||!_renderedViews.has('dash')){renderDashboard();clearDirty('dash');_renderedViews.add('dash');}}
+  if(v==='analytics'){if(isDirty('analytics')||!_renderedViews.has('analytics')){renderAnalytics();clearDirty('analytics');_renderedViews.add('analytics');}}
+  if(v==='goals'){renderGoals();clearDirty('goals');_renderedViews.add('goals');}
+  if(v==='report'){if(isDirty('report')||!_renderedViews.has('report')){renderReport();clearDirty('report');_renderedViews.add('report');}}
+  if(v==='content'){renderContentTimeline();_renderedViews.add('content');}
+  if(v==='planner'){renderPlanner();_renderedViews.add('planner');}
+  if(v==='calendar'){renderCalendar();_renderedViews.add('calendar');}
+  if(v==='competitor'){if(isDirty('competitor')||!_renderedViews.has('competitor')){renderCompetitor();clearDirty('competitor');_renderedViews.add('competitor');}}
 }
 function mobContent(panel){
   mobContentPanel=panel;
@@ -6304,22 +6269,6 @@ function initSwipeToDelete() {
 }
 
 /* ══ MODALS ══ */
-function trapFocus(modalEl) {
-  const focusableSelectors = 'button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])';
-  const focusable = modalEl.querySelectorAll(focusableSelectors);
-  const first = focusable[0];
-  const last = focusable[focusable.length - 1];
-  modalEl.addEventListener('keydown', function(e) {
-    if (e.key !== 'Tab') return;
-    if (e.shiftKey) {
-      if (document.activeElement === first) { e.preventDefault(); last?.focus(); }
-    } else {
-      if (document.activeElement === last) { e.preventDefault(); first?.focus(); }
-    }
-  });
-  setTimeout(() => first?.focus(), 50);
-}
-
 function openModal(id){
   if(id==='m-month'){
     const cy=new Date().getFullYear();
@@ -6333,10 +6282,7 @@ function openModal(id){
     setTimeout(()=>document.getElementById('mi-acc').focus(),50);
   }
   if(id==='m-pillar'){renderPillarModal();}
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.remove('hidden');
-  trapFocus(el);
+  document.getElementById(id)?.classList.remove('hidden');
 }
 function closeModal(id){document.getElementById(id)?.classList.add('hidden');}
 
@@ -6905,12 +6851,12 @@ function benchmarkHTML(allPosts) {
   }).join('');
   return `<div style="margin-top:14px;">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-      <span class="text-uppercase-label">Bandingkan vs niche:</span>
+      <span style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;">Bandingkan vs niche:</span>
       <select class="af-sel" style="font-size:11px;padding:4px 8px;" onchange="userNiche=this.value;try{localStorage.setItem('cl-niche',this.value);}catch(e){}destroyCharts();renderAnalytics();">${nicheOpts}</select>
-      <span class="text-xs-muted">Benchmark untuk <strong style="color:var(--t2);">${bm.label}</strong></span>
+      <span style="font-size:10px;color:var(--t3);">Benchmark untuk <strong style="color:var(--t2);">${bm.label}</strong></span>
     </div>
     <div style="display:grid;grid-template-columns:1fr 70px 70px 55px;gap:4px;padding:0 10px 6px;font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;">
-      <span>Metrik</span><span class="text-right">Kamu</span><span class="text-right">${bm.label}</span><span class="text-right">Delta</span>
+      <span>Metrik</span><span style="text-align:right;">Kamu</span><span style="text-align:right;">${bm.label}</span><span style="text-align:right;">Delta</span>
     </div>
     ${rowsHTML}
     <div style="font-size:10px;color:var(--t4);margin-top:8px;padding:0 10px;">* Benchmark estimasi per niche. Angka aktual bisa berbeda tergantung skala akun.</div>
@@ -6941,9 +6887,9 @@ function formatAnalyticsHTML(allPosts) {
       <div style="font-size:11px;font-weight:700;color:var(--t);margin-bottom:8px;">${d.label}</div>
       <div class="fmt-stat-val">${d.posts.length}</div><div class="fmt-stat-lbl">Post</div>
       <div style="height:6px;"></div>
-      <div class="fmt-stat-val" class="text-base">${erStr(avgER)}</div><div class="fmt-stat-lbl">Avg ER</div>
+      <div class="fmt-stat-val" style="font-size:14px;">${erStr(avgER)}</div><div class="fmt-stat-lbl">Avg ER</div>
       <div style="height:4px;"></div>
-      <div class="fmt-stat-val" class="text-base">${fmt(avgReach)}</div><div class="fmt-stat-lbl">Avg Reach</div>
+      <div class="fmt-stat-val" style="font-size:14px;">${fmt(avgReach)}</div><div class="fmt-stat-lbl">Avg Reach</div>
     </div>`;
   }).join('');
   // Best format
@@ -7054,7 +7000,7 @@ function reminderBannerHTML(allPosts) {
       <span class="notif-bar-ico">⏰</span>
       <div class="notif-bar-txt">Sudah <strong>${daysSince} hari</strong> belum ada post baru. Jaga konsistensinya!</div>
       <button class="notif-bar-btn" onclick="openQCModal()">＋ Input Sekarang</button>
-      <button class="notif-bar-dismiss" onclick="this.closest('.notif-bar').remove()" title="Tutup" aria-label="Tutup notifikasi">×</button>
+      <button class="notif-bar-dismiss" onclick="this.closest('.notif-bar').remove()" title="Tutup">×</button>
     </div>`;
   }
   if (notifPermission === 'denied') return '';
@@ -7063,7 +7009,7 @@ function reminderBannerHTML(allPosts) {
     <span class="notif-bar-ico">🔔</span>
     <div class="notif-bar-txt"><strong>Aktifkan reminder posting</strong> — Creatorlytics akan mengingatkan kamu jika 2+ hari tidak posting.</div>
     <button class="notif-bar-btn" onclick="requestNotifPermission()">Aktifkan</button>
-    <button class="notif-bar-dismiss" onclick="notifPermission='denied';this.closest('.notif-bar').remove()" title="Nanti" aria-label="Tutup notifikasi">×</button>
+    <button class="notif-bar-dismiss" onclick="notifPermission='denied';this.closest('.notif-bar').remove()" title="Nanti">×</button>
   </div>`;
 }
 
@@ -7097,7 +7043,7 @@ function renderNavPlatforms(){
     const dot=dotColor[p.id]||'var(--accent)';
     return `<div class="nav-item nav-plt-row" style="font-size:12px;color:var(--sidebar-t);padding:7px 11px;cursor:default;">
       <span style="font-size:13px;flex-shrink:0;">${p.emoji||'📌'}</span>
-      <span class="flex-1">${p.name||'Platform'}</span>
+      <span style="flex:1;">${p.name||'Platform'}</span>
       <span style="width:7px;height:7px;border-radius:50%;background:${dot};flex-shrink:0;box-shadow:0 0 6px ${dot};"></span>
       ${isBuiltIn?'':`<button class="nav-plt-del" onclick="event.stopPropagation();deletePlatform('${p.id}')" title="Hapus platform">✕</button>`}
     </div>`;
@@ -7139,7 +7085,7 @@ function renderMonthTree(){
       </div>
     </div>
     <div class="week-tabs">
-      ${weeks||`<div class="period-empty" class="grid-full">Belum ada minggu.</div>`}
+      ${weeks||`<div class="period-empty" style="grid-column:1/-1;">Belum ada minggu.</div>`}
     </div>
     <div class="week-tools">
       <button class="week-tool" onclick="addWeek('${active.id}')">+ Tambah minggu</button>
@@ -7202,7 +7148,7 @@ function renderEditorHeader(){
     const all=allPlatforms();
     segEl.innerHTML=`<div class="seg">
       ${all.map(p=>`<button class="seg-btn ${sel.plt===p.id?(p.id==='tt'?'tt-act':p.id==='ig'?'ig-act':'act'):''}" onclick="setPlt('${p.id}')">${p.emoji||'📌'} ${p.name||'Platform'}</button>`).join('')}
-      <button class="seg-btn" onclick="openModal('m-plt')" class="text-muted" title="Tambah platform">+</button>
+      <button class="seg-btn" onclick="openModal('m-plt')" style="color:var(--t3);" title="Tambah platform">+</button>
     </div>`;
   }
   // ER buttons
@@ -7245,7 +7191,7 @@ function renderEditorBody(){
 
   // Weekly stats + summary bar
   const weeklyHTML=`
-    <div class="weekly-stats-row" class="mb-12">
+    <div class="weekly-stats-row" style="margin-bottom:12px;">
       <div class="ws-field">
         <span class="ws-label">${pi.emoji||'📌'} Followers</span>
         <input class="ws-inp" type="number" min="0" value="${flw||''}" placeholder="0" oninput="saveFlw('${plt}',this.value)">
@@ -7563,7 +7509,7 @@ function topPostsHTML(posts,sortBy){
           ${scorePill}
         </div>
         <div class="top-post-meta">
-          ${p.name?`<span style="font-weight:500;color:var(--t2);">${safeHTML(p.name)}</span> · `:''}${p.date||'—'} · ${p._month}
+          ${p.name?`<span style="font-weight:500;color:var(--t2);">${p.name}</span> · `:''}${p.date||'—'} · ${p._month}
         </div>
       </div>
       <div class="top-post-metrics">
@@ -7614,7 +7560,7 @@ function renderDashboard(){
   }
 
   const weeklyMovement=hasData?`
-    <div class="mb-28">
+    <div style="margin-bottom:28px;">
       <div class="section-hdr">
         <div>
           <div class="section-ttl">📊 Pergerakan Bulan Ini vs Bulan Lalu</div>
@@ -7635,7 +7581,7 @@ function renderDashboard(){
 
   // ── Insight Engine — HERO ──
   const insightEngineHTML=`
-    <div class="mb-28">
+    <div style="margin-bottom:28px;">
       <div class="section-hdr">
         <div class="section-ttl">💡 Insight Engine</div>
         <span style="font-size:10px;color:var(--t3);font-style:italic;">Auto generated · rule-based</span>
@@ -7648,7 +7594,7 @@ function renderDashboard(){
   // ── Top 3 Content Only ──
   const top3=sortedTopPosts(allPosts,'engagement',3);
   const top3HTML=`
-    <div class="mb-28">
+    <div style="margin-bottom:28px;">
       <div class="section-hdr">
         <div class="section-ttl">🏆 Best Performing Content</div>
         <button class="section-action" onclick="switchView('analytics');analyticsTab='top';renderAnalytics()">Lihat semua →</button>
@@ -7667,21 +7613,21 @@ function renderDashboard(){
     const pltObj=g.platform==='all'?{emoji:'🌐'}:allPlatforms().find(p=>p.id===g.platform)||{emoji:'📌'};
     return `<div style="margin-bottom:14px;">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-        <span class="text-base">${g.emoji||pltObj.emoji||'🎯'}</span>
-        <span class="text-12 font-semibold" style="color:var(--t);">${safeHTML(g.label)}</span>
+        <span style="font-size:14px;">${g.emoji||pltObj.emoji||'🎯'}</span>
+        <span style="font-size:12px;font-weight:600;color:var(--t);">${g.label}</span>
         <span class="goal-pct ${cls}" style="margin-left:auto;">${pct}%</span>
       </div>
       <div class="goal-progress-bar"><div class="goal-progress-fill" style="width:${pct}%;background:${barColor};"></div></div>
       <div style="display:flex;justify-content:space-between;margin-top:4px;">
         <span style="font-size:11px;font-family:var(--mono);color:var(--t2);">${fmtFull(curr)}</span>
-        <span class="text-sm-muted">dari ${fmtFull(target)}</span>
+        <span style="font-size:11px;color:var(--t3);">dari ${fmtFull(target)}</span>
       </div>
     </div>`;
   }).join(''):
   `<div style="text-align:center;padding:20px 0;color:var(--t3);font-size:12px;">
     <div style="font-size:24px;margin-bottom:8px;opacity:.3;">🎯</div>
     Tambah goal untuk track progres.
-    <div class="mt-10"><button onclick="switchView('goals')" style="padding:6px 16px;border-radius:8px;border:none;background:var(--accent);color:#000;font-size:12px;font-weight:800;cursor:pointer;">+ Tambah Goal →</button></div>
+    <div style="margin-top:10px;"><button onclick="switchView('goals')" style="padding:6px 16px;border-radius:8px;border:none;background:var(--accent);color:#000;font-size:12px;font-weight:800;cursor:pointer;">+ Tambah Goal →</button></div>
   </div>`;
 
   // Total followers
@@ -7691,7 +7637,7 @@ function renderDashboard(){
     return s+(plPosts.length?Math.max(...plPosts.map(p=>p._flw||0)):0);
   },0);
   // Dynamic sync timestamp
-  let lastSyncStr = '';
+  let lastSyncStr = 'Belum pernah disimpan';
   try {
     const _sm = localStorage.getItem(SYNC_META_KEY);
     if (_sm) {
@@ -7715,7 +7661,7 @@ function renderDashboard(){
             <span class="view-header-badge-dot"></span>
             Live Analytics
           </span>
-          ${lastSyncStr ? `<span class="view-header-sync">• ${lastSyncStr}</span>` : ''}
+          <span class="view-header-sync">• ${lastSyncStr}</span>
         </div>
         <div class="view-title">Ringkasan Dashboard</div>
       </div>
@@ -7801,11 +7747,11 @@ function renderDashboard(){
         const rCls=reachDiff>=0?'color:var(--green)':'color:var(--red)';
         return`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--b);">
           <div style="font-size:18px;flex-shrink:0;">${plt.emoji}</div>
-          <div class="flex-1-mw0">
-            <div style="font-size:12px;font-weight:700;color:var(--t);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${safeHTML(c.name)}</div>
-            <div class="text-xs-muted">${fmt(c.followers)} followers</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;font-weight:700;color:var(--t);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.name}</div>
+            <div style="font-size:10px;color:var(--t3);">${fmt(c.followers)} followers</div>
           </div>
-          <div class="text-right">
+          <div style="text-align:right;">
             <div style="font-size:11px;font-weight:700;${erCls}">${erDiff>=0?'+':''}${erDiff.toFixed(2)}% ER</div>
             <div style="font-size:10px;color:var(--t4);">vs mereka</div>
           </div>
@@ -7825,12 +7771,12 @@ function renderDashboard(){
       <div onclick="openQuickAdd()" style="background:linear-gradient(135deg,rgba(14,159,143,.12),rgba(14,159,143,.05));border:1px solid rgba(14,159,143,.25);border-radius:14px;padding:18px 20px;cursor:pointer;transition:transform .15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
         <div style="font-size:22px;margin-bottom:8px;">⚡</div>
         <div style="font-size:14px;font-weight:800;color:var(--t);margin-bottom:3px;">Quick Add Post</div>
-        <div class="text-sm-muted">Input post tanpa navigasi · Langsung dari sini</div>
+        <div style="font-size:11px;color:var(--t3);">Input post tanpa navigasi · Langsung dari sini</div>
       </div>
       <div onclick="switchView('calendar')" style="background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(34,197,94,.06));border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:18px 20px;cursor:pointer;transition:transform .15s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
         <div style="font-size:22px;margin-bottom:8px;">📅</div>
         <div style="font-size:14px;font-weight:800;color:var(--t);margin-bottom:3px;">Kalender Konten</div>
-        <div class="text-sm-muted">${calendarPosts.filter(e=>e.status!=='posted').length} konten terjadwal · Termasuk brief & hook</div>
+        <div style="font-size:11px;color:var(--t3);">${calendarPosts.filter(e=>e.status!=='posted').length} konten terjadwal · Termasuk brief & hook</div>
       </div>
     </div>
   `;
@@ -8035,7 +7981,7 @@ function renderInsightsTab(body, allPosts){
           <div class="ins-time-bar-wrap"><div class="ins-time-bar" style="width:${Math.round((t.posts/maxPosts)*100)}%;background:${lvl.color};"></div></div>
           <div class="ins-time-meta">
             ${t.avgER>0?`<span style="color:${lvl.color};font-family:var(--mono);">${erStr(t.avgER)}</span> ER · `:''}
-            <span class="text-muted">${t.posts} post</span>
+            <span style="color:var(--t3);">${t.posts} post</span>
           </div>
           ${isTop?`<div class="ins-time-badge">Best</div>`:''}
         </div>`;
@@ -8141,7 +8087,7 @@ function renderInsightsTab(body, allPosts){
         </div>
         ${streakHTML}
         ${dayRanking.length?`<div style="margin-top:12px;padding:10px 14px;background:rgba(0,232,122,.06);border:1px solid rgba(0,232,122,.15);border-radius:10px;font-size:12px;color:var(--t2);">
-          📅 Hari terbaik untuk posting: <strong class="text-accent">${dayRanking[0].day}</strong> · Avg ER <span style="font-family:var(--mono);color:var(--accent);">${erStr(dayRanking[0].avgER)}</span>
+          📅 Hari terbaik untuk posting: <strong style="color:var(--accent);">${dayRanking[0].day}</strong> · Avg ER <span style="font-family:var(--mono);color:var(--accent);">${erStr(dayRanking[0].avgER)}</span>
         </div>`:''}
       </div>
 
@@ -8155,7 +8101,7 @@ function renderAnalytics(){
   const _allPostsCheck=getAllPosts();
   if(_allPostsCheck.length < 5 && analyticsTab==='trends'){
     const need=5-_allPostsCheck.length;
-    body.innerHTML=emptyStateHTML('analytics',`Tambah <strong class="text-accent">${need} post lagi</strong> untuk membuka Analytics.`);
+    body.innerHTML=emptyStateHTML('analytics',`Tambah <strong style="color:var(--accent);">${need} post lagi</strong> untuk membuka Analytics.`);
     return;
   }
   if(ovAcc!=='all'&&!accounts.includes(ovAcc))ovAcc='all';
@@ -8189,9 +8135,9 @@ function renderAnalytics(){
       <span class="af-label">s/d</span>
       <input type="date" class="date-inp" value="${ovDateTo}" onchange="ovDateTo=this.value;destroyCharts();renderAnalytics()">`:''}
     ${analyticsTab==='trends'?`
-      <span class="af-label" class="ml-8">Akun:</span>
+      <span class="af-label" style="margin-left:8px;">Akun:</span>
       <select class="af-sel" onchange="ovAcc=this.value;scheduleSave(100);destroyCharts();renderAnalytics()">${ovAccOpts}</select>`:''}
-    <span class="af-label" class="ml-8" title="Engagement Rate dihitung dengan membagi total engagement dengan basis yang dipilih">ER ÷:</span>
+    <span class="af-label" style="margin-left:8px;" title="Engagement Rate dihitung dengan membagi total engagement dengan basis yang dipilih">ER ÷:</span>
     <div class="seg">
       <button class="seg-btn ${sel.erMode==='impression'?'act':''}" onclick="setER('impression')" title="ER ÷ Impresi — angka lebih kecil, lebih akurat">Impresi</button>
       <button class="seg-btn ${sel.erMode==='reach'?'act':''}" onclick="setER('reach')" title="ER ÷ Reach — akun unik yang lihat konten">Reach</button>
@@ -8253,7 +8199,7 @@ function renderAnalytics(){
     </div>`;
     const statsSection=(s,label,pltId)=>{
       const c=pltColorRaw(pltId);
-      return `<div class="mb-16">
+      return `<div style="margin-bottom:16px;">
         <div style="font-size:12px;font-weight:600;color:${c};margin-bottom:10px;display:flex;align-items:center;gap:6px;">
           <span>${pltInfo(pltId).emoji}</span>${label}
         </div>
@@ -8324,7 +8270,7 @@ function renderAnalytics(){
       </div>
       ${benchmarkMode?`
         <div class="benchmark-banner">
-          <span class="text-lg">🏭</span>
+          <span style="font-size:16px;">🏭</span>
           <div>Perbandingan vs <strong>rata-rata kreator konten umum</strong>. Benchmark bersifat statis — cocok untuk orientasi, bukan patokan absolut.</div>
         </div>
         ${benchmarkHTML(getAllPosts())}
@@ -8333,7 +8279,7 @@ function renderAnalytics(){
         <div class="section-hdr"><div class="section-ttl">💡 Insight Otomatis</div><span style="font-size:10px;color:var(--t3);font-style:italic;">Rule-based · dari data kamu</span></div>
         ${(()=>{const _ins=generateInsights(getAllPosts());return _ins.length?`<div class="insight-grid">${_ins.map((_i,_idx)=>insightCardHTML(_i,_idx)).join('')}</div>`:`<div class="dash-insight-empty" style="padding:20px;"><div style="font-size:12px;color:var(--t3);">Insight muncul otomatis setelah kamu punya 5+ post dengan data lengkap.</div></div>`;})()}
       </div>`;
-    body.innerHTML=`<div class="view-header" class="mb-20"><div class="view-header-left"><div class="view-title">Analisis Mendalam</div><div class="view-subtitle">Grafik tren pertumbuhan, performa engagement rate, dan persebaran audiens organik</div></div><div class="view-header-right"><div class="flex-center-gap6"><span class="text-sm-muted-semibold">Rentang Waktu:</span><select class="af-sel" class="badge-sm" onchange="ovFilter=this.value==='all'?'all':'month';destroyCharts();renderAnalytics()"><option value="month" ${ovFilter==='month'?'selected':''}>30 Hari Terakhir</option><option value="all" ${ovFilter==='all'?'selected':''}>Semua Waktu</option></select></div></div></div>${tabsHTML}${filterHTML}${tabContent}`;
+    body.innerHTML=`<div class="view-header" style="margin-bottom:20px;"><div class="view-header-left"><div class="view-title">Analisis Mendalam</div><div class="view-subtitle">Grafik tren pertumbuhan, performa engagement rate, dan persebaran audiens organik</div></div><div class="view-header-right"><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:11px;color:var(--t3);font-weight:600;">Rentang Waktu:</span><select class="af-sel" style="padding:6px 12px;border-radius:9px;font-size:12px;font-weight:700;" onchange="ovFilter=this.value==='all'?'all':'month';destroyCharts();renderAnalytics()"><option value="month" ${ovFilter==='month'?'selected':''}>30 Hari Terakhir</option><option value="all" ${ovFilter==='all'?'selected':''}>Semua Waktu</option></select></div></div></div>${tabsHTML}${filterHTML}${tabContent}`;
 
     // Draw charts
     const ttC=pltColorRaw('tt'),igC=pltColorRaw('ig');
@@ -8381,7 +8327,7 @@ function renderAnalytics(){
         <div style="display:flex;align-items:center;gap:8px;"><span class="af-label">Urutkan:</span>${sortDropdown}</div>
       </div>
       <div class="top-post-list">${topPostsHTML(sortedPostsForTop,analyticsTopSortBy)}</div>`;
-    body.innerHTML=`<div class="view-header" class="mb-20"><div class="view-header-left"><div class="view-title">Analisis Mendalam</div><div class="view-subtitle">Grafik tren pertumbuhan, performa engagement rate, dan persebaran audiens organik</div></div><div class="view-header-right"><div class="flex-center-gap6"><span class="text-sm-muted-semibold">Rentang Waktu:</span><select class="af-sel" class="badge-sm" onchange="ovFilter=this.value==='all'?'all':'month';destroyCharts();renderAnalytics()"><option value="month" ${ovFilter==='month'?'selected':''}>30 Hari Terakhir</option><option value="all" ${ovFilter==='all'?'selected':''}>Semua Waktu</option></select></div></div></div>${tabsHTML}${filterHTML}${tabContent}`;
+    body.innerHTML=`<div class="view-header" style="margin-bottom:20px;"><div class="view-header-left"><div class="view-title">Analisis Mendalam</div><div class="view-subtitle">Grafik tren pertumbuhan, performa engagement rate, dan persebaran audiens organik</div></div><div class="view-header-right"><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:11px;color:var(--t3);font-weight:600;">Rentang Waktu:</span><select class="af-sel" style="padding:6px 12px;border-radius:9px;font-size:12px;font-weight:700;" onchange="ovFilter=this.value==='all'?'all':'month';destroyCharts();renderAnalytics()"><option value="month" ${ovFilter==='month'?'selected':''}>30 Hari Terakhir</option><option value="all" ${ovFilter==='all'?'selected':''}>Semua Waktu</option></select></div></div></div>${tabsHTML}${filterHTML}${tabContent}`;
     return;
     const filteredPosts=getAllPosts((p,m)=>{
       if(ovFilter==='month')return m.year===ovYear&&m.month===ovMonth;
@@ -8419,7 +8365,7 @@ function renderAnalytics(){
           </div>`;
         }).join('')||'<div style="padding:24px;text-align:center;color:var(--t3);">Tidak ada konten dalam rentang ini.</div>'}
       </div>`;
-    body.innerHTML=`<div class="view-header" class="mb-20"><div class="view-header-left"><div class="view-title">Analisis Mendalam</div><div class="view-subtitle">Grafik tren pertumbuhan, performa engagement rate, dan persebaran audiens organik</div></div><div class="view-header-right"><div class="flex-center-gap6"><span class="text-sm-muted-semibold">Rentang Waktu:</span><select class="af-sel" class="badge-sm" onchange="ovFilter=this.value==='all'?'all':'month';destroyCharts();renderAnalytics()"><option value="month" ${ovFilter==='month'?'selected':''}>30 Hari Terakhir</option><option value="all" ${ovFilter==='all'?'selected':''}>Semua Waktu</option></select></div></div></div>${tabsHTML}${filterHTML}${tabContent}`;
+    body.innerHTML=`<div class="view-header" style="margin-bottom:20px;"><div class="view-header-left"><div class="view-title">Analisis Mendalam</div><div class="view-subtitle">Grafik tren pertumbuhan, performa engagement rate, dan persebaran audiens organik</div></div><div class="view-header-right"><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:11px;color:var(--t3);font-weight:600;">Rentang Waktu:</span><select class="af-sel" style="padding:6px 12px;border-radius:9px;font-size:12px;font-weight:700;" onchange="ovFilter=this.value==='all'?'all':'month';destroyCharts();renderAnalytics()"><option value="month" ${ovFilter==='month'?'selected':''}>30 Hari Terakhir</option><option value="all" ${ovFilter==='all'?'selected':''}>Semua Waktu</option></select></div></div></div>${tabsHTML}${filterHTML}${tabContent}`;
 
   } else if(analyticsTab==='pillar'){
     const filteredPosts=getAllPosts((p,m)=>{
@@ -8479,7 +8425,7 @@ function renderAnalytics(){
       ${pillarAdvisorHTML(filteredPosts)}
       <div class="section-hdr" style="margin-top:20px;"><div class="section-ttl">🎬 Analisis Format Konten</div></div>
       ${formatAnalyticsHTML(filteredPosts)}`;
-    body.innerHTML=`<div class="view-header" class="mb-20"><div class="view-header-left"><div class="view-title">Analisis Mendalam</div><div class="view-subtitle">Grafik tren pertumbuhan, performa engagement rate, dan persebaran audiens organik</div></div><div class="view-header-right"><div class="flex-center-gap6"><span class="text-sm-muted-semibold">Rentang Waktu:</span><select class="af-sel" class="badge-sm" onchange="ovFilter=this.value==='all'?'all':'month';destroyCharts();renderAnalytics()"><option value="month" ${ovFilter==='month'?'selected':''}>30 Hari Terakhir</option><option value="all" ${ovFilter==='all'?'selected':''}>Semua Waktu</option></select></div></div></div>${tabsHTML}${filterHTML}${tabContent}`;
+    body.innerHTML=`<div class="view-header" style="margin-bottom:20px;"><div class="view-header-left"><div class="view-title">Analisis Mendalam</div><div class="view-subtitle">Grafik tren pertumbuhan, performa engagement rate, dan persebaran audiens organik</div></div><div class="view-header-right"><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:11px;color:var(--t3);font-weight:600;">Rentang Waktu:</span><select class="af-sel" style="padding:6px 12px;border-radius:9px;font-size:12px;font-weight:700;" onchange="ovFilter=this.value==='all'?'all':'month';destroyCharts();renderAnalytics()"><option value="month" ${ovFilter==='month'?'selected':''}>30 Hari Terakhir</option><option value="all" ${ovFilter==='all'?'selected':''}>Semua Waktu</option></select></div></div></div>${tabsHTML}${filterHTML}${tabContent}`;
     setTimeout(()=>{
       charts.pillar=makeChart('ch-pillar','bar',
         pillars.map(p=>p.emoji+' '+p.label),
@@ -8592,7 +8538,7 @@ function renderAnalytics(){
         <select class="af-sel" onchange="kompA.acc=this.value;analyticsTab='comparison';destroyCharts();renderAnalytics()"><option value="">— Pilih —</option>${accOpts(kompA.acc)}</select>
         <span class="af-label">vs</span>
         <select class="af-sel" onchange="kompB.acc=this.value;analyticsTab='comparison';destroyCharts();renderAnalytics()"><option value="">— Pilih —</option>${accOpts(kompB.acc)}</select>
-        <span class="af-label" class="ml-8">Dari:</span>
+        <span class="af-label" style="margin-left:8px;">Dari:</span>
         <input type="date" class="date-inp" value="${kompDateFrom}" onchange="kompDateFrom=this.value;analyticsTab='comparison';renderAnalytics()">
         <span class="af-label">—</span>
         <input type="date" class="date-inp" value="${kompDateTo}" onchange="kompDateTo=this.value;analyticsTab='comparison';renderAnalytics()">
@@ -8612,7 +8558,7 @@ function renderAnalytics(){
       </div>
       ${filterRow}
       ${tableHTML||`<div class="placeholder" style="height:auto;padding:40px;"><div class="ph-ico">⚖️</div><div class="ph-title">Pilih dua opsi untuk dibandingkan</div></div>`}`;
-    body.innerHTML=`<div class="view-header" class="mb-20"><div class="view-header-left"><div class="view-title">Analisis Mendalam</div><div class="view-subtitle">Grafik tren pertumbuhan, performa engagement rate, dan persebaran audiens organik</div></div></div>${tabsHTML}${filterHTML}<div class="tab-content">${tabContent}</div>`;
+    body.innerHTML=`<div class="view-header" style="margin-bottom:20px;"><div class="view-header-left"><div class="view-title">Analisis Mendalam</div><div class="view-subtitle">Grafik tren pertumbuhan, performa engagement rate, dan persebaran audiens organik</div></div></div>${tabsHTML}${filterHTML}<div class="tab-content">${tabContent}</div>`;
   } else if(analyticsTab==='multiacc'){
     // ── Multi-Account Overview ──
     const now=new Date();
@@ -8693,18 +8639,18 @@ function renderAnalytics(){
             <div style="display:flex;align-items:center;gap:10px;">
               <div style="width:32px;height:32px;border-radius:10px;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--accent);flex-shrink:0;">${initials}</div>
               <div>
-                <div class="text-md-bold">${s.acc}</div>
-                <div class="text-xs-muted">${platBadges}</div>
+                <div style="font-size:13px;font-weight:700;color:var(--t);">${s.acc}</div>
+                <div style="font-size:10px;color:var(--t3);">${platBadges}</div>
               </div>
             </div>
           </td>
           <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--t);">${erStr(s.avgER)}</td>
-          <td class="cell-data-right">${fmt(s.totalReach)}</td>
-          <td class="cell-data-right">${fmt(s.totalEng)}</td>
-          <td class="cell-data-right">${fmt(s.avgEng)}</td>
-          <td class="cell-data-right">${s.totalPosts}</td>
+          <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--t2);">${fmt(s.totalReach)}</td>
+          <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--t2);">${fmt(s.totalEng)}</td>
+          <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--t2);">${fmt(s.avgEng)}</td>
+          <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--t2);">${s.totalPosts}</td>
           <td style="padding:10px 16px;min-width:100px;">
-            <div class="flex-center-gap6">
+            <div style="display:flex;align-items:center;gap:6px;">
               <div style="flex:1;height:5px;background:var(--bg-hover);border-radius:4px;overflow:hidden;">
                 <div style="height:100%;width:${barW}%;background:var(--accent);border-radius:4px;"></div>
               </div>
@@ -8721,12 +8667,12 @@ function renderAnalytics(){
           <div style="background:linear-gradient(135deg,rgba(14,159,143,.1),rgba(14,159,143,.04));border:1px solid rgba(14,159,143,.2);border-radius:12px;padding:14px 16px;">
             <div style="font-size:10px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">🏆 Akun Terkuat</div>
             <div style="font-size:15px;font-weight:800;color:var(--t);margin-bottom:4px;">${top1.acc}</div>
-            <div class="text-sm-muted">ER ${erStr(top1.avgER)} · Reach ${fmt(top1.totalReach)} · ${top1.totalPosts} post</div>
+            <div style="font-size:11px;color:var(--t3);">ER ${erStr(top1.avgER)} · Reach ${fmt(top1.totalReach)} · ${top1.totalPosts} post</div>
           </div>
           <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:14px 16px;">
             <div style="font-size:10px;font-weight:800;color:var(--amber);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">⚡ Perlu Perhatian</div>
             <div style="font-size:15px;font-weight:800;color:var(--t);margin-bottom:4px;">${bot1.acc}</div>
-            <div class="text-sm-muted">ER ${erStr(bot1.avgER)} · Reach ${fmt(bot1.totalReach)} · ${bot1.totalPosts} post</div>
+            <div style="font-size:11px;color:var(--t3);">ER ${erStr(bot1.avgER)} · Reach ${fmt(bot1.totalReach)} · ${bot1.totalPosts} post</div>
           </div>
         </div>`:'';
 
@@ -8738,15 +8684,15 @@ function renderAnalytics(){
         </div>
         ${callouts}
         <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--b);">
-          <table class="w-full text-base" style="border-collapse:collapse;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
             <thead><tr style="background:var(--surf2);">
               <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;">#</th>
               <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;">Akun</th>
               <th style="padding:9px 12px;text-align:right;font-size:10px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;">Avg ER</th>
-              <th class="cell-header-right">Total Reach</th>
-              <th class="cell-header-right">Total Eng</th>
-              <th class="cell-header-right">Avg Eng/Post</th>
-              <th class="cell-header-right">Post</th>
+              <th style="padding:9px 12px;text-align:right;font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;">Total Reach</th>
+              <th style="padding:9px 12px;text-align:right;font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;">Total Eng</th>
+              <th style="padding:9px 12px;text-align:right;font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;">Avg Eng/Post</th>
+              <th style="padding:9px 12px;text-align:right;font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;">Post</th>
               <th style="padding:9px 16px;font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;">Bar</th>
             </tr></thead>
             <tbody>${tableRows}</tbody>
@@ -8795,7 +8741,7 @@ function renderGoals(){
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
         <div>
           <div style="font-size:13px;font-weight:800;color:var(--t);">🎯 Performa per Pilar Konten</div>
-          <div class="text-sm-muted-mt2">Berdasarkan semua data · ER tertinggi ke terendah</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px;">Berdasarkan semua data · ER tertinggi ke terendah</div>
         </div>
         <span style="font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;background:rgba(168,85,247,.12);color:#A855F7;">DIFFERENTIATOR</span>
       </div>
@@ -8871,18 +8817,18 @@ function renderGoals(){
       const dailyNeeded=Math.ceil(needed/daysLeft);
       const weeklyNeeded=Math.ceil(needed/Math.max(1,Math.ceil(daysLeft/7)));
       gapHTML=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px;">
-        <div style="background:var(--bg-hover);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Sisa</div><div class="text-mono-md-bold">${fmt(needed)}</div></div>
+        <div style="background:var(--bg-hover);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Sisa</div><div style="font-family:var(--mono);font-size:14px;font-weight:800;color:var(--t);">${fmt(needed)}</div></div>
         <div style="background:var(--bg-hover);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Per hari</div><div style="font-family:var(--mono);font-size:14px;font-weight:800;color:${pct<30?'var(--red)':pct<60?'var(--amber)':'var(--green)'};">${fmt(dailyNeeded)}</div></div>
-        <div style="background:var(--bg-hover);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Per minggu</div><div class="text-mono-md-bold">${fmt(weeklyNeeded)}</div></div>
+        <div style="background:var(--bg-hover);border-radius:8px;padding:8px 10px;text-align:center;"><div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Per minggu</div><div style="font-family:var(--mono);font-size:14px;font-weight:800;color:var(--t);">${fmt(weeklyNeeded)}</div></div>
       </div>`;
     }else if(pct>=100){gapHTML=`<div style="background:rgba(29,185,84,.08);border:1px solid rgba(29,185,84,.2);border-radius:8px;padding:8px 12px;margin-top:8px;font-size:12px;color:var(--green);">🎉 Goal tercapai! ${fmt(curr)} dari target ${fmt(target)}.</div>`;}
 
-    return `<div class="goal-card" class="mb-12">
+    return `<div class="goal-card" style="margin-bottom:12px;">
       <div class="goal-card-top">
         <div class="goal-card-ico">${g.emoji||'🎯'}</div>
-        <div class="flex-1-mw0">
-          <div class="goal-card-name">${safeHTML(g.label)}</div>
-          <div class="text-sm-muted-mt2">${pltObj.emoji} ${pltObj.name} · ${metricLabel}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="goal-card-name">${g.label}</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:2px;">${pltObj.emoji} ${pltObj.name} · ${metricLabel}</div>
         </div>
         <span style="font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;background:${pct>=100?'rgba(29,185,84,.12)':pct>=70?'rgba(59,130,246,.1)':pct>=35?'rgba(245,158,11,.1)':'rgba(255,77,77,.1)'};color:${statusColor};">${statusBadge}</span>
         <button class="goal-card-edit" onclick="openGoalModal('${g.id}')" style="margin-left:6px;">✏ Edit</button>
@@ -8890,7 +8836,7 @@ function renderGoals(){
       </div>
       <div style="margin:12px 0 6px;">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
-          <div style="display:flex;align-items:baseline;gap:6px;"><span style="font-family:var(--mono);font-size:20px;font-weight:900;color:var(--t);">${fmt(curr)}</span><span class="text-sm-muted">/ ${fmt(target)}</span></div>
+          <div style="display:flex;align-items:baseline;gap:6px;"><span style="font-family:var(--mono);font-size:20px;font-weight:900;color:var(--t);">${fmt(curr)}</span><span style="font-size:11px;color:var(--t3);">/ ${fmt(target)}</span></div>
           <span style="font-family:var(--mono);font-size:18px;font-weight:900;color:${statusColor};">${pct}%</span>
         </div>
         <div style="height:8px;background:var(--bg-hover);border-radius:8px;overflow:hidden;">
@@ -8965,8 +8911,8 @@ function buildGoalHistoryHTML(goals) {
       const p = t ? Math.min(Math.round((val / t) * 100), 100) : 0;
       const ok = t > 0 && val >= t;
       return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);">
-        <span class="text-base">${g.emoji || '🎯'}</span>
-        <span style="flex:1;font-size:12px;color:var(--t2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${safeHTML(g.label)}</span>
+        <span style="font-size:14px;">${g.emoji || '🎯'}</span>
+        <span style="flex:1;font-size:12px;color:var(--t2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${g.label}</span>
         <span style="font-size:11px;font-family:var(--mono);color:${ok?'var(--green)':'var(--t3)'};">${fmt(val)} / ${fmt(t)}</span>
         <span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;min-width:42px;text-align:center;background:${ok?'rgba(39,209,127,.12)':'rgba(255,255,255,.06)'};color:${ok?'var(--green)':'var(--t4)'};">${p}%</span>
       </div>`;
@@ -8975,10 +8921,10 @@ function buildGoalHistoryHTML(goals) {
     return `<div style="background:var(--surf);border:1px solid var(--b);border-radius:12px;padding:14px 16px;transition:background .15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='var(--surf)'">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div style="display:flex;align-items:center;gap:8px;">
-          <span class="text-xl">${emoji}</span>
+          <span style="font-size:20px;">${emoji}</span>
           <div>
             <div style="font-size:13px;font-weight:800;color:var(--t);">${monthLabel}</div>
-            <div class="text-sm-muted">${achieved.length} dari ${total} goal tercapai</div>
+            <div style="font-size:11px;color:var(--t3);">${achieved.length} dari ${total} goal tercapai</div>
           </div>
         </div>
         <span style="font-family:var(--mono);font-size:18px;font-weight:900;color:${color};">${pct}%</span>
@@ -9069,8 +9015,8 @@ function buildCompTable(sA,sB,labelA,labelB){
     const winner=r.a>r.b?'A':r.a<r.b?'B':'';
     return`<tr class="comp-row">
       <td class="comp-metric">${r.icon} ${r.label}</td>
-      <td class="comp-val ${winner==='A'?'comp-val-win':''}" class="text-mono">${r.fmt(r.a)}</td>
-      <td class="comp-val ${winner==='B'?'comp-val-win':''}" class="text-mono">${r.fmt(r.b)}</td>
+      <td class="comp-val ${winner==='A'?'comp-val-win':''}" style="font-family:var(--mono);">${r.fmt(r.a)}</td>
+      <td class="comp-val ${winner==='B'?'comp-val-win':''}" style="font-family:var(--mono);">${r.fmt(r.b)}</td>
       <td class="comp-delta ${dCls}">${dStr}</td>
     </tr>`;
   }).join('');
@@ -9360,7 +9306,7 @@ function renderReport() {
         <div class="rpt-cc-name">${name}</div>
         <div class="rpt-cc-meta">
           <span style="color:${pi.color||'var(--t3)'};">${pi.emoji} ${pi.name}</span>
-          <span class="text-muted">${p.date||'—'}</span>
+          <span style="color:var(--t3);">${p.date||'—'}</span>
           ${er>0?`<span style="color:${lvl.color};font-family:var(--mono);font-size:11px;">${erStr(er)} ER · ${lvl.label}</span>`:''}
           <span style="background:${sg.bg};color:${sg.color};padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;">${sg.grade}</span>
         </div>
@@ -9383,15 +9329,15 @@ function renderReport() {
     const tColor = pctOfTarget==null?'var(--t3)':pctOfTarget>=100?'var(--green)':pctOfTarget>=70?'var(--amber)':'var(--red)';
     return `<tr class="rpt-tgt-row">
       <td class="rpt-tgt-label">${label}</td>
-      <td class="rpt-tgt-actual" class="text-mono">${fmtFn(actual)}</td>
-      <td class="rpt-tgt-target" class="text-mono">${target>0?fmtFn(target):'—'}</td>
+      <td class="rpt-tgt-actual" style="font-family:var(--mono);">${fmtFn(actual)}</td>
+      <td class="rpt-tgt-target" style="font-family:var(--mono);">${target>0?fmtFn(target):'—'}</td>
       <td class="rpt-tgt-pct" style="color:${tColor};font-family:var(--mono);font-weight:700;">${pctOfTarget!=null?pctOfTarget+'%':'—'}</td>
       <td class="rpt-tgt-prev">${prevDelta!=null?`<span style="color:${prevDelta>=0?'var(--green)':'var(--red)'};">${prevDelta>=0?'▲':'▼'} ${Math.abs(prevDelta).toFixed(0)}%</span>`:'—'}</td>
     </tr>`;
   }
   const metricsTableHTML = `
     <div style="overflow-x:auto;border-radius:12px;border:1px solid rgba(255,255,255,.07);">
-      <table class="w-full text-base" style="border-collapse:collapse;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
         <thead>
           <tr style="background:rgba(255,255,255,.04);">
             <th class="rpt-tgt-th">Metrik</th>
@@ -9411,7 +9357,7 @@ function renderReport() {
       </table>
     </div>
     <div class="rpt-tgt-edit-row">
-      <span class="text-xs-muted">Set target:</span>
+      <span style="font-size:10px;color:var(--t3);">Set target:</span>
       ${[
         ['Posts','targetPosts',fmtFull],
         ['Reach','targetReach',fmt],
@@ -9550,16 +9496,16 @@ function renderReport() {
     </div>
 
     <!-- Download History (Gemini-style) -->
-    <div class="mb-24">
+    <div style="margin-bottom:24px;">
       <div style="font-size:15px;font-weight:800;color:var(--t);margin-bottom:14px;">Riwayat Unduhan Laporan</div>
       <div id="rpt-dl-history">
         <div style="background:var(--surf);border:1px solid var(--b);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;margin-bottom:8px;transition:background .15s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='var(--surf)'">
           <div style="width:34px;height:34px;border-radius:9px;background:rgba(239,68,68,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2.5" y="1.5" width="11" height="13" rx="1.5" stroke="#EF4444" stroke-width="1.4"/><path d="M5 5.5h6M5 8h6M5 10.5h3.5" stroke="#EF4444" stroke-width="1.3" stroke-linecap="round"/></svg>
           </div>
-          <div class="flex-1">
-            <div class="text-md-bold">Laporan_Bulanan_${MN[reportMonth]}_Creatorlytics.pdf</div>
-            <div class="text-sm-muted-mt2">Dibuat pada: ${new Date().toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})} • Ukuran: 2.4 MB</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:var(--t);">Laporan_Bulanan_${MN[reportMonth]}_Creatorlytics.pdf</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:2px;">Dibuat pada: ${new Date().toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})} • Ukuran: 2.4 MB</div>
           </div>
           <button onclick="showPDFPreview()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--b2);background:none;color:var(--t2);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;">
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 2v7M4 6l2.5 3 2.5-3M1.5 10v.5a1 1 0 001 1h8a1 1 0 001-1V10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -9569,9 +9515,9 @@ function renderReport() {
           <div style="width:34px;height:34px;border-radius:9px;background:rgba(34,197,94,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="1.5" width="13" height="13" rx="1.5" stroke="#22C55E" stroke-width="1.4"/><path d="M4 8h8M4 5h8M4 11h5" stroke="#22C55E" stroke-width="1.3" stroke-linecap="round"/></svg>
           </div>
-          <div class="flex-1">
-            <div class="text-md-bold">Raw_Data_Video_TikTok_Q1_2026.csv</div>
-            <div class="text-sm-muted-mt2">Dibuat pada: 30 Apr 2026 • Ukuran: 182 KB</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:var(--t);">Raw_Data_Video_TikTok_Q1_2026.csv</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:2px;">Dibuat pada: 30 Apr 2026 • Ukuran: 182 KB</div>
           </div>
           <button onclick="exportImage()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--b2);background:none;color:var(--t2);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;">
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 2v7M4 6l2.5 3 2.5-3M1.5 10v.5a1 1 0 001 1h8a1 1 0 001-1V10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -9592,7 +9538,7 @@ function renderReport() {
             <div class="rpt-brand-sub">Laporan Performa Konten</div>
           </div>
         </div>
-        <div class="text-right">
+        <div style="text-align:right;">
           <div class="rpt-period-badge">${periodLabel} · ${pltLabel}</div>
           <div style="font-size:10px;color:var(--t3);margin-top:6px;font-weight:600;">
             ${new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}
@@ -9619,7 +9565,7 @@ function renderReport() {
             <input class="rpt-field-inp" type="text" placeholder="Nama Brand" value="${rud.brandName||''}"
               oninput="updateRUD('brandName',this.value)">
           </div>
-          <div class="rpt-identity-field" class="grid-full">
+          <div class="rpt-identity-field" style="grid-column:1/-1;">
             <label class="rpt-field-label">Fokus Utama Periode Ini <span style="color:var(--t3);font-weight:400;font-size:10px;">— tema atau tujuan campaign bulan ini</span></label>
             <textarea class="rpt-field-ta" rows="3" placeholder="Contoh: Bulan ini fokus pada peningkatan awareness melalui campaign Ramadan dengan target reach 200K..."
               oninput="updateRUD('brandFocus',this.value)">${rud.brandFocus||''}</textarea>
@@ -9656,18 +9602,18 @@ function renderReport() {
         <div class="rpt-section-title">📊 Laporan Metrik</div>
         <div class="rpt-slide-desc">Pencapaian aktual vs target, dibandingkan dengan bulan lalu.</div>
         ${metricsTableHTML}
-        <div class="mt-16">
+        <div style="margin-top:16px;">
           <div class="rpt-cc-section-title">📈 KPI Overview</div>
-          <div class="rpt-kpi-grid" class="mt-10">${kpiCardsHTML}</div>
+          <div class="rpt-kpi-grid" style="margin-top:10px;">${kpiCardsHTML}</div>
         </div>
-        ${pltCards ? `<div class="mt-16"><div class="rpt-cc-section-title">📱 Platform Performance</div><div class="rpt-plt-grid" class="mt-10">${pltCards}</div></div>` : ''}
+        ${pltCards ? `<div style="margin-top:16px;"><div class="rpt-cc-section-title">📱 Platform Performance</div><div class="rpt-plt-grid" style="margin-top:10px;">${pltCards}</div></div>` : ''}
       </div>
 
       <!-- SLIDE 4 — PILAR BREAKDOWN (DIFFERENTIATOR) -->
       <div class="rpt-slide" style="page-break-inside:avoid;">
         <div class="rpt-slide-num">Slide 4</div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-          <div class="rpt-section-title" class="ma-0">🎯 Analisis Pilar Konten</div>
+          <div class="rpt-section-title" style="margin:0;">🎯 Analisis Pilar Konten</div>
           <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:20px;background:rgba(168,85,247,.15);color:#A855F7;letter-spacing:.06em;">AGENCY INSIGHT</span>
         </div>
         <div class="rpt-slide-desc">Breakdown performa per pilar konten — mana yang harus ditambah, mana yang dievaluasi.</div>
@@ -9722,13 +9668,13 @@ function renderReport() {
             <div style="margin-top:16px;padding:14px 16px;background:var(--accent-dim);border:1px solid rgba(14,159,143,.2);border-radius:10px;">
               <div style="font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">💡 Rekomendasi Strategis</div>
               <div style="font-size:12px;color:var(--t2);line-height:1.7;">
-                Pilar <strong style="color:var(--t);">"${topEntry.label}"</strong> adalah konten terkuat dengan avg ER <strong class="text-accent">${erStr(topEntry.avgER)}</strong> — rekomendasikan klien untuk meningkatkan frekuensi minimal 50% pada pilar ini.
+                Pilar <strong style="color:var(--t);">"${topEntry.label}"</strong> adalah konten terkuat dengan avg ER <strong style="color:var(--accent);">${erStr(topEntry.avgER)}</strong> — rekomendasikan klien untuk meningkatkan frekuensi minimal 50% pada pilar ini.
                 ${bottomEntry !== topEntry && bottomEntry.avgER < topEntry.avgER * 0.5 ? ` Sebaliknya, pilar <strong>"${bottomEntry.label}"</strong> (ER ${erStr(bottomEntry.avgER)}) perlu direview: apakah formatnya sesuai, atau topiknya kurang relevan dengan audiens saat ini.` : ''}
               </div>
             </div>` : '';
           return `
             <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--b);margin-bottom:0;">
-              <table class="w-full text-base" style="border-collapse:collapse;">
+              <table style="width:100%;border-collapse:collapse;font-size:13px;">
                 <thead>
                   <tr style="background:var(--surf2);">
                     <th style="padding:9px 12px;text-align:left;font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;">Pilar</th>
@@ -9755,12 +9701,12 @@ function renderReport() {
           <div class="rpt-cc-section-title">🏆 Top Performing Content</div>
           <div class="rpt-content-eval-list">${topContent.map((p,i)=>contentEvalCard(p,i+1,true)).join('')}</div>` : ''}
         ${worstContent.length ? `
-          <div class="rpt-cc-section-title" class="mt-16">📉 Low Performance Content</div>
+          <div class="rpt-cc-section-title" style="margin-top:16px;">📉 Low Performance Content</div>
           <div class="rpt-content-eval-list">${worstContent.map((p,i)=>contentEvalCard(p,i+1,false)).join('')}</div>` : ''}
         ${highlightCards ? `
-          <div class="mt-16">
+          <div style="margin-top:16px;">
             <div class="rpt-cc-section-title">⭐ Key Highlights</div>
-            <div class="rpt-highlights-grid" class="mt-10">${highlightCards}</div>
+            <div class="rpt-highlights-grid" style="margin-top:10px;">${highlightCards}</div>
           </div>` : ''}
       </div>
 
@@ -9770,13 +9716,13 @@ function renderReport() {
         <div class="rpt-section-title">🚀 Action Plan</div>
         <div class="rpt-slide-desc">Target dan rencana taktis untuk periode selanjutnya.</div>
         <div class="rpt-exec-input-grid">
-          <div class="rpt-exec-field" class="grid-full">
+          <div class="rpt-exec-field" style="grid-column:1/-1;">
             <label class="rpt-field-label">🎯 Target Bulan Depan</label>
             <textarea class="rpt-field-ta" rows="2" placeholder="Contoh: Meningkatkan followers 500 akun baru, reach 150K melalui campaign giveaway..."
               oninput="updateRUD('nextTarget',this.value)">${rud.nextTarget||''}</textarea>
             ${rud.nextTarget ? `<div class="rpt-slide-preview">${rud.nextTarget}</div>` : ''}
           </div>
-          <div class="rpt-exec-field" class="grid-full">
+          <div class="rpt-exec-field" style="grid-column:1/-1;">
             <label class="rpt-field-label">📋 Rencana Taktis</label>
             <textarea class="rpt-field-ta" rows="3" placeholder="Contoh: Giveaway minggu ke-2, kolaborasi 2 kreator niche edukasi, posting 5x per minggu..."
               oninput="updateRUD('rencanaTaktis',this.value)">${rud.rencanaTaktis||''}</textarea>
@@ -9784,9 +9730,9 @@ function renderReport() {
           </div>
         </div>
         ${recsHTML}
-        <div class="mt-16">
+        <div style="margin-top:16px;">
           <div class="rpt-cc-section-title">📊 Benchmark vs Niche: ${getNicheBenchmark().label}</div>
-          <div class="rpt-benchmark-grid" class="mt-10">
+          <div class="rpt-benchmark-grid" style="margin-top:10px;">
             ${getBenchmarkComparison(allReportPosts).map(r=>{
               const dCls=r.delta>0.1?'pos':r.delta<-0.1?'neg':'neu';
               const dStr=r.delta>0.1?'▲ +'+(r.unit==='%'?r.delta.toFixed(2)+'%':fmt(r.delta)):r.delta<-0.1?'▼ '+(r.unit==='%'?Math.abs(r.delta).toFixed(2)+'%':fmt(Math.abs(r.delta))):'≈ Setara';
@@ -9929,7 +9875,6 @@ function openQCModal() {
 
 /* ══ SPRINT 7: Updated _qcBuildPost (now reads pillar + format) ══ */
 function _qcBuildPost(saveFull) {
-  invalidatePostsCache();
   const acc  = document.getElementById('qc-acc')?.value || accounts[0] || '';
   const date = document.getElementById('qc-date')?.value || new Date().toISOString().split('T')[0];
   const name = document.getElementById('qc-name')?.value.trim() || '';
@@ -10127,7 +10072,6 @@ function getAllPostsFlat(filters={}) {
 
 // Delete post by ID across all storage
 function deletePostById(postId) {
-  invalidatePostsCache();
   months.forEach(mo => {
     mo.weeks.forEach(wk => {
       accounts.forEach(a => {
@@ -10163,7 +10107,6 @@ function _stashPost(postId) {
   return found;
 }
 function _restorePost(stash) {
-  invalidatePostsCache();
   if (!stash) return;
   const mo = months.find(m => m.id === stash.moId);
   if (!mo) return;
@@ -10243,7 +10186,7 @@ function renderContentTimeline() {
   // Platform chip filter
   const allPlts = [{id:'',label:'Semua'},...allPlatforms().map(p=>({id:p.id,label:p.name+' Only',emoji:p.emoji}))];
   const chipFilter = `
-    <div class="view-header" class="mb-20">
+    <div class="view-header" style="margin-bottom:20px;">
       <div class="view-header-left">
         <div class="view-title">Manajemen Konten</div>
         <div class="view-subtitle">Kelola, filter, dan pantau performa seluruh video &amp; postingan secara real-time</div>
@@ -10300,8 +10243,8 @@ function renderContentTimeline() {
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px;">
             <div>${statusBadge||''}</div>
             <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
-              <span class="text-lg">${pi.emoji}</span>
-              <span class="text-sm-muted-bold">${pi.name.replace('TikTok','TikTok').replace('Instagram','Reels')}</span>
+              <span style="font-size:16px;">${pi.emoji}</span>
+              <span style="font-size:11px;font-weight:700;color:var(--t3);">${pi.name.replace('TikTok','TikTok').replace('Instagram','Reels')}</span>
             </div>
           </div>
           <div class="timeline-card-name" style="font-size:15px;font-weight:800;letter-spacing:-.02em;margin-bottom:10px;">${nm}</div>
@@ -10321,9 +10264,9 @@ function renderContentTimeline() {
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <span class="text-sm-muted">${p._acc}</span>
+            <span style="font-size:11px;color:var(--t3);">${p._acc}</span>
             <span style="font-size:11px;color:var(--t4);">·</span>
-            <span class="text-sm-muted">Diposting: ${p.date||'—'}</span>
+            <span style="font-size:11px;color:var(--t3);">Diposting: ${p.date||'—'}</span>
             ${pil.id!=='other'?`<span style="font-size:11px;color:var(--t4);">·</span><span style="font-size:11px;color:${pil.color};font-weight:700;">${pil.emoji} ${pil.label}</span>`:''}
           </div>
         </div>
@@ -10464,8 +10407,6 @@ function getSeedInsightFI(plt, pillar) {
 }
 
 function showFirstInsightModal(post) {
-  const onboardingEl = document.getElementById('onboarding-ov');
-  if (onboardingEl && !onboardingEl.classList.contains('hidden')) return;
   const pil = pillarOf(post.pillar || '');
   const tip = getSeedInsightFI(post._plt || 'tt', pil);
   const need = Math.max(0, 5 - getAllPosts().length);
@@ -10499,7 +10440,7 @@ function showRetentionBanner(days) {
   banner.id = 'retention-banner';
   banner.className = 'retention-banner';
   banner.innerHTML = `
-    <span class="text-xl">📅</span>
+    <span style="font-size:20px;">📅</span>
     <div class="retention-banner-text">
       <strong>Sudah ${days} hari sejak input terakhir.</strong><br>
       Data belum terupdate — insight mungkin tidak akurat.
@@ -10637,7 +10578,7 @@ function renderIdeaRefLinks(){
     try{const u=new URL(url);label=u.hostname.replace('www.','')+u.pathname.slice(0,30)+(u.pathname.length>30?'...':'');}catch(e){}
     const platform=getPlatformFromUrl(url);
     return `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surf2);border:1px solid var(--b);border-radius:9px;">
-      <span class="text-base">${platform.emoji}</span>
+      <span style="font-size:14px;">${platform.emoji}</span>
       <a href="${url}" target="_blank" onclick="event.stopPropagation()" style="flex:1;font-size:11px;font-weight:600;color:var(--accent);text-overflow:ellipsis;overflow:hidden;white-space:nowrap;min-width:0;" title="${url}">${label}</a>
       <button onclick="_ideaRefLinks.splice(${i},1);renderIdeaRefLinks()" style="width:20px;height:20px;border-radius:5px;border:none;background:none;color:var(--t4);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--t4)'">✕</button>
     </div>`;
@@ -10825,7 +10766,7 @@ function renderPlanner(){
             ${idea.pillar?`<span class="idea-card-tag" style="background:var(--surf2);color:var(--t3);">${pilLabel(idea.pillar)}</span>`:''}
           </div>
           ${idea.desc?`<div style="font-size:11px;color:var(--t3);margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${idea.desc}</div>`:''}
-          ${idea.targetDate?`<div class="text-xs-muted">📅 ${idea.targetDate}</div>`:''}
+          ${idea.targetDate?`<div style="font-size:10px;color:var(--t3);">📅 ${idea.targetDate}</div>`:''}
           ${renderIdeaRefLinkChips(idea.refLinks,"6px")}
           <div class="idea-card-actions" onclick="event.stopPropagation()">
             <button class="idea-card-btn primary" onclick="openCalEventModal(null,{title:'${idea.title.replace(/'/g,"\'")}',platform:'${idea.platform||''}',format:'${idea.format||''}',pillar:'${idea.pillar||''}',ideaId:'${idea.id}'})">📅 Jadwal</button>
@@ -10851,9 +10792,9 @@ function renderPlanner(){
       const sg=statusGroups.find(s=>s.key===idea.status)||statusGroups[0];
       return `<div class="idea-list-item" onclick="openIdeaModal('${idea.id}')">
         <div style="width:36px;height:36px;border-radius:10px;background:rgba(99,102,241,.12);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${fmtIcons[idea.format]||'💡'}</div>
-        <div class="flex-1-mw0">
+        <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">
-            <span class="text-md-bold">${idea.title}</span>
+            <span style="font-size:13px;font-weight:700;color:var(--t);">${idea.title}</span>
             <span class="idea-card-tag ${sg.cls}" style="font-size:11px;">${sg.label}</span>
             <span class="idea-card-tag ${priorityCls(idea.priority)}" style="font-size:11px;">${priorityLabel(idea.priority)}</span>
             ${hasBrief?`<span style="font-size:11px;color:var(--green);font-weight:700;">✓ Brief</span>`:''}
@@ -11077,7 +11018,7 @@ function renderCalendar(){
             <div style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--t);">${d.getDate()}</div>
             <div style="font-size:11px;color:var(--t3);font-weight:700;">${MN_ID[d.getMonth()].slice(0,3).toUpperCase()}</div>
           </div>
-          <div class="flex-1-mw0">
+          <div style="flex:1;min-width:0;">
             <div style="font-size:13px;font-weight:700;color:var(--t);margin-bottom:3px;">${ev.title}</div>
             <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t3);flex-wrap:wrap;">
               ${pltInfo?`<span>${pltInfo.emoji} ${pltInfo.name}</span>`:''}
@@ -11183,8 +11124,6 @@ function renderCalendar(){
   // Sprint 6: init notification permission state & check reminders
   if ('Notification' in window) notifPermission = Notification.permission;
   setTimeout(()=>checkReminders(false), 5000);
-  // Backup reminder
-  setTimeout(checkBackupReminder, 10000);
   // Sprint 7: show onboarding for new users
   checkShowOnboarding();
   // Revisi 5: check retention reminder
@@ -11614,9 +11553,9 @@ function renderCompetitor(){
     return `<div class="comp-card">
       <div class="comp-card-header">
         <div style="width:38px;height:38px;border-radius:10px;background:var(--red-bg);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${plt.emoji}</div>
-        <div class="flex-1-mw0">
+        <div style="flex:1;min-width:0;">
           <div style="font-size:14px;font-weight:800;color:var(--t);">${c.name}</div>
-          <div class="text-sm-muted">${plt.emoji} ${plt.name}${c.note?` · ${c.note}`:''}</div>
+          <div style="font-size:11px;color:var(--t3);">${plt.emoji} ${plt.name}${c.note?` · ${c.note}`:''}</div>
         </div>
         <span class="comp-vs-badge">VS</span>
         <button onclick="openAddCompetitorModal('${c.id}')" style="padding:4px 10px;border-radius:7px;border:1px solid var(--b);background:none;color:var(--t3);font-size:11px;font-weight:700;cursor:pointer;margin-left:4px;">✏ Edit</button>
@@ -11632,7 +11571,7 @@ function renderCompetitor(){
         ].map(m=>`<div style="background:var(--surf2);border-radius:9px;padding:10px 12px;">
           <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">${m.label}</div>
           <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;">
-            <span class="text-mono-md-bold">${m.mine}</span>
+            <span style="font-family:var(--mono);font-size:14px;font-weight:800;color:var(--t);">${m.mine}</span>
             <span style="font-size:10px;color:var(--t4);">vs</span>
             <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--t3);">${m.theirs}</span>
             ${m.diff}
@@ -11651,7 +11590,7 @@ function renderCompetitor(){
   }).join('');
 
   const emptyState=competitors.length===0?`
-    <div class="mb-24">${emptyStateHTML('competitor')}</div>
+    <div style="margin-bottom:24px;">${emptyStateHTML('competitor')}</div>
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:24px;text-align:left;max-width:400px;margin-left:auto;margin-right:auto;">
       <div style="font-size:12px;color:var(--t3);padding:8px 12px;background:var(--surf2);border-radius:8px;">💡 Cari kompetitor di TikTok/IG → catat followers & avg reach per post</div>
       <div style="font-size:12px;color:var(--t3);padding:8px 12px;background:var(--surf2);border-radius:8px;">📅 Update data minimal sekali seminggu agar perbandingan akurat</div>
@@ -11664,7 +11603,7 @@ function renderCompetitor(){
       ${[['Followers',fmt(myFlw)],['Total Reach',fmt(myStats.reach)],['Avg ER',erStr(myER)],['Total Post',String(myPosts)],['Avg Eng/Post',fmt(myEng)]].map(([l,v])=>`
         <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;">
           <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">${l}</div>
-          <div class="text-mono-md-bold">${v}</div>
+          <div style="font-family:var(--mono);font-size:14px;font-weight:800;color:var(--t);">${v}</div>
         </div>`).join('')}
     </div>
     <div style="font-size:10px;color:var(--t4);margin-top:8px;">* Diambil dari data bulan ${MN[new Date().getMonth()]} — semua platform</div>
@@ -11761,38 +11700,6 @@ function executeQuickAdd(){
   const eng=post.like+post.comment+post.share+post.save+post.repost;
   _qcToast(`✅ Post disimpan${post.name?' · "'+post.name.slice(0,25)+'"':''} → ${MN[m]} Minggu ${weekIndex+1}${eng>0?' · Eng: '+fmt(eng):''}`);
 }
-
-/* ── App namespace ── */
-window.Creatorlytics = {
-  version: APP_VERSION,
-  build: APP_BUILD_DATE,
-  state: {
-    accounts, months, platforms, pillars, customGoals,
-    sel, view, userProfile, userNiche, exp, charts,
-    ovFilter, ovYear, ovMonth, ovAcc, ovDateFrom, ovDateTo,
-    kompMode, kompPlt, kompA, kompB, kompDateFrom, kompDateTo,
-    analyticsTab, mobContentPanel, dashSortBy, analyticsTopSortBy,
-    overviewMetrics, contentIdeas, calendarPosts,
-    plannerView, calendarDate, calendarViewMode, ideaFilter,
-    reportPeriod, reportYear, reportMonth, reportPlt,
-    competitors, notifPermission
-  },
-  refs: {
-    CONFIG, DEFAULTS, KEY, MN, PILLAR_PALETTE,
-    METRIC_LABELS, METRIC_EMOJIS, NICHE_BENCHMARKS, FORMAT_TYPES,
-    VIEW_LABELS, OVERVIEW_METRIC_DEFS
-  },
-  fn: {
-    safeHTML, safeURL, getAllPosts, scheduleSave, renderView,
-    switchView, renderDashboard, renderAnalytics, renderGoals,
-    renderReport, renderContentTimeline, renderPlanner, renderCalendar,
-    toggleTheme, openModal, closeModal, showToast,
-    exportJSONBackup, importJSONBackup,
-    getFilteredStats, getAllStats, getCurrMonthStats,
-    generateInsights, getNicheBenchmark, exportPDF,
-    renderCompetitor, renderPillarModal, openIdeaModal
-  }
-};
 </script>
 <!-- ── CSV IMPORT MODAL ── -->
 <div class="modal-ov hidden" id="m-csv" onclick="if(event.target===this)closeModal('m-csv')">
@@ -11804,7 +11711,7 @@ window.Creatorlytics = {
     </div>
     <div id="csv-tab-content-custom">
       <div style="background:var(--accent-dim);border:1px solid rgba(14,159,143,.2);border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--t2);line-height:1.6;">
-        <strong class="text-accent">Template Custom Creatorlytics</strong> — download dulu, isi datanya, lalu upload kembali. Kolom yang tersedia: <code style="font-size:11px;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px;">tanggal, nama_konten, pilar, format, impression, reach, like, comment, share, save, repost, followers_gained, link</code>
+        <strong style="color:var(--accent);">Template Custom Creatorlytics</strong> — download dulu, isi datanya, lalu upload kembali. Kolom yang tersedia: <code style="font-size:11px;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px;">tanggal, nama_konten, pilar, format, impression, reach, like, comment, share, save, repost, followers_gained, link</code>
       </div>
       <button onclick="downloadCSVTemplate()" style="width:100%;padding:10px;border-radius:9px;border:1.5px dashed var(--b2);background:none;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px;transition:all .15s;" onmouseover="this.style.background='var(--accent-dim)'" onmouseout="this.style.background='none'">
         ⬇️ Download Template CSV
@@ -11822,7 +11729,7 @@ window.Creatorlytics = {
     <div class="csv-drop-area" id="csv-drop" onclick="document.getElementById('csv-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="handleCSVDrop(event)">
       <div class="csv-drop-icon">📂</div>
       <div style="font-size:13px;font-weight:700;color:var(--t);margin-bottom:4px;">Klik atau drag & drop file CSV</div>
-      <div class="text-sm-muted">Format: .csv — maks. 5.000 baris</div>
+      <div style="font-size:11px;color:var(--t3);">Format: .csv — maks. 5.000 baris</div>
     </div>
     <input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="handleCSVFile(this.files[0])">
     <div id="csv-preview" style="display:none;margin-top:14px;">
@@ -11847,46 +11754,46 @@ window.Creatorlytics = {
     <div id="rpt-cfg-metrics">
       <div class="rpt-cfg-metric selected" id="rptm-reach" onclick="toggleReportMetric('reach')">
         <div class="rpt-cfg-check"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <span class="text-lg">👁</span><span class="text-12 font-semibold" style="color:var(--t);">Total Reach</span>
+        <span style="font-size:16px;">👁</span><span style="font-size:12px;font-weight:600;color:var(--t);">Total Reach</span>
       </div>
       <div class="rpt-cfg-metric selected" id="rptm-engagement" onclick="toggleReportMetric('engagement')">
         <div class="rpt-cfg-check"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <span class="text-lg">❤️</span><span class="text-12 font-semibold" style="color:var(--t);">Total Engagement</span>
+        <span style="font-size:16px;">❤️</span><span style="font-size:12px;font-weight:600;color:var(--t);">Total Engagement</span>
       </div>
       <div class="rpt-cfg-metric selected" id="rptm-avgER" onclick="toggleReportMetric('avgER')">
         <div class="rpt-cfg-check"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <span class="text-lg">📊</span><span class="text-12 font-semibold" style="color:var(--t);">Avg ER Rate</span>
+        <span style="font-size:16px;">📊</span><span style="font-size:12px;font-weight:600;color:var(--t);">Avg ER Rate</span>
       </div>
       <div class="rpt-cfg-metric selected" id="rptm-posts" onclick="toggleReportMetric('posts')">
         <div class="rpt-cfg-check"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <span class="text-lg">📝</span><span class="text-12 font-semibold" style="color:var(--t);">Jumlah Post</span>
+        <span style="font-size:16px;">📝</span><span style="font-size:12px;font-weight:600;color:var(--t);">Jumlah Post</span>
       </div>
       <div class="rpt-cfg-metric" id="rptm-followersGained" onclick="toggleReportMetric('followersGained')">
         <div class="rpt-cfg-check"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <span class="text-lg">📈</span><span class="text-12 font-semibold" style="color:var(--t);">Followers Gained</span>
+        <span style="font-size:16px;">📈</span><span style="font-size:12px;font-weight:600;color:var(--t);">Followers Gained</span>
       </div>
       <div class="rpt-cfg-metric" id="rptm-impression" onclick="toggleReportMetric('impression')">
         <div class="rpt-cfg-check"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <span class="text-lg">📺</span><span class="text-12 font-semibold" style="color:var(--t);">Total Impressi</span>
+        <span style="font-size:16px;">📺</span><span style="font-size:12px;font-weight:600;color:var(--t);">Total Impressi</span>
       </div>
       <div class="rpt-cfg-metric" id="rptm-like" onclick="toggleReportMetric('like')">
         <div class="rpt-cfg-check"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <span class="text-lg">👍</span><span class="text-12 font-semibold" style="color:var(--t);">Total Like</span>
+        <span style="font-size:16px;">👍</span><span style="font-size:12px;font-weight:600;color:var(--t);">Total Like</span>
       </div>
       <div class="rpt-cfg-metric" id="rptm-comment" onclick="toggleReportMetric('comment')">
         <div class="rpt-cfg-check"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <span class="text-lg">💬</span><span class="text-12 font-semibold" style="color:var(--t);">Total Comment</span>
+        <span style="font-size:16px;">💬</span><span style="font-size:12px;font-weight:600;color:var(--t);">Total Comment</span>
       </div>
       <div class="rpt-cfg-metric" id="rptm-share" onclick="toggleReportMetric('share')">
         <div class="rpt-cfg-check"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <span class="text-lg">🔁</span><span class="text-12 font-semibold" style="color:var(--t);">Total Share</span>
+        <span style="font-size:16px;">🔁</span><span style="font-size:12px;font-weight:600;color:var(--t);">Total Share</span>
       </div>
       <div class="rpt-cfg-metric" id="rptm-save" onclick="toggleReportMetric('save')">
         <div class="rpt-cfg-check"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <span class="text-lg">🔖</span><span class="text-12 font-semibold" style="color:var(--t);">Total Save</span>
+        <span style="font-size:16px;">🔖</span><span style="font-size:12px;font-weight:600;color:var(--t);">Total Save</span>
       </div>
     </div>
-    <div class="modal-fld" class="mt-16">
+    <div class="modal-fld" style="margin-top:16px;">
       <label>Nama Brand / Klien (opsional)</label>
       <input class="modal-inp" id="rpt-cfg-brand" type="text" placeholder="Masukkan nama brand untuk laporan..." maxlength="60">
     </div>
@@ -11923,10 +11830,10 @@ window.Creatorlytics = {
     <div id="comp-manual-data" style="margin-top:4px;">
       <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Data Performa (opsional)</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <div class="modal-fld" class="ma-0"><label>Avg Reach/Post</label><input class="modal-inp" id="mi-comp-reach" type="number" min="0" placeholder="0"></div>
-        <div class="modal-fld" class="ma-0"><label>Avg ER %</label><input class="modal-inp" id="mi-comp-er" type="number" min="0" step="0.01" placeholder="0.00"></div>
-        <div class="modal-fld" class="ma-0"><label>Post/Bulan</label><input class="modal-inp" id="mi-comp-posts" type="number" min="0" placeholder="0"></div>
-        <div class="modal-fld" class="ma-0"><label>Avg Engagement</label><input class="modal-inp" id="mi-comp-eng" type="number" min="0" placeholder="0"></div>
+        <div class="modal-fld" style="margin:0;"><label>Avg Reach/Post</label><input class="modal-inp" id="mi-comp-reach" type="number" min="0" placeholder="0"></div>
+        <div class="modal-fld" style="margin:0;"><label>Avg ER %</label><input class="modal-inp" id="mi-comp-er" type="number" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="modal-fld" style="margin:0;"><label>Post/Bulan</label><input class="modal-inp" id="mi-comp-posts" type="number" min="0" placeholder="0"></div>
+        <div class="modal-fld" style="margin:0;"><label>Avg Engagement</label><input class="modal-inp" id="mi-comp-eng" type="number" min="0" placeholder="0"></div>
       </div>
     </div>
     <div class="modal-acts">
@@ -11937,24 +11844,24 @@ window.Creatorlytics = {
 </div>
 
 <!-- ── QUICK ADD POST MODAL ── -->
-<div class="modal-ov hidden" id="m-quickadd" onclick="if(event.target===this)closeModal('m-quickadd')" role="dialog" aria-modal="true" aria-label="Quick add post">
+<div class="modal-ov hidden" id="m-quickadd" onclick="if(event.target===this)closeModal('m-quickadd')">
   <div class="modal" style="max-width:520px;">
     <div class="modal-title">⚡ Quick Add Post</div>
     <div style="font-size:12px;color:var(--t3);margin-bottom:16px;">Input post langsung — tidak perlu navigasi bulan/minggu. Creatorlytics akan otomatis menempatkan di minggu yang sesuai.</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div class="modal-fld" class="ma-0">
+      <div class="modal-fld" style="margin:0;">
         <label>Tanggal Post *</label>
         <input class="modal-inp" id="qa-date" type="date">
       </div>
-      <div class="modal-fld" class="ma-0">
+      <div class="modal-fld" style="margin:0;">
         <label>Akun *</label>
         <select class="modal-inp" id="qa-acc"></select>
       </div>
-      <div class="modal-fld" class="ma-0">
+      <div class="modal-fld" style="margin:0;">
         <label>Platform *</label>
         <select class="modal-inp" id="qa-plt"></select>
       </div>
-      <div class="modal-fld" class="ma-0">
+      <div class="modal-fld" style="margin:0;">
         <label>Format</label>
         <select class="modal-inp" id="qa-format">
           <option value="">— Format —</option>
@@ -11967,7 +11874,7 @@ window.Creatorlytics = {
         </select>
       </div>
     </div>
-    <div class="modal-fld" class="mt-10">
+    <div class="modal-fld" style="margin-top:10px;">
       <label>Nama Konten</label>
       <input class="modal-inp" id="qa-name" type="text" placeholder="Judul atau deskripsi singkat konten..." maxlength="120">
     </div>
@@ -11978,20 +11885,20 @@ window.Creatorlytics = {
     <div style="background:var(--surf2);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
       <div style="font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Metrik Utama</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
-        <div class="modal-fld" class="ma-0"><label>Reach</label><input class="modal-inp" id="qa-reach" type="number" min="0" placeholder="0" class="p-10"></div>
-        <div class="modal-fld" class="ma-0"><label>Impressi</label><input class="modal-inp" id="qa-imp" type="number" min="0" placeholder="0" class="p-10"></div>
-        <div class="modal-fld" class="ma-0"><label>Like</label><input class="modal-inp" id="qa-like" type="number" min="0" placeholder="0" class="p-10"></div>
-        <div class="modal-fld" class="ma-0"><label>Comment</label><input class="modal-inp" id="qa-comment" type="number" min="0" placeholder="0" class="p-10"></div>
-        <div class="modal-fld" class="ma-0"><label>Share</label><input class="modal-inp" id="qa-share" type="number" min="0" placeholder="0" class="p-10"></div>
-        <div class="modal-fld" class="ma-0"><label>Save</label><input class="modal-inp" id="qa-save" type="number" min="0" placeholder="0" class="p-10"></div>
-        <div class="modal-fld" class="ma-0"><label>Repost</label><input class="modal-inp" id="qa-repost" type="number" min="0" placeholder="0" class="p-10"></div>
-        <div class="modal-fld" class="ma-0"><label>Flw Gained</label><input class="modal-inp" id="qa-flw" type="number" min="0" placeholder="0" class="p-10"></div>
+        <div class="modal-fld" style="margin:0;"><label>Reach</label><input class="modal-inp" id="qa-reach" type="number" min="0" placeholder="0" style="padding:7px 10px;"></div>
+        <div class="modal-fld" style="margin:0;"><label>Impressi</label><input class="modal-inp" id="qa-imp" type="number" min="0" placeholder="0" style="padding:7px 10px;"></div>
+        <div class="modal-fld" style="margin:0;"><label>Like</label><input class="modal-inp" id="qa-like" type="number" min="0" placeholder="0" style="padding:7px 10px;"></div>
+        <div class="modal-fld" style="margin:0;"><label>Comment</label><input class="modal-inp" id="qa-comment" type="number" min="0" placeholder="0" style="padding:7px 10px;"></div>
+        <div class="modal-fld" style="margin:0;"><label>Share</label><input class="modal-inp" id="qa-share" type="number" min="0" placeholder="0" style="padding:7px 10px;"></div>
+        <div class="modal-fld" style="margin:0;"><label>Save</label><input class="modal-inp" id="qa-save" type="number" min="0" placeholder="0" style="padding:7px 10px;"></div>
+        <div class="modal-fld" style="margin:0;"><label>Repost</label><input class="modal-inp" id="qa-repost" type="number" min="0" placeholder="0" style="padding:7px 10px;"></div>
+        <div class="modal-fld" style="margin:0;"><label>Flw Gained</label><input class="modal-inp" id="qa-flw" type="number" min="0" placeholder="0" style="padding:7px 10px;"></div>
       </div>
     </div>
     <div class="modal-acts">
       <button class="btn-c" onclick="closeModal('m-quickadd')">Batal</button>
       <button class="btn-ok" onclick="executeQuickAdd()">
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" class="mr-4"><path d="M6.5 1.5v10M1.5 6.5h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="margin-right:4px;"><path d="M6.5 1.5v10M1.5 6.5h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         Simpan Post
       </button>
     </div>
@@ -12036,14 +11943,14 @@ function showConfirm(title, message, onConfirm, isDanger){
   <div class="modal" style="max-width:480px;">
     <div class="modal-title">📄 Preview Laporan PDF</div>
     <div id="pdf-preview-body" style="font-size:13px;color:var(--t2);line-height:1.7;"></div>
-    <div class="modal-acts" class="mt-16">
+    <div class="modal-acts" style="margin-top:16px;">
       <button class="btn-c" onclick="closeModal('m-pdf-preview')">Batal</button>
-      <button class="rpt-export-btn rpt-export-btn-sec" onclick="closeModal('m-pdf-preview');openModal('m-rpt-cfg')" class="mr-4">
+      <button class="rpt-export-btn rpt-export-btn-sec" onclick="closeModal('m-pdf-preview');openModal('m-rpt-cfg')" style="margin-right:4px;">
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" stroke="currentColor" stroke-width="1.2"/><path d="M11 6.5a4.5 4.5 0 0 0-.1-.8l1.3-1-1.2-2-1.6.5a4.5 4.5 0 0 0-1.4-.8L7.7 1H5.3l-.3 1.4c-.5.2-1 .5-1.4.8l-1.6-.5-1.2 2 1.3 1a4.5 4.5 0 0 0 0 1.6l-1.3 1 1.2 2 1.6-.5c.4.3.9.6 1.4.8L5.3 12h2.4l.3-1.4c.5-.2 1-.5 1.4-.8l1.6.5 1.2-2-1.3-1c0-.3.1-.5.1-.8z" stroke="currentColor" stroke-width="1.2"/></svg>
         Konfigurasi Dulu
       </button>
       <button class="btn-ok" onclick="closeModal('m-pdf-preview');exportPDF()">
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" class="mr-4"><path d="M6.5 1v8M3.5 6.5l3 3 3-3M1.5 11h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="margin-right:4px;"><path d="M6.5 1v8M3.5 6.5l3 3 3-3M1.5 11h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Download PDF
       </button>
     </div>
@@ -12068,12 +11975,12 @@ function showPDFPreview(){
       <div style="background:var(--surf2);border:1px solid var(--b);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
         <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Laporan yang akan di-export</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div><div class="text-xs-muted">Periode</div><div class="text-md-bold">\${period}</div></div>
-          <div><div class="text-xs-muted">Platform</div><div class="text-md-bold">\${pltLbl}</div></div>
-          <div><div class="text-xs-muted">Total Post</div><div class="text-md-bold">\${allP.posts||0} post</div></div>
-          <div><div class="text-xs-muted">Total Reach</div><div class="text-md-bold">\${typeof fmt==='function'?fmt(allP.reach||0):(allP.reach||0)}</div></div>
-          <div><div class="text-xs-muted">Avg ER</div><div class="text-md-bold">\${typeof erStr==='function'?erStr(allP.avgER||0):(allP.avgER||0)+'%'}</div></div>
-          <div><div class="text-xs-muted">Engagement</div><div class="text-md-bold">\${typeof fmt==='function'?fmt(allP.engagement||0):(allP.engagement||0)}</div></div>
+          <div><div style="font-size:10px;color:var(--t3);">Periode</div><div style="font-size:13px;font-weight:700;color:var(--t);">\${period}</div></div>
+          <div><div style="font-size:10px;color:var(--t3);">Platform</div><div style="font-size:13px;font-weight:700;color:var(--t);">\${pltLbl}</div></div>
+          <div><div style="font-size:10px;color:var(--t3);">Total Post</div><div style="font-size:13px;font-weight:700;color:var(--t);">\${allP.posts||0} post</div></div>
+          <div><div style="font-size:10px;color:var(--t3);">Total Reach</div><div style="font-size:13px;font-weight:700;color:var(--t);">\${typeof fmt==='function'?fmt(allP.reach||0):(allP.reach||0)}</div></div>
+          <div><div style="font-size:10px;color:var(--t3);">Avg ER</div><div style="font-size:13px;font-weight:700;color:var(--t);">\${typeof erStr==='function'?erStr(allP.avgER||0):(allP.avgER||0)+'%'}</div></div>
+          <div><div style="font-size:10px;color:var(--t3);">Engagement</div><div style="font-size:13px;font-weight:700;color:var(--t);">\${typeof fmt==='function'?fmt(allP.engagement||0):(allP.engagement||0)}</div></div>
         </div>
       </div>
       <div style="font-size:11px;color:var(--t3);padding:0 2px;">
@@ -12191,37 +12098,6 @@ function _updateStorageInfo() {
   } catch(e) { el.textContent = 'Tidak dapat membaca info storage.'; }
 }
 
-/* ── Backup Reminder ── */
-const BACKUP_REMINDER_KEY = 'cr-last-backup-reminder';
-const BACKUP_DONE_KEY = 'cr-last-backup-done';
-
-function checkBackupReminder() {
-  try {
-    const allPosts = getAllPosts();
-    if (allPosts.length < 5) return;
-    const lastReminder = localStorage.getItem(BACKUP_REMINDER_KEY);
-    const lastDone = localStorage.getItem(BACKUP_DONE_KEY);
-    const now = Date.now();
-    const sevenDays = 7 * 24 * 60 * 60 * 1000;
-    const shouldRemind = !lastDone || (now - parseInt(lastDone)) > sevenDays;
-    const notTooFrequent = !lastReminder || (now - parseInt(lastReminder)) > 24 * 60 * 60 * 1000;
-    if (shouldRemind && notTooFrequent) {
-      localStorage.setItem(BACKUP_REMINDER_KEY, now.toString());
-      showBackupReminderToast();
-    }
-  } catch(e) {}
-}
-
-function showBackupReminderToast() {
-  const t = document.createElement('div');
-  t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surf);border:1.5px solid var(--amber);color:var(--t);padding:12px 16px;border-radius:12px;font-size:13px;font-weight:600;z-index:9997;box-shadow:0 8px 24px rgba(0,0,0,0.3);display:flex;align-items:center;gap:12px;white-space:nowrap;';
-  t.innerHTML = '<span>⚠️ Backup data kamu sekarang — data tersimpan di browser ini saja.</span>' +
-    '<button onclick="exportJSONBackup();localStorage.setItem(\'' + BACKUP_DONE_KEY + '\',Date.now());this.closest(\'div\').remove()" style="padding:6px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer;">Backup Sekarang</button>' +
-    '<button onclick="this.closest(\'div\').remove()" style="padding:6px 10px;border-radius:8px;border:1px solid var(--b);background:none;color:var(--t3);font-size:12px;cursor:pointer;">Nanti</button>';
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 15000);
-}
-
 /* ── Export / Import JSON Backup ── */
 function exportJSONBackup() {
   try {
@@ -12288,14 +12164,14 @@ function confirmResetAllData() {
 </script>
 
 <!-- ── SETTINGS PANEL ── -->
-<div class="modal-ov hidden" id="m-settings" onclick="if(event.target===this)closeSettings()" role="dialog" aria-modal="true" aria-labelledby="settings-header-title">
+<div class="modal-ov hidden" id="m-settings" onclick="if(event.target===this)closeSettings()">
   <div class="settings-panel" onclick="event.stopPropagation()">
     <div class="settings-header">
       <div style="display:flex;align-items:center;gap:10px;">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" stroke="var(--accent)" stroke-width="1.5"/><path d="M14.8 9a5.9 5.9 0 0 0-.1-1l1.7-1.3-1.6-2.8-2 .7a6 6 0 0 0-1.8-1.1L10.5 2h-3L7 3.5A6 6 0 0 0 5.2 4.6l-2-.7L1.6 6.7 3.3 8A6 6 0 0 0 3.3 10l-1.7 1.3 1.6 2.8 2-.7c.5.4 1.1.8 1.8 1.1l.5 1.5h3l.5-1.5c.7-.3 1.3-.7 1.8-1.1l2 .7 1.6-2.8L14.8 10c0-.3.1-.6.1-1z" stroke="var(--accent)" stroke-width="1.5"/></svg>
-        <div class="settings-header-title" id="settings-header-title">Pengaturan</div>
+        <div class="settings-header-title">Pengaturan</div>
       </div>
-      <button class="settings-close" onclick="closeSettings()" aria-label="Tutup pengaturan">
+      <button class="settings-close" onclick="closeSettings()">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
       </button>
     </div>
@@ -12378,7 +12254,7 @@ function confirmResetAllData() {
       <!-- DATA & PRIVASI -->
       <div class="settings-section">
         <div class="settings-section-label">🗄️ Data &amp; Privasi</div>
-        <div class="settings-btn-row" class="mb-8">
+        <div class="settings-btn-row" style="margin-bottom:8px;">
           <button class="settings-action-btn" onclick="exportJSONBackup()">⬇️ Export JSON Backup</button>
           <button class="settings-action-btn" onclick="document.getElementById('st-json-import').click()">⬆️ Import JSON Backup</button>
           <input type="file" id="st-json-import" accept=".json" style="display:none" onchange="importJSONBackup(this)">
@@ -12402,7 +12278,7 @@ function confirmResetAllData() {
             <div class="settings-row-label">Creatorlytics</div>
             <div class="settings-row-sub">Analytics dashboard untuk kreator konten Indonesia.</div>
           </div>
-          <span style="font-size:11px;font-weight:800;color:var(--accent);background:var(--accent-dim);padding:4px 10px;border-radius:8px;">v1.0.0-beta</span>
+          <span style="font-size:11px;font-weight:800;color:var(--accent);background:var(--accent-dim);padding:4px 10px;border-radius:8px;">v7.0</span>
         </div>
         <div class="settings-row">
           <div class="settings-row-left">
@@ -12412,17 +12288,10 @@ function confirmResetAllData() {
         </div>
         <div class="settings-row">
           <div class="settings-row-left">
-            <div class="settings-row-label">Versi</div>
-            <div class="settings-row-sub">Creatorlytics v1.0.0-beta</div>
+            <div class="settings-row-label">Mode</div>
+            <div class="settings-row-sub">Local-only · Auth belum aktif · Data di perangkat ini</div>
           </div>
-          <span style="font-size:11px;font-weight:700;color:var(--t3);padding:4px 10px;border-radius:8px;">Local-only</span>
-        </div>
-        <div class="settings-row">
-          <div class="settings-row-left">
-            <div class="settings-row-label">Feedback & Bug Report</div>
-            <div class="settings-row-sub">Bantu improve Creatorlytics</div>
-          </div>
-          <a href="https://forms.gle/LINK_FORM_DISINI" target="_blank" class="settings-action-btn" style="text-decoration:none;text-align:center;">Isi Form →</a>
+          <span style="font-size:11px;font-weight:700;color:var(--amber);background:rgba(251,191,36,.1);padding:4px 10px;border-radius:8px;">Dev</span>
         </div>
       </div>
 
@@ -12434,133 +12303,5 @@ function confirmResetAllData() {
   </div>
 </div>
 
-<script>
-/* ── MOBILE POST CARDS (moved from inside <style> where they were zombies) ── */
-function renderMobilePostCards(posts, plt, wk, acc, flw) {
-  if (!posts.length) return `
-    <div class="ct-empty" class="p-10 pv-20">
-      <div class="text-xl" style="margin-bottom:12px;opacity:.3;">📱</div>
-      <div class="text-base text-muted mb-8">Belum ada post</div>
-      <div class="text-xs" style="color:var(--t4);">Ketuk tombol ＋ untuk input post baru</div>
-    </div>`;
-
-  return '<div class="mob-post-cards">' + posts.map((p, i) => {
-    const er = calcER(p, sel.erMode, flw);
-    const lvl = erLevel(er);
-    const pil = pillarOf(p.pillar || '');
-    const score = computeContentScore(p, getAllPosts());
-    const displayName = p.name || p.link?.replace(/^https?:\/\//, '').slice(0,40) || `Post ${i+1}`;
-    const hasAnyData = (p.reach||p.impression||p.like||p.comment||p.share||p.save) > 0;
-    let statusColor = 'var(--t4)', statusLabel = '';
-    if (score >= 80 || er >= 5) { statusColor = 'var(--green)'; statusLabel = '🔥 Viral'; }
-    else if (score >= 60 || er >= 3) { statusColor = 'var(--accent)'; statusLabel = '✅ Normal'; }
-    else if (hasAnyData) { statusColor = 'var(--amber)'; statusLabel = '⚠️ Perhatian'; }
-
-    return `<div class="mob-post-card" data-pid="${p.id}" data-plt="${plt}">
-      <div class="mob-post-card-inner">
-      <div class="mob-post-card-top">
-        <div class="mob-post-card-meta flex-1-mw0">
-          <div class="mob-post-card-name">${safeHTML(displayName)}</div>
-          <div class="mob-post-card-date flex-center" style="gap:4px;flex-wrap:wrap;">
-            <span>${p.date || '—'}</span>
-            ${pil.id !== 'other' ? `<span style="color:var(--t4);">·</span><span style="color:${pil.color};" class="text-xs font-bold">${pil.emoji} ${pil.label}</span>` : ''}
-            ${statusLabel ? `<span style="color:var(--t4);">·</span><span style="color:${statusColor};text-xs font-800">${statusLabel}</span>` : ''}
-          </div>
-        </div>
-        <div class="flex-center-gap6" style="flex-shrink:0;">
-          ${er > 0 ? `<span class="text-mono-md-bold" style="color:${lvl.color};background:${lvl.bg};padding:3px 8px;border-radius:8px;">${erStr(er)}</span>` : ''}
-          ${p.link ? `<a href="${safeURL(p.link)}" target="_blank" style="font-size:11px;color:var(--blue);padding:4px 8px;border-radius:6px;background:var(--blue-bg);text-decoration:none;font-weight:700;">↗</a>` : ''}
-        </div>
-      </div>
-      <div class="mob-post-card-metrics" style="grid-template-columns:repeat(5,1fr);gap:6px;">
-        <div class="mob-metric-cell">
-          <span class="mob-metric-val">${fmt(p.like||0)}</span>
-          <span class="mob-metric-lbl">❤️</span>
-        </div>
-        <div class="mob-metric-cell">
-          <span class="mob-metric-val">${fmt(p.comment||0)}</span>
-          <span class="mob-metric-lbl">💬</span>
-        </div>
-        <div class="mob-metric-cell">
-          <span class="mob-metric-val">${fmt(p.share||0)}</span>
-          <span class="mob-metric-lbl">🔁</span>
-        </div>
-        <div class="mob-metric-cell">
-          <span class="mob-metric-val">${fmt(p.save||0)}</span>
-          <span class="mob-metric-lbl">🔖</span>
-        </div>
-        <div class="mob-metric-cell">
-          <span class="mob-metric-val">${fmt(p.reach||p.impression||0)}</span>
-          <span class="mob-metric-lbl">👁</span>
-        </div>
-      </div>
-      <div class="mob-post-card-actions">
-        <button class="mob-post-card-del" onclick="deletePost('${p.id}','${plt}')">🗑</button>
-        <button class="flex-1" style="padding:7px 10px;border-radius:8px;border:1px solid var(--b2);background:none;color:var(--t2);font-size:12px;font-weight:600;cursor:pointer;"
-          onclick="editPostMobile('${p.id}','${plt}')">✏ Edit Angka</button>
-        ${!hasAnyData ? `<button class="flex-1" style="padding:7px 10px;border-radius:8px;border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;"
-          onclick="editPostMobile('${p.id}','${plt}')">+ Input Data</button>` : ''}
-      </div>
-      </div>
-      <div class="mob-swipe-delete" onclick="deletePost('${p.id}','${plt}')">
-        <span class="text-xl">🗑</span>
-        <span>Hapus</span>
-      </div>
-    </div>`;
-  }).join('') + '</div>';
-  setTimeout(initSwipeToDelete, 20);
-}
-
-function deletePost(pid, plt) {
-  showConfirm('Hapus Post Ini?', 'Data engagement dan metrik post ini akan hilang permanen.', () => {
-  const stashed = _stashPost(pid);
-  const wk = getW(sel.mid, sel.wid);
-  if (!wk) return;
-  const d = aD(wk, sel.acc);
-  const key = plt + 'Posts';
-  if (!d[key]) return;
-  d[key] = d[key].filter(p => p.id !== pid);
-  scheduleSave(300);
-  if(view==='content')renderContentTimeline();
-  if (view === 'dash') renderDashboard();
-  _qcToastUndo('🗑 Post dihapus.', () => {
-    if (stashed) { _restorePost(stashed); if(view==='content')renderContentTimeline(); if(view==='dash')renderDashboard(); }
-  });
-  }, true);
-}
-
-function editPostMobile(pid, plt) {
-  const wk = getW(sel.mid, sel.wid);
-  if (!wk) return;
-  const d = aD(wk, sel.acc);
-  const key = plt + 'Posts';
-  const p = (d[key]||[]).find(x => x.id === pid);
-  if (!p) return;
-
-  openQCModal();
-  window._qcEditId  = pid;
-  window._qcEditPlt = plt;
-
-  setTimeout(() => {
-    const set = (id, v) => { const el=document.getElementById(id); if(el) el.value=v??''; };
-    set('qc-name',      p.name);
-    set('qc-date',      p.date);
-    set('qc-like',      p.like||0);
-    set('qc-comment',   p.comment||0);
-    set('qc-share',     p.share||0);
-    set('qc-save',      p.save||0);
-    set('qc-reach',     p.reach||0);
-    set('qc-impression',p.impression||0);
-    set('qc-format',    p.format||'');
-    const pillarSel = document.getElementById('qc-pillar');
-    if (pillarSel) pillarSel.value = p.pillar || pillars[0]?.id || '';
-    const pltBtns = document.querySelectorAll('.qc-plt-btn');
-    pltBtns.forEach(btn => btn.classList.toggle('act', btn.dataset?.plt === plt || btn.getAttribute('onclick')?.includes("'"+plt+"'")));
-    _qcPlt = plt;
-    const title = document.querySelector('#m-qc .modal-title, #m-qc .qc-title');
-    if (title) title.textContent = '✏️ Edit Konten';
-  }, 80);
-}
-</script>
 </body>
 </html>
