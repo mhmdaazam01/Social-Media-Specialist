@@ -1,0 +1,113 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import { AppShell } from '@/components/layout/AppShell';
+import { GoalCard } from '@/components/goals/GoalCard';
+import { GoalModal } from '@/components/goals/GoalModal';
+import { Button } from '@/components/ui/button';
+import { useGoalStore } from '@/lib/store/goal-store';
+import { usePostStore } from '@/lib/store/post-store';
+import { Plus, Target } from 'lucide-react';
+import type { Goal, Post } from '@/types';
+
+function calcActual(goal: Goal, posts: Post[]): number {
+  const monthStr = String(goal.month).padStart(2, '0');
+  const filtered = posts.filter(p => {
+    if (!p.date) return false;
+    const [y, m] = p.date.split('-');
+    if (parseInt(y) !== goal.year || parseInt(m) !== goal.month) return false;
+    if (goal.platform !== 'all' && p.platform !== goal.platform) return false;
+    return true;
+  });
+
+  switch (goal.metric) {
+    case 'followers':
+      return filtered.reduce((s, p) => s + p.followers_gained, 0);
+    case 'reach':
+      return filtered.reduce((s, p) => s + p.reach, 0);
+    case 'impression':
+      return filtered.reduce((s, p) => s + p.impression, 0);
+    case 'engagement':
+      return filtered.reduce((s, p) => s + p.like + p.comment + p.share + p.save, 0);
+    case 'posts':
+      return filtered.length;
+    case 'likes':
+      return filtered.reduce((s, p) => s + p.like, 0);
+    case 'comments':
+      return filtered.reduce((s, p) => s + p.comment, 0);
+    default:
+      return 0;
+  }
+}
+
+export default function GoalsPage() {
+  const goals = useGoalStore(s => s.goals);
+  const posts = usePostStore(s => s.posts);
+  const deleteGoal = useGoalStore(s => s.deleteGoal);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editGoal, setEditGoal] = useState<Goal | null>(null);
+
+  const items = useMemo(() => {
+    return goals.map(goal => {
+      const actual = calcActual(goal, posts);
+      const progress = goal.target > 0 ? Math.round((actual / goal.target) * 100) : 0;
+      return { goal, progress };
+    });
+  }, [goals, posts]);
+
+  function handleEdit(goal: Goal) {
+    setEditGoal(goal);
+    setModalOpen(true);
+  }
+
+  function handleAdd() {
+    setEditGoal(null);
+    setModalOpen(true);
+  }
+
+  function handleDelete(id: string) {
+    deleteGoal(id);
+  }
+
+  return (
+    <AppShell title="Goals">
+      <div className="flex flex-col gap-6">
+        {items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <Target className="size-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">Belum ada goals. Buat target pertamamu!</p>
+            <Button className="mt-4" onClick={handleAdd}>
+              <Plus className="size-4" />
+              Buat Goal
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {items.map(({ goal, progress }) => (
+                <GoalCard
+                  key={goal.id}
+                  goal={goal}
+                  progress={progress}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+            <Button className="fixed bottom-20 right-6 lg:bottom-6 lg:right-6 z-40 shadow-lg" size="lg" onClick={handleAdd}>
+              <Plus className="size-5" />
+              Goal Baru
+            </Button>
+          </>
+        )}
+
+        <GoalModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          editGoal={editGoal}
+        />
+      </div>
+    </AppShell>
+  );
+}

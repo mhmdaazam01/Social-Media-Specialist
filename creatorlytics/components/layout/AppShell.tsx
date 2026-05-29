@@ -1,0 +1,42 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Sidebar } from './Sidebar';
+import { Topbar } from './Topbar';
+import { MobileNav } from './MobileNav';
+
+interface AppShellProps {
+  children: React.ReactNode;
+  title?: string;
+  onAddPost?: () => void;
+}
+
+export function AppShell({ children, title = 'Dashboard', onAddPost }: AppShellProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Memuat...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      <Sidebar />
+      <div className="flex-1 flex flex-col lg:ml-64 pb-14 lg:pb-0">
+        <Topbar title={title} onAddPost={onAddPost} />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+          {children}
+        </main>
+      </div>
+      <MobileNav />
+    </div>
+  );
+}
