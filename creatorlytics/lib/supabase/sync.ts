@@ -3,42 +3,57 @@ import { createClient } from './client';
 export function createSync<T>(table: string) {
   let supabase = createClient();
 
-  async function ensureAuth() {
+  async function getUserId() {
     if (!supabase) {
       supabase = createClient();
     }
     if (!supabase) return null;
-    const { data } = await supabase.auth.getUser();
-    return data?.user ?? null;
+    const { data } = await supabase.auth.getSession();
+    return data?.session?.user?.id ?? null;
+  }
+
+  async function uidOrThrow() {
+    const id = await getUserId();
+    if (!id) throw new Error('Not authenticated');
+    return id;
   }
 
   return {
     async upsert(rows: T[]) {
       if (!rows.length) return;
-      const user = await ensureAuth();
-      if (!user) return;
-      const rowsWithUser = rows.map(r => ({ ...r, user_id: user.id }));
-      const { error } = await supabase!.from(table).upsert(rowsWithUser, { onConflict: 'id' });
-      if (error) console.error(`sync:${table} upsert`, error);
+      try {
+        const userId = await uidOrThrow();
+        const rowsWithUser = rows.map(r => ({ ...r, user_id: userId }));
+        const { error } = await supabase!.from(table).upsert(rowsWithUser, { onConflict: 'id' });
+        if (error) console.error(`sync:${table} upsert`, error);
+      } catch (e) {
+        console.error(`sync:${table} upsert`, e);
+      }
     },
 
     async remove(ids: string[]) {
       if (!ids.length) return;
-      const user = await ensureAuth();
-      if (!user) return;
-      const { error } = await supabase!.from(table).delete().in('id', ids);
-      if (error) console.error(`sync:${table} delete`, error);
+      try {
+        await uidOrThrow();
+        const { error } = await supabase!.from(table).delete().in('id', ids);
+        if (error) console.error(`sync:${table} delete`, error);
+      } catch (e) {
+        console.error(`sync:${table} remove`, e);
+      }
     },
 
     async loadAll(): Promise<T[]> {
-      const user = await ensureAuth();
-      if (!user) return [];
-      const { data, error } = await supabase!.from(table).select('*');
-      if (error) {
-        console.error(`sync:${table} load`, error);
+      try {
+        await uidOrThrow();
+        const { data, error } = await supabase!.from(table).select('*');
+        if (error) {
+          console.error(`sync:${table} load`, error);
+          return [];
+        }
+        return (data ?? []) as T[];
+      } catch {
         return [];
       }
-      return (data ?? []) as T[];
     },
   };
 }
