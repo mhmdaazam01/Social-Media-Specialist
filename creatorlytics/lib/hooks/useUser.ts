@@ -23,12 +23,12 @@ export function useUser() {
     }
 
     async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase!.auth.getSession();
       const currentUser = session?.user ?? null;
       setUser(currentUser);
 
       if (currentUser) {
-        const { data } = await supabase
+        const { data } = await supabase!
           .from('profiles')
           .select('*')
           .eq('id', currentUser.id)
@@ -41,12 +41,13 @@ export function useUser() {
 
     init();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
+    const { data: { subscription } } = supabase!.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
+      const s = supabase!;
 
       if (currentUser) {
-        const { data } = await supabase
+        const { data } = await s
           .from('profiles')
           .select('*')
           .eq('id', currentUser.id)

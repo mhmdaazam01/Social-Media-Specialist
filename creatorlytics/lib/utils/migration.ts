@@ -6,6 +6,7 @@ export async function migrateFromV1(userId: string): Promise<{
   error?: string;
 }> {
   const supabase = createClient();
+  if (!supabase) return { success: false, postCount: 0, error: 'Supabase not available' };
 
   try {
     const alreadyMigrated = localStorage.getItem('cl-v1-migrated');
