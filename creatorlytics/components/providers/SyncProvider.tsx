@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useUser } from '@/lib/hooks/useUser';
+import { createClient } from '@/lib/supabase/client';
 import { usePostStore } from '@/lib/store/post-store';
 import { useGoalStore } from '@/lib/store/goal-store';
 import { useIdeaStore } from '@/lib/store/idea-store';
@@ -24,36 +25,52 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const syncPlatforms = usePlatformStore(s => s.syncFromSupabase);
   const syncPillars = usePillarStore(s => s.syncFromSupabase);
 
-  const posts = usePostStore(s => s.posts);
-  const goals = useGoalStore(s => s.goals);
-  const ideas = useIdeaStore(s => s.ideas);
-  const events = useEventStore(s => s.events);
-  const competitors = useCompetitorStore(s => s.competitors);
-  const accounts = useAccountStore(s => s.accounts);
-  const platforms = usePlatformStore(s => s.platforms);
-  const pillars = usePillarStore(s => s.pillars);
-
   useEffect(() => {
     if (loading || synced.current) return;
+    if (!user) { synced.current = true; return; }
 
-    if (!user) {
-      synced.current = true;
-      return;
-    }
+    const fullSync = async () => {
+      const supabase = createClient();
+      if (!supabase) { synced.current = true; return; }
+      const { data: { user: u } } = await supabase.auth.getUser();
+      if (!u) { synced.current = true; return; }
+      const uid = u.id;
 
-    const loadIfEmpty = async () => {
-      if (!posts.length) await syncPosts();
-      if (!goals.length) await syncGoals();
-      if (!ideas.length) await syncIdeas();
-      if (!events.length) await syncEvents();
-      if (!competitors.length) await syncCompetitors();
-      if (!accounts.length) await syncAccounts();
-      if (!platforms.length) await syncPlatforms();
-      if (!pillars.length) await syncPillars();
+      const push = async (table: string, rows: unknown[]) => {
+        if (!rows.length) return;
+        const { error } = await supabase.from(table).upsert(
+          (rows as Record<string, unknown>[]).map(r => ({ ...r, user_id: uid })),
+          { onConflict: 'id' }
+        );
+        if (error) console.error(`auto-sync push ${table}:`, error);
+      };
+
+      await Promise.all([
+        push('posts', usePostStore.getState().posts),
+        push('goals', useGoalStore.getState().goals),
+        push('content_ideas', useIdeaStore.getState().ideas),
+        push('calendar_events', useEventStore.getState().events),
+        push('competitors', useCompetitorStore.getState().competitors),
+        push('accounts', useAccountStore.getState().accounts),
+        push('platforms', usePlatformStore.getState().platforms),
+        push('pillars', usePillarStore.getState().pillars),
+      ]);
+
+      await Promise.all([
+        syncPosts(),
+        syncGoals(),
+        syncIdeas(),
+        syncEvents(),
+        syncCompetitors(),
+        syncAccounts(),
+        syncPlatforms(),
+        syncPillars(),
+      ]);
+
       synced.current = true;
     };
 
-    loadIfEmpty();
+    fullSync();
   }, [user, loading]);
 
   return <>{children}</>;
