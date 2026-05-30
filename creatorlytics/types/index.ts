@@ -7,10 +7,10 @@ export type EventStatus = 'idea' | 'scheduled' | 'published' | 'cancelled';
 export interface UserProfile {
   id: string;
   email: string;
-  display_name: string;
-  niche: string;
-  er_mode: ErMode;
-  theme: Theme;
+  full_name: string;
+  avatar_url: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Account {

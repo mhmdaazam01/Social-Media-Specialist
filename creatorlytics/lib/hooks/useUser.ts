@@ -27,7 +27,7 @@ export function useUser() {
 
       if (currentUser) {
         const { data } = await supabase
-          .from('user_profiles')
+          .from('profiles')
           .select('*')
           .eq('id', currentUser.id)
           .single();
@@ -44,7 +44,7 @@ export function useUser() {
 
       if (currentUser) {
         const { data } = await supabase
-          .from('user_profiles')
+          .from('profiles')
           .select('*')
           .eq('id', currentUser.id)
           .single();

@@ -32,7 +32,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, profile, signOut } = useUser();
   const { settings, updateSettings } = useSettingsStore();
-  const displayName = profile?.display_name || settings.display_name || 'Kreator';
+  const displayName = profile?.full_name || settings.display_name || 'Kreator';
   const userEmail = user?.email || 'Local Mode';
 
   const handleLogout = () => {
