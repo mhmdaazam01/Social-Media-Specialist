@@ -63,7 +63,7 @@ export function useUser() {
     if (supabase) {
       await supabase.auth.signOut();
     }
-    router.push('/login');
+    window.location.href = '/login';
   }
 
   return { user, profile, loading, signOut };
