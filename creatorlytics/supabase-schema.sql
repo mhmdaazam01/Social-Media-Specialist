@@ -3,28 +3,41 @@
 -- Jalankan SQL ini di Supabase SQL Editor (satu kali)
 -- ══════════════════════════════════════════════════════════════
 
--- ══ TABEL 1: User Profiles ══
-CREATE TABLE IF NOT EXISTS user_profiles (
-  id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email       TEXT,
-  display_name TEXT,
-  niche       TEXT DEFAULT '',
-  er_mode     TEXT DEFAULT 'impression',
-  theme       TEXT DEFAULT 'dark',
-  created_at  TIMESTAMPTZ DEFAULT now(),
-  last_seen   TIMESTAMPTZ DEFAULT now()
+-- ══ TABEL 1: Profiles (gabungan user_profiles + auth) ══
+CREATE TABLE IF NOT EXISTS profiles (
+  id           UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email        TEXT,
+  full_name    TEXT DEFAULT '',
+  display_name TEXT DEFAULT '',
+  avatar_url   TEXT DEFAULT '',
+  niche        TEXT DEFAULT '',
+  er_mode      TEXT DEFAULT 'impression',
+  theme        TEXT DEFAULT 'dark',
+  created_at   TIMESTAMPTZ DEFAULT now(),
+  updated_at   TIMESTAMPTZ DEFAULT now(),
+  last_seen    TIMESTAMPTZ DEFAULT now()
 );
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own profile"
+  ON profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can update own profile"
+  ON profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
 -- Auto-create profile saat user baru register
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO user_profiles (id, email, display_name)
+  INSERT INTO profiles (id, email, full_name, avatar_url, display_name)
   VALUES (
     NEW.id,
     NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
+    NEW.raw_user_meta_data->>'avatar_url',
     COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1))
-  );
+  )
+  ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -156,7 +169,7 @@ CREATE TABLE IF NOT EXISTS pillars (
 
 -- ══ ROW LEVEL SECURITY ══
 
-ALTER TABLE user_profiles   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE accounts        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE platforms       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE posts           ENABLE ROW LEVEL SECURITY;
@@ -168,8 +181,8 @@ ALTER TABLE pillars         ENABLE ROW LEVEL SECURITY;
 
 -- Hapus policies lama (kalau ada)
 DO $$ BEGIN
-  DROP POLICY IF EXISTS "Users can view own profile" ON user_profiles;
-  DROP POLICY IF EXISTS "Users can update own profile" ON user_profiles;
+  DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
+  DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
   DROP POLICY IF EXISTS "Users can view own accounts" ON accounts;
   DROP POLICY IF EXISTS "Users can insert own accounts" ON accounts;
   DROP POLICY IF EXISTS "Users can update own accounts" ON accounts;
@@ -204,10 +217,10 @@ DO $$ BEGIN
   DROP POLICY IF EXISTS "Users can delete own pillars" ON pillars;
 END $$;
 
--- User Profiles (special — only select/update)
-CREATE POLICY "Users can view own profile" ON user_profiles
+-- Profiles (special — only select/update)
+CREATE POLICY "Users can view own profile" ON profiles
   FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users can update own profile" ON user_profiles
+CREATE POLICY "Users can update own profile" ON profiles
   FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 
 -- Helper function to generate policy SQL for other tables
