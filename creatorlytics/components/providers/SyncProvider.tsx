@@ -18,8 +18,9 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const synced = useRef(false);
 
   useEffect(() => {
-    if (loading || synced.current) return;
-    if (!user) { synced.current = true; return; }
+    if (loading) return;
+    if (!user) { synced.current = false; return; }
+    if (synced.current) return;
 
     const fullSync = async () => {
       const supabase = createClient();
