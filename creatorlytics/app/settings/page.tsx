@@ -19,13 +19,22 @@ import { useGoalStore } from '@/lib/store/goal-store';
 import { useIdeaStore } from '@/lib/store/idea-store';
 import { useEventStore } from '@/lib/store/event-store';
 import { exportToJSON, importFromJSON } from '@/lib/utils/export';
-import { Trash2Icon, PlusIcon, DownloadIcon, UploadIcon, SunIcon, MoonIcon } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
+import { Trash2Icon, PlusIcon, DownloadIcon, UploadIcon, SunIcon, MoonIcon, CloudDownloadIcon } from 'lucide-react';
 
 export default function SettingsPage() {
   const { settings, updateSettings } = useSettingsStore();
   const { platforms, addPlatform, removePlatform } = usePlatformStore();
   const { accounts, addAccount, removeAccount } = useAccountStore();
   const { pillars, addPillar, removePillar } = usePillarStore();
+  const syncPosts = usePostStore(s => s.syncFromSupabase);
+  const syncGoals = useGoalStore(s => s.syncFromSupabase);
+  const syncIdeas = useIdeaStore(s => s.syncFromSupabase);
+  const syncEvents = useEventStore(s => s.syncFromSupabase);
+  const syncCompetitors = useCompetitorStore(s => s.syncFromSupabase);
+  const syncPlatforms = usePlatformStore(s => s.syncFromSupabase);
+  const syncAccounts = useAccountStore(s => s.syncFromSupabase);
+  const syncPillars = usePillarStore(s => s.syncFromSupabase);
   const importRef = useRef<HTMLInputElement>(null);
 
   const [displayName, setDisplayName] = useState(settings.display_name);
@@ -40,8 +49,26 @@ export default function SettingsPage() {
   const [pillarLabel, setPillarLabel] = useState('');
   const [pillarColor, setPillarColor] = useState('#3B82F6');
 
-  function handleSaveProfile() {
+  async function syncProfileToSupabase(overrides?: Partial<typeof settings>) {
+    const supabase = createClient();
+    if (!supabase) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      email: user.email,
+      display_name: displayName,
+      niche,
+      er_mode: settings.er_mode,
+      theme: settings.theme,
+      ...overrides,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'id' });
+  }
+
+  async function handleSaveProfile() {
     updateSettings({ display_name: displayName, niche });
+    await syncProfileToSupabase();
     toast.success('Profil berhasil diperbarui');
   }
 
@@ -125,6 +152,20 @@ export default function SettingsPage() {
     if (importRef.current) importRef.current.value = '';
   }
 
+  async function handleSyncFromCloud() {
+    await Promise.all([
+      syncPosts(),
+      syncGoals(),
+      syncIdeas(),
+      syncEvents(),
+      syncCompetitors(),
+      syncPlatforms(),
+      syncAccounts(),
+      syncPillars(),
+    ]);
+    toast.success('Data berhasil disinkron dari cloud');
+  }
+
   return (
     <AppShell title="Pengaturan">
       <div className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -152,7 +193,7 @@ export default function SettingsPage() {
             <h3 className="font-medium">Tampilan</h3>
             <div className="grid gap-2">
               <Label>ER Mode</Label>
-              <Select value={settings.er_mode} onValueChange={v => updateSettings({ er_mode: v as 'impression' | 'reach' | 'followers' })}>
+              <Select value={settings.er_mode} onValueChange={async v => { updateSettings({ er_mode: v as 'impression' | 'reach' | 'followers' }); await syncProfileToSupabase({ er_mode: v as 'impression' | 'reach' | 'followers' }); }}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -166,20 +207,20 @@ export default function SettingsPage() {
             <div className="grid gap-2">
               <Label>Theme</Label>
               <div className="flex gap-2">
-                <Button
-                  variant={settings.theme === 'dark' ? 'default' : 'outline'}
-                  onClick={() => updateSettings({ theme: 'dark' })}
-                >
-                  <MoonIcon />
-                  Dark
-                </Button>
-                <Button
-                  variant={settings.theme === 'light' ? 'default' : 'outline'}
-                  onClick={() => updateSettings({ theme: 'light' })}
-                >
-                  <SunIcon />
-                  Light
-                </Button>
+                  <Button
+                    variant={settings.theme === 'dark' ? 'default' : 'outline'}
+                    onClick={async () => { updateSettings({ theme: 'dark' }); await syncProfileToSupabase({ theme: 'dark' }); }}
+                  >
+                    <MoonIcon />
+                    Dark
+                  </Button>
+                  <Button
+                    variant={settings.theme === 'light' ? 'default' : 'outline'}
+                    onClick={async () => { updateSettings({ theme: 'light' }); await syncProfileToSupabase({ theme: 'light' }); }}
+                  >
+                    <SunIcon />
+                    Light
+                  </Button>
               </div>
             </div>
           </CardContent>
@@ -312,6 +353,10 @@ export default function SettingsPage() {
               <Button variant="outline" onClick={handleExport}>
                 <DownloadIcon />
                 Export All Data
+              </Button>
+              <Button variant="outline" onClick={handleSyncFromCloud}>
+                <CloudDownloadIcon />
+                Sync dari Cloud
               </Button>
               <Button variant="outline" onClick={() => importRef.current?.click()}>
                 <UploadIcon />

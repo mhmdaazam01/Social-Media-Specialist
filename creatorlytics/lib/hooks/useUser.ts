@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useSettingsStore } from '@/lib/store/settings-store';
 import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
-import type { UserProfile } from '@/types';
+import type { UserProfile, ErMode, Theme } from '@/types';
 
 export function useUser() {
   const router = useRouter();
+  const updateSettings = useSettingsStore(s => s.updateSettings);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,6 +34,7 @@ export function useUser() {
           .eq('id', currentUser.id)
           .single();
         setProfile(data);
+        if (data) applyProfileToSettings(data);
       }
       setLoading(false);
     }
@@ -49,6 +52,7 @@ export function useUser() {
           .eq('id', currentUser.id)
           .single();
         setProfile(data);
+        if (data) applyProfileToSettings(data);
       } else {
         setProfile(null);
       }
@@ -57,6 +61,15 @@ export function useUser() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  function applyProfileToSettings(p: UserProfile) {
+    updateSettings({
+      display_name: p.display_name || p.full_name || 'Kreator',
+      niche: p.niche || '',
+      er_mode: p.er_mode as ErMode || 'impression',
+      theme: p.theme as Theme || 'dark',
+    });
+  }
 
   async function signOut() {
     const supabase = createClient();
