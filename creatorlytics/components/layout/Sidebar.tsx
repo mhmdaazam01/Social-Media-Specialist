@@ -102,7 +102,7 @@ export function Sidebar() {
             <p className="text-sm font-medium truncate">{displayName}</p>
             <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleLogout}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.location.href = '/auth/logout'}>
             <LogOut size={16} />
           </Button>
         </div>
