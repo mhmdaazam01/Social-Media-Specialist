@@ -3,17 +3,23 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import type { User } from '@supabase/supabase-js';
+import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 import type { UserProfile } from '@/types';
 
 export function useUser() {
-  const supabase = createClient();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const supabase = createClient();
+
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
     async function init() {
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user ?? null;
@@ -32,7 +38,7 @@ export function useUser() {
 
     init();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: AuthChangeEvent, session: Session | null) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
 
@@ -53,7 +59,10 @@ export function useUser() {
   }, []);
 
   async function signOut() {
-    await supabase.auth.signOut();
+    const supabase = createClient();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
     router.push('/login');
   }
 
