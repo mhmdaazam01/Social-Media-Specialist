@@ -37,19 +37,10 @@ export function ContentTimeline({ onEditPost }: ContentTimelineProps) {
   }
 
   function handleDelete(post: Post) {
-    const timer = setTimeout(() => {
-      deletePost(post.id);
-    }, 5000);
+    deletePost(post.id);
 
     toast('Postingan dihapus', {
-      description: `"${post.name}" akan dihapus permanen dalam 5 detik`,
-      action: {
-        label: 'Undo',
-        onClick: () => {
-          clearTimeout(timer);
-          toast.dismiss();
-        },
-      },
+      description: `"${post.name}" berhasil dihapus`,
     });
   }
 
