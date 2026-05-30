@@ -1,7 +1,7 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useSettingsStore } from '@/lib/store/settings-store';
 import { Sun, Moon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,25 +10,6 @@ import { APP_NAME, APP_TAGLINE } from '@/lib/constants';
 export default function LoginPage() {
   const { settings, updateSettings } = useSettingsStore();
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get('code');
-
-    if (code) {
-      setLoading(true);
-      const supabase = createClient();
-      if (!supabase) { setLoading(false); return; }
-
-      supabase.auth.exchangeCodeForSession(code).then((result: any) => {
-        if (result.error) {
-          window.location.href = '/login';
-        } else {
-          window.location.href = '/dashboard';
-        }
-      });
-    }
-  }, []);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
