@@ -153,6 +153,40 @@ export default function SettingsPage() {
   }
 
   async function handleSyncFromCloud() {
+    const supabase = createClient();
+    if (!supabase) {
+      toast.error('Supabase tidak tersedia');
+      return;
+    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('Login dulu untuk sync');
+      return;
+    }
+
+    const uid = user.id;
+
+    // Push local → Supabase
+    const push = async (table: string, rows: unknown[]) => {
+      if (!rows.length) return;
+      await supabase.from(table).upsert(
+        (rows as Record<string, unknown>[]).map(r => ({ ...r, user_id: uid })),
+        { onConflict: 'id' }
+      );
+    };
+
+    await Promise.all([
+      push('posts', usePostStore.getState().posts),
+      push('goals', useGoalStore.getState().goals),
+      push('content_ideas', useIdeaStore.getState().ideas),
+      push('calendar_events', useEventStore.getState().events),
+      push('competitors', useCompetitorStore.getState().competitors),
+      push('accounts', useAccountStore.getState().accounts),
+      push('platforms', usePlatformStore.getState().platforms),
+      push('pillars', usePillarStore.getState().pillars),
+    ]);
+
+    // Pull Supabase → local
     await Promise.all([
       syncPosts(),
       syncGoals(),
@@ -163,6 +197,7 @@ export default function SettingsPage() {
       syncAccounts(),
       syncPillars(),
     ]);
+
     toast.success('Data berhasil disinkron dari cloud');
   }
 
