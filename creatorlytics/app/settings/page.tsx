@@ -166,13 +166,16 @@ export default function SettingsPage() {
 
     const uid = user.id;
 
+    const errors: string[] = [];
+
     // Push local → Supabase
     const push = async (table: string, rows: unknown[]) => {
       if (!rows.length) return;
-      await supabase.from(table).upsert(
+      const { error } = await supabase.from(table).upsert(
         (rows as Record<string, unknown>[]).map(r => ({ ...r, user_id: uid })),
         { onConflict: 'id' }
       );
+      if (error) errors.push(`Push ${table}: ${error.message}`);
     };
 
     await Promise.all([
@@ -187,18 +190,30 @@ export default function SettingsPage() {
     ]);
 
     // Pull Supabase → local
+    const pull = async (name: string, fn: () => Promise<void>) => {
+      try {
+        await fn();
+      } catch (e) {
+        errors.push(`Pull ${name}: ${String(e)}`);
+      }
+    };
+
     await Promise.all([
-      syncPosts(),
-      syncGoals(),
-      syncIdeas(),
-      syncEvents(),
-      syncCompetitors(),
-      syncPlatforms(),
-      syncAccounts(),
-      syncPillars(),
+      pull('posts', syncPosts),
+      pull('goals', syncGoals),
+      pull('ideas', syncIdeas),
+      pull('events', syncEvents),
+      pull('competitors', syncCompetitors),
+      pull('platforms', syncPlatforms),
+      pull('accounts', syncAccounts),
+      pull('pillars', syncPillars),
     ]);
 
-    toast.success('Data berhasil disinkron dari cloud');
+    if (errors.length) {
+      toast.error(`Sync gagal:\n${errors.join('\n')}`);
+    } else {
+      toast.success('Data berhasil disinkron dari cloud');
+    }
   }
 
   return (
