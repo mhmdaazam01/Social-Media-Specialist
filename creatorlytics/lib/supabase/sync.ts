@@ -1,10 +1,8 @@
 import { createClient } from './client';
 
 export function createSync<T>(table: string) {
-  const getSupabase = () => createClient();
-
   async function getUserId() {
-    const supabase = getSupabase();
+    const supabase = createClient();
     if (!supabase) return null;
     const { data } = await supabase.auth.getSession();
     return data?.session?.user?.id ?? null;
@@ -19,10 +17,9 @@ export function createSync<T>(table: string) {
   return {
     async upsert(rows: T[]) {
       if (!rows.length) return;
-      const supabase = getSupabase();
-      if (!supabase) return;
       try {
         const userId = await uidOrThrow();
+        const supabase = createClient()!;
         const rowsWithUser = rows.map(r => ({ ...r, user_id: userId }));
         const { error } = await supabase.from(table).upsert(rowsWithUser, { onConflict: 'id' });
         if (error) console.error(`sync:${table} upsert`, error);
@@ -33,10 +30,9 @@ export function createSync<T>(table: string) {
 
     async remove(ids: string[]) {
       if (!ids.length) return;
-      const supabase = getSupabase();
-      if (!supabase) return;
       try {
         await uidOrThrow();
+        const supabase = createClient()!;
         const { error } = await supabase.from(table).delete().in('id', ids);
         if (error) console.error(`sync:${table} delete`, error);
       } catch (e) {
@@ -45,10 +41,9 @@ export function createSync<T>(table: string) {
     },
 
     async loadAll(): Promise<T[]> {
-      const supabase = getSupabase();
-      if (!supabase) return [];
       try {
         await uidOrThrow();
+        const supabase = createClient()!;
         const { data, error } = await supabase.from(table).select('*');
         if (error) {
           console.error(`sync:${table} load`, error);
