@@ -4,17 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, BarChart3, FileText, Target, FileSpreadsheet,
-  ClipboardList, Calendar, Users, Settings, LogOut, Sun, Moon,
+  ClipboardList, Calendar, Users, Settings, Sun, Moon,
 } from 'lucide-react';
 import { NAV_ITEMS, APP_NAME } from '@/lib/constants';
-import { useUser } from '@/lib/hooks/useUser';
 import { useSettingsStore } from '@/lib/store/settings-store';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const iconMap: Record<string, React.ReactNode> = {
   LayoutDashboard: <LayoutDashboard size={20} />,
@@ -30,18 +27,8 @@ const iconMap: Record<string, React.ReactNode> = {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user, profile, signOut } = useUser();
   const { settings, updateSettings } = useSettingsStore();
-  const displayName = profile?.full_name || settings.display_name || 'Kreator';
-  const userEmail = user?.email || 'Local Mode';
-
-  const handleLogout = () => {
-    if (user) {
-      signOut();
-    } else {
-      window.location.href = '/login';
-    }
-  };
+  const displayName = settings.display_name || 'Kreator';
 
   return (
     <aside className="hidden lg:flex lg:flex-col w-64 h-screen border-r bg-card fixed left-0 top-0 z-30">
@@ -93,18 +80,12 @@ export function Sidebar() {
         </div>
 
         <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/50">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="text-xs bg-primary/20 text-primary">
-              {displayName.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">
+            {displayName.charAt(0).toUpperCase()}
+          </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{displayName}</p>
-            <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.location.href = '/auth/logout'}>
-            <LogOut size={16} />
-          </Button>
         </div>
       </div>
     </aside>

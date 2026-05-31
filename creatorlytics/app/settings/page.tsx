@@ -13,28 +13,19 @@ import { useSettingsStore } from '@/lib/store/settings-store';
 import { usePlatformStore } from '@/lib/store/platform-store';
 import { useAccountStore } from '@/lib/store/account-store';
 import { usePillarStore } from '@/lib/store/pillar-store';
-import { useCompetitorStore } from '@/lib/store/competitor-store';
 import { usePostStore } from '@/lib/store/post-store';
 import { useGoalStore } from '@/lib/store/goal-store';
 import { useIdeaStore } from '@/lib/store/idea-store';
 import { useEventStore } from '@/lib/store/event-store';
+import { useCompetitorStore } from '@/lib/store/competitor-store';
 import { exportToJSON, importFromJSON } from '@/lib/utils/export';
-import { createClient } from '@/lib/supabase/client';
-import { Trash2Icon, PlusIcon, DownloadIcon, UploadIcon, SunIcon, MoonIcon, CloudDownloadIcon } from 'lucide-react';
+import { Trash2Icon, PlusIcon, DownloadIcon, UploadIcon, SunIcon, MoonIcon } from 'lucide-react';
 
 export default function SettingsPage() {
   const { settings, updateSettings } = useSettingsStore();
   const { platforms, addPlatform, removePlatform } = usePlatformStore();
   const { accounts, addAccount, removeAccount } = useAccountStore();
   const { pillars, addPillar, removePillar } = usePillarStore();
-  const syncPosts = usePostStore(s => s.syncFromSupabase);
-  const syncGoals = useGoalStore(s => s.syncFromSupabase);
-  const syncIdeas = useIdeaStore(s => s.syncFromSupabase);
-  const syncEvents = useEventStore(s => s.syncFromSupabase);
-  const syncCompetitors = useCompetitorStore(s => s.syncFromSupabase);
-  const syncPlatforms = usePlatformStore(s => s.syncFromSupabase);
-  const syncAccounts = useAccountStore(s => s.syncFromSupabase);
-  const syncPillars = usePillarStore(s => s.syncFromSupabase);
   const importRef = useRef<HTMLInputElement>(null);
 
   const [displayName, setDisplayName] = useState(settings.display_name);
@@ -49,26 +40,8 @@ export default function SettingsPage() {
   const [pillarLabel, setPillarLabel] = useState('');
   const [pillarColor, setPillarColor] = useState('#3B82F6');
 
-  async function syncProfileToSupabase(overrides?: Partial<typeof settings>) {
-    const supabase = createClient();
-    if (!supabase) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    await supabase.from('profiles').upsert({
-      id: user.id,
-      email: user.email,
-      display_name: displayName,
-      niche,
-      er_mode: settings.er_mode,
-      theme: settings.theme,
-      ...overrides,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'id' });
-  }
-
-  async function handleSaveProfile() {
+  function handleSaveProfile() {
     updateSettings({ display_name: displayName, niche });
-    await syncProfileToSupabase();
     toast.success('Profil berhasil diperbarui');
   }
 
@@ -152,70 +125,6 @@ export default function SettingsPage() {
     if (importRef.current) importRef.current.value = '';
   }
 
-  async function handleSyncFromCloud() {
-    const supabase = createClient();
-    if (!supabase) {
-      toast.error('Supabase tidak tersedia');
-      return;
-    }
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error('Login dulu untuk sync');
-      return;
-    }
-
-    const uid = user.id;
-
-    const errors: string[] = [];
-
-    // Push local → Supabase
-    const push = async (table: string, rows: unknown[]) => {
-      if (!rows.length) return;
-      const { error } = await supabase.from(table).upsert(
-        (rows as Record<string, unknown>[]).map(r => ({ ...r, user_id: uid })),
-        { onConflict: 'id' }
-      );
-      if (error) errors.push(`Push ${table}: ${error.message}`);
-    };
-
-    await Promise.all([
-      push('posts', usePostStore.getState().posts),
-      push('goals', useGoalStore.getState().goals),
-      push('content_ideas', useIdeaStore.getState().ideas),
-      push('calendar_events', useEventStore.getState().events),
-      push('competitors', useCompetitorStore.getState().competitors),
-      push('accounts', useAccountStore.getState().accounts),
-      push('platforms', usePlatformStore.getState().platforms),
-      push('pillars', usePillarStore.getState().pillars),
-    ]);
-
-    // Pull Supabase → local
-    const pull = async (name: string, fn: () => Promise<void>) => {
-      try {
-        await fn();
-      } catch (e) {
-        errors.push(`Pull ${name}: ${String(e)}`);
-      }
-    };
-
-    await Promise.all([
-      pull('posts', syncPosts),
-      pull('goals', syncGoals),
-      pull('ideas', syncIdeas),
-      pull('events', syncEvents),
-      pull('competitors', syncCompetitors),
-      pull('platforms', syncPlatforms),
-      pull('accounts', syncAccounts),
-      pull('pillars', syncPillars),
-    ]);
-
-    if (errors.length) {
-      toast.error(`Sync gagal:\n${errors.join('\n')}`);
-    } else {
-      toast.success('Data berhasil disinkron dari cloud');
-    }
-  }
-
   return (
     <AppShell title="Pengaturan">
       <div className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -243,7 +152,7 @@ export default function SettingsPage() {
             <h3 className="font-medium">Tampilan</h3>
             <div className="grid gap-2">
               <Label>ER Mode</Label>
-              <Select value={settings.er_mode} onValueChange={async v => { updateSettings({ er_mode: v as 'impression' | 'reach' | 'followers' }); await syncProfileToSupabase({ er_mode: v as 'impression' | 'reach' | 'followers' }); }}>
+              <Select value={settings.er_mode} onValueChange={v => updateSettings({ er_mode: v as 'impression' | 'reach' | 'followers' })}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -259,14 +168,14 @@ export default function SettingsPage() {
               <div className="flex gap-2">
                   <Button
                     variant={settings.theme === 'dark' ? 'default' : 'outline'}
-                    onClick={async () => { updateSettings({ theme: 'dark' }); await syncProfileToSupabase({ theme: 'dark' }); }}
+                    onClick={() => updateSettings({ theme: 'dark' })}
                   >
                     <MoonIcon />
                     Dark
                   </Button>
                   <Button
                     variant={settings.theme === 'light' ? 'default' : 'outline'}
-                    onClick={async () => { updateSettings({ theme: 'light' }); await syncProfileToSupabase({ theme: 'light' }); }}
+                    onClick={() => updateSettings({ theme: 'light' })}
                   >
                     <SunIcon />
                     Light
@@ -403,10 +312,6 @@ export default function SettingsPage() {
               <Button variant="outline" onClick={handleExport}>
                 <DownloadIcon />
                 Export All Data
-              </Button>
-              <Button variant="outline" onClick={handleSyncFromCloud}>
-                <CloudDownloadIcon />
-                Sync dari Cloud
               </Button>
               <Button variant="outline" onClick={() => importRef.current?.click()}>
                 <UploadIcon />

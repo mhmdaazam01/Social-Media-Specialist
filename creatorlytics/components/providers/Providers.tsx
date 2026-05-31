@@ -4,7 +4,6 @@ import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
 import { useEffect } from 'react';
 import { useSettingsStore } from '@/lib/store/settings-store';
-import { SyncProvider } from './SyncProvider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const theme = useSettingsStore(s => s.settings.theme);
@@ -21,7 +20,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       enableSystem={false}
       disableTransitionOnChange
     >
-      <SyncProvider>{children}</SyncProvider>
+      {children}
       <Toaster position="top-right" richColors />
     </ThemeProvider>
   );
