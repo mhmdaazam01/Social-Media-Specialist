@@ -1,5 +1,7 @@
 import { createClient } from './client';
 
+console.log('[sync] module loaded');
+
 export function createSync<T extends { id: string }>(table: string) {
   async function getUserId() {
     const supabase = createClient();

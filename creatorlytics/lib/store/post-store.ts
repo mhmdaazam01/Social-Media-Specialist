@@ -5,6 +5,8 @@ import type { Post } from '@/types';
 import { STORAGE_PREFIX } from '@/lib/constants';
 import { createSync } from '@/lib/supabase/sync';
 
+console.log('[post-store] module loaded');
+
 const sync = createSync<Post>('posts');
 
 interface PostState {
