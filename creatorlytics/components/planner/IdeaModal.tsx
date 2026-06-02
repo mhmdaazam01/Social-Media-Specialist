@@ -21,7 +21,7 @@ interface IdeaModalProps {
 
 interface FormFields {
   title: string;
-  desc: string;
+  description: string;
   platform: string;
   pillar: string;
   format: string;
@@ -33,7 +33,7 @@ interface FormFields {
 
 const emptyForm: FormFields = {
   title: '',
-  desc: '',
+  description: '',
   platform: '',
   pillar: '',
   format: '',
@@ -55,7 +55,7 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
     if (editIdea) {
       setForm({
         title: editIdea.title,
-        desc: editIdea.desc,
+        description: editIdea.description,
         platform: editIdea.platform,
         pillar: editIdea.pillar,
         format: editIdea.format,
@@ -82,7 +82,7 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
     try {
       const data = {
         title: form.title,
-        desc: form.desc,
+        description: form.description,
         platform: form.platform,
         pillar: form.pillar,
         format: form.format,
@@ -126,8 +126,8 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="desc">Deskripsi</Label>
-            <Textarea id="desc" value={form.desc} onChange={e => update('desc', e.target.value)} placeholder="Deskripsi singkat..." />
+            <Label htmlFor="description">Deskripsi</Label>
+            <Textarea id="description" value={form.description} onChange={e => update('description', e.target.value)} placeholder="Deskripsi singkat..." />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
