@@ -12,16 +12,17 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
-import { usePostStore } from '@/lib/store/post-store';
-import { useSettingsStore } from '@/lib/store/settings-store';
+import { usePosts } from '@/lib/hooks/usePosts';
+import { useUser } from '@/lib/hooks/useUser';
 import { calcTotalER, fmt, aggregateByPlatform } from '@/lib/utils/analytics';
 import { formatMonth } from '@/lib/utils/formatting';
 import { FileText, BarChart3, Activity, Users, Printer } from 'lucide-react';
 import { useMemo } from 'react';
 
 export default function ReportPage() {
-  const posts = usePostStore(s => s.posts);
-  const erMode = useSettingsStore(s => s.settings.er_mode);
+  const { posts } = usePosts();
+  const { profile } = useUser();
+  const erMode = profile?.er_mode || 'impression';
 
   const totalPosts = posts.length;
   const totalReach = posts.reduce((s, p) => s + p.reach, 0);

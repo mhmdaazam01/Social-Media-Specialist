@@ -2,9 +2,9 @@
 
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { usePostStore } from '@/lib/store/post-store';
-import { useGoalStore } from '@/lib/store/goal-store';
-import { useSettingsStore } from '@/lib/store/settings-store';
+import { usePosts } from '@/lib/hooks/usePosts';
+import { useGoals } from '@/lib/hooks/useGoals';
+import { useUser } from '@/lib/hooks/useUser';
 import { generateInsights } from '@/lib/utils/insights';
 import { cn } from '@/lib/utils';
 import { Lightbulb, Trophy, AlertTriangle, TrendingUp, Sparkles } from 'lucide-react';
@@ -17,9 +17,10 @@ const typeConfig = {
 };
 
 export function InsightEngine() {
-  const posts = usePostStore(s => s.posts);
-  const goals = useGoalStore(s => s.goals);
-  const erMode = useSettingsStore(s => s.settings.er_mode);
+  const { posts } = usePosts();
+  const { goals } = useGoals();
+  const { profile } = useUser();
+  const erMode = profile?.er_mode || 'impression';
 
   const insights = useMemo(
     () => generateInsights(posts, goals, erMode),

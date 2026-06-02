@@ -2,15 +2,16 @@
 
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { usePostStore } from '@/lib/store/post-store';
-import { useSettingsStore } from '@/lib/store/settings-store';
+import { usePosts } from '@/lib/hooks/usePosts';
+import { useUser } from '@/lib/hooks/useUser';
 import { calcTotalER, fmt } from '@/lib/utils/analytics';
 import { startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { CalendarDays } from 'lucide-react';
 
 export function WeeklyNarrative() {
-  const posts = usePostStore(s => s.posts);
-  const erMode = useSettingsStore(s => s.settings.er_mode);
+  const { posts } = usePosts();
+  const { profile } = useUser();
+  const erMode = profile?.er_mode || 'impression';
 
   const { weekPosts, totalPosts, avgER, totalReach, bestDay } = useMemo(() => {
     const now = new Date();

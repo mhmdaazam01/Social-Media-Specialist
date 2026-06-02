@@ -11,7 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { usePlatformStore } from '@/lib/store/platform-store';
+import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import type { Post } from '@/types';
 import { formatDate } from '@/lib/utils/formatting';
 import { calcER, fmt, fmtPercent } from '@/lib/utils/analytics';
@@ -24,7 +24,7 @@ type SortKey = 'er' | 'reach' | 'likes' | 'date';
 type SortDir = 'asc' | 'desc';
 
 export function TopContentTable({ posts }: TopContentTableProps) {
-  const platforms = usePlatformStore((s) => s.platforms);
+  const { platforms } = usePlatforms();
   const [sortKey, setSortKey] = useState<SortKey>('er');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 

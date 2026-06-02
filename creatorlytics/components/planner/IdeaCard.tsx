@@ -4,8 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { XIcon } from 'lucide-react';
-import { usePlatformStore } from '@/lib/store/platform-store';
-import { usePillarStore } from '@/lib/store/pillar-store';
+import { usePlatforms } from '@/lib/hooks/usePlatforms';
+import { usePillars } from '@/lib/hooks/usePillars';
 import type { ContentIdea } from '@/types';
 
 interface IdeaCardProps {
@@ -15,8 +15,8 @@ interface IdeaCardProps {
 }
 
 export function IdeaCard({ idea, onClick, onDelete }: IdeaCardProps) {
-  const { platforms } = usePlatformStore();
-  const { pillars } = usePillarStore();
+  const { platforms } = usePlatforms();
+  const { pillars } = usePillars();
 
   const platform = platforms.find(p => p.platform_id === idea.platform);
   const pillar = pillars.find(p => p.pillar_id === idea.pillar);

@@ -3,18 +3,19 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { usePostStore } from '@/lib/store/post-store';
-import { useSettingsStore } from '@/lib/store/settings-store';
-import { usePlatformStore } from '@/lib/store/platform-store';
+import { usePosts } from '@/lib/hooks/usePosts';
+import { useUser } from '@/lib/hooks/useUser';
+import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { calcER, fmt } from '@/lib/utils/analytics';
 import { formatDate } from '@/lib/utils/formatting';
 import { Badge } from '@/components/ui/badge';
 import { Crown, BarChart3 } from 'lucide-react';
 
 export function TopContent() {
-  const posts = usePostStore(s => s.posts);
-  const erMode = useSettingsStore(s => s.settings.er_mode);
-  const platforms = usePlatformStore(s => s.platforms);
+  const { posts } = usePosts();
+  const { profile } = useUser();
+  const { platforms } = usePlatforms();
+  const erMode = profile?.er_mode || 'impression';
 
   const topPosts = useMemo(() => {
     return [...posts]
