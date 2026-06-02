@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { usePostStore } from '@/lib/store/post-store';
+import { usePosts } from '@/lib/hooks/usePosts';
 import { UploadIcon, DownloadIcon } from 'lucide-react';
 
 interface CSVImportProps {
@@ -28,7 +28,7 @@ function parseCSV(text: string): Record<string, string>[] {
 
 export function CSVImport({ onImport }: CSVImportProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { importPosts } = usePostStore();
+  const { importPosts } = usePosts();
 
   function handleTemplate() {
     const headers = ['tanggal', 'nama', 'platform', 'akun', 'reach', 'impression', 'like', 'comment', 'share', 'save', 'repost', 'followers_gained', 'pillar', 'format', 'caption_len', 'link'];

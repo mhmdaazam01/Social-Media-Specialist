@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useCompetitorStore } from '@/lib/store/competitor-store';
+import { useCompetitors } from '@/lib/hooks/useCompetitors';
 import type { Competitor } from '@/types';
 
 interface CompetitorModalProps {
@@ -37,7 +37,7 @@ const emptyForm: FormFields = {
 };
 
 export function CompetitorModal({ open, onOpenChange, editCompetitor }: CompetitorModalProps) {
-  const { createCompetitor, updateCompetitor } = useCompetitorStore();
+  const { createCompetitor, updateCompetitor } = useCompetitors();
   const [form, setForm] = useState<FormFields>(emptyForm);
   const [loading, setLoading] = useState(false);
 

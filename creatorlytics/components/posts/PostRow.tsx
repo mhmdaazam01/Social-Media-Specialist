@@ -3,8 +3,8 @@
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { usePlatformStore } from '@/lib/store/platform-store';
-import { useSettingsStore } from '@/lib/store/settings-store';
+import { usePlatforms } from '@/lib/hooks/usePlatforms';
+import { useUser } from '@/lib/hooks/useUser';
 import { calcER, fmt, fmtPercent } from '@/lib/utils/analytics';
 import { formatDate } from '@/lib/utils/formatting';
 import { PencilIcon, Trash2Icon } from 'lucide-react';
@@ -18,10 +18,10 @@ interface PostRowProps {
 }
 
 export function PostRow({ post, index, onEdit, onDelete }: PostRowProps) {
-  const { platforms } = usePlatformStore();
-  const { settings } = useSettingsStore();
+  const { platforms } = usePlatforms();
+  const { profile } = useUser();
   const platform = platforms.find(p => p.platform_id === post.platform);
-  const er = calcER(post, settings.er_mode);
+  const er = calcER(post, profile?.er_mode || 'impression');
 
   return (
     <TableRow>

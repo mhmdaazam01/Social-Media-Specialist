@@ -2,10 +2,11 @@
 
 import { Toaster } from '@/components/ui/sonner';
 import { useEffect } from 'react';
-import { useSettingsStore } from '@/lib/store/settings-store';
+import { useUser } from '@/lib/hooks/useUser';
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const theme = useSettingsStore(s => s.settings.theme);
+  const { profile } = useUser();
+  const theme = profile?.theme || 'dark';
 
   useEffect(() => {
     document.documentElement.classList.remove('light', 'dark');
