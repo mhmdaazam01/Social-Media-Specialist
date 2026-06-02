@@ -5,14 +5,14 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/button';
 import { CompetitorCard } from '@/components/competitor/CompetitorCard';
 import { CompetitorModal } from '@/components/competitor/CompetitorModal';
-import { useCompetitorStore } from '@/lib/store/competitor-store';
+import { useCompetitors } from '@/lib/hooks/useCompetitors';
 import { PlusIcon, UsersIcon } from 'lucide-react';
 import type { Competitor } from '@/types';
 
 export default function CompetitorPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editCompetitor, setEditCompetitor] = useState<Competitor | null>(null);
-  const { competitors, deleteCompetitor } = useCompetitorStore();
+  const { competitors, deleteCompetitor } = useCompetitors();
 
   function handleAdd() {
     setEditCompetitor(null);

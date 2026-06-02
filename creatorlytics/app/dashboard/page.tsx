@@ -7,15 +7,16 @@ import { InsightEngine } from '@/components/dashboard/InsightEngine';
 import { GoalProgress } from '@/components/dashboard/GoalProgress';
 import { TopContent } from '@/components/dashboard/TopContent';
 import { WeeklyNarrative } from '@/components/dashboard/WeeklyNarrative';
-import { usePostStore } from '@/lib/store/post-store';
-import { useSettingsStore } from '@/lib/store/settings-store';
+import { usePosts } from '@/lib/hooks/usePosts';
+import { useUser } from '@/lib/hooks/useUser';
 import { calcTotalER, fmt } from '@/lib/utils/analytics';
 import { FileText, BarChart3, Activity, Users } from 'lucide-react';
 
 export default function DashboardPage() {
   const [showPostModal, setShowPostModal] = useState(false);
-  const posts = usePostStore(s => s.posts);
-  const erMode = useSettingsStore(s => s.settings.er_mode);
+  const { posts } = usePosts();
+  const { profile } = useUser();
+  const erMode = profile?.er_mode || 'impression';
 
   const totalPosts = posts.length;
   const totalReach = posts.reduce((s, p) => s + p.reach, 0);

@@ -5,10 +5,10 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { usePostStore } from '@/lib/store/post-store';
-import { usePlatformStore } from '@/lib/store/platform-store';
-import { usePillarStore } from '@/lib/store/pillar-store';
-import { useSettingsStore } from '@/lib/store/settings-store';
+import { usePosts } from '@/lib/hooks/usePosts';
+import { usePlatforms } from '@/lib/hooks/usePlatforms';
+import { usePillars } from '@/lib/hooks/usePillars';
+import { useUser } from '@/lib/hooks/useUser';
 import { calcER, fmt, fmtPercent } from '@/lib/utils/analytics';
 import { formatDate } from '@/lib/utils/formatting';
 import { cn } from '@/lib/utils';
@@ -20,13 +20,14 @@ interface ContentTimelineProps {
 }
 
 export function ContentTimeline({ onEditPost }: ContentTimelineProps) {
-  const { posts, deletePost } = usePostStore();
-  const { platforms } = usePlatformStore();
-  const { pillars } = usePillarStore();
-  const { settings } = useSettingsStore();
+  const { posts, deletePost } = usePosts();
+  const { platforms } = usePlatforms();
+  const { pillars } = usePillars();
+  const { profile } = useUser();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const sorted = [...posts].sort((a, b) => b.date.localeCompare(a.date));
+  const erMode = profile?.er_mode || 'impression';
 
   function getPlatform(platformId: string) {
     return platforms.find(p => p.platform_id === platformId);
@@ -59,7 +60,7 @@ export function ContentTimeline({ onEditPost }: ContentTimelineProps) {
       {sorted.map(post => {
         const platform = getPlatform(post.platform);
         const pillar = getPillar(post.pillar);
-        const er = calcER(post, settings.er_mode);
+        const er = calcER(post, erMode);
         const isExpanded = expandedId === post.id;
 
         return (
@@ -138,7 +139,7 @@ export function ContentTimeline({ onEditPost }: ContentTimelineProps) {
                     <p className="font-medium">{fmt(post.impression)}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground text-xs">ER ({settings.er_mode})</span>
+                    <span className="text-muted-foreground text-xs">ER ({erMode})</span>
                     <p className="font-medium">{fmtPercent(er)}</p>
                   </div>
                   <div>

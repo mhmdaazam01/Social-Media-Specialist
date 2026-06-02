@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { usePostStore } from '@/lib/store/post-store';
-import { usePlatformStore } from '@/lib/store/platform-store';
-import { usePillarStore } from '@/lib/store/pillar-store';
-import { useAccountStore } from '@/lib/store/account-store';
+import { usePosts } from '@/lib/hooks/usePosts';
+import { usePlatforms } from '@/lib/hooks/usePlatforms';
+import { usePillars } from '@/lib/hooks/usePillars';
+import { useAccounts } from '@/lib/hooks/useAccounts';
 import { today } from '@/lib/utils/formatting';
 import type { Post } from '@/types';
 
@@ -61,10 +61,10 @@ const emptyForm: FormFields = {
 };
 
 export function PostModal({ open, onOpenChange, editPost }: PostModalProps) {
-  const { createPost, updatePost } = usePostStore();
-  const { platforms } = usePlatformStore();
-  const { pillars } = usePillarStore();
-  const { accounts } = useAccountStore();
+  const { createPost, updatePost } = usePosts();
+  const { platforms } = usePlatforms();
+  const { pillars } = usePillars();
+  const { accounts } = useAccounts();
   const [form, setForm] = useState<FormFields>(emptyForm);
   const [loading, setLoading] = useState(false);
 

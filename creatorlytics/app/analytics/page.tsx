@@ -15,8 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { usePostStore } from '@/lib/store/post-store';
-import { usePlatformStore } from '@/lib/store/platform-store';
+import { usePosts } from '@/lib/hooks/usePosts';
+import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import {
   aggregateByMonth,
   aggregateByPillar,
@@ -27,8 +27,8 @@ import {
 } from '@/lib/utils/analytics';
 
 export default function AnalyticsPage() {
-  const posts = usePostStore((s) => s.getPosts());
-  const platforms = usePlatformStore((s) => s.platforms);
+  const { posts } = usePosts();
+  const { platforms } = usePlatforms();
   const [platform, setPlatform] = useState('all');
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
 

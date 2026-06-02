@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { PlusIcon } from 'lucide-react';
 import { KanbanBoard } from '@/components/planner/KanbanBoard';
 import { IdeaModal } from '@/components/planner/IdeaModal';
-import { useIdeaStore } from '@/lib/store/idea-store';
+import { useIdeas } from '@/lib/hooks/useIdeas';
 import type { ContentIdea } from '@/types';
 
 export default function PlannerPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editIdea, setEditIdea] = useState<ContentIdea | null>(null);
-  const { ideas, deleteIdea } = useIdeaStore();
+  const { ideas, deleteIdea } = useIdeas();
 
   function handleAdd() {
     setEditIdea(null);

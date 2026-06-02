@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { PlusIcon } from 'lucide-react';
 import { CalendarGrid } from '@/components/calendar/CalendarGrid';
 import { CalEventModal } from '@/components/calendar/CalEventModal';
-import { useEventStore } from '@/lib/store/event-store';
+import { useEvents } from '@/lib/hooks/useEvents';
 import { today } from '@/lib/utils/formatting';
 import type { CalendarEvent } from '@/types';
 
@@ -17,7 +17,7 @@ export default function CalendarPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
-  const { events, deleteEvent } = useEventStore();
+  const { events, deleteEvent } = useEvents();
 
   function handlePrevMonth() {
     if (month === 1) {

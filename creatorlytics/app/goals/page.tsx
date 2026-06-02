@@ -5,8 +5,8 @@ import { AppShell } from '@/components/layout/AppShell';
 import { GoalCard } from '@/components/goals/GoalCard';
 import { GoalModal } from '@/components/goals/GoalModal';
 import { Button } from '@/components/ui/button';
-import { useGoalStore } from '@/lib/store/goal-store';
-import { usePostStore } from '@/lib/store/post-store';
+import { useGoals } from '@/lib/hooks/useGoals';
+import { usePosts } from '@/lib/hooks/usePosts';
 import { Plus, Target } from 'lucide-react';
 import type { Goal, Post } from '@/types';
 
@@ -41,9 +41,8 @@ function calcActual(goal: Goal, posts: Post[]): number {
 }
 
 export default function GoalsPage() {
-  const goals = useGoalStore(s => s.goals);
-  const posts = usePostStore(s => s.posts);
-  const deleteGoal = useGoalStore(s => s.deleteGoal);
+  const { goals, deleteGoal } = useGoals();
+  const { posts } = usePosts();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editGoal, setEditGoal] = useState<Goal | null>(null);

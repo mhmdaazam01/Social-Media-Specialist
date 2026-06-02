@@ -9,7 +9,7 @@ import { PostModal } from '@/components/posts/PostModal';
 import { ContentTimeline } from '@/components/posts/ContentTimeline';
 import { PostRow } from '@/components/posts/PostRow';
 import { CSVImport } from '@/components/posts/CSVImport';
-import { usePostStore } from '@/lib/store/post-store';
+import { usePosts } from '@/lib/hooks/usePosts';
 import { postsToCSV } from '@/lib/utils/export';
 import { PlusIcon, DownloadIcon } from 'lucide-react';
 import type { Post } from '@/types';
@@ -17,7 +17,7 @@ import type { Post } from '@/types';
 export default function ContentPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editPost, setEditPost] = useState<Post | null>(null);
-  const { posts, deletePost } = usePostStore();
+  const { posts, deletePost } = usePosts();
   const [view, setView] = useState<'timeline' | 'table'>('timeline');
   const sorted = [...posts].sort((a, b) => b.date.localeCompare(a.date));
 

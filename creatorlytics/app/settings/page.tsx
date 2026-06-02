@@ -9,27 +9,29 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { useSettingsStore } from '@/lib/store/settings-store';
-import { usePlatformStore } from '@/lib/store/platform-store';
-import { useAccountStore } from '@/lib/store/account-store';
-import { usePillarStore } from '@/lib/store/pillar-store';
-import { usePostStore } from '@/lib/store/post-store';
-import { useGoalStore } from '@/lib/store/goal-store';
-import { useIdeaStore } from '@/lib/store/idea-store';
-import { useEventStore } from '@/lib/store/event-store';
-import { useCompetitorStore } from '@/lib/store/competitor-store';
+import { useUser } from '@/lib/hooks/useUser';
+import { usePlatforms } from '@/lib/hooks/usePlatforms';
+import { useAccounts } from '@/lib/hooks/useAccounts';
+import { usePillars } from '@/lib/hooks/usePillars';
+import { usePosts } from '@/lib/hooks/usePosts';
+import { useGoals } from '@/lib/hooks/useGoals';
+import { useIdeas } from '@/lib/hooks/useIdeas';
+import { useEvents } from '@/lib/hooks/useEvents';
+import { useCompetitors } from '@/lib/hooks/useCompetitors';
 import { exportToJSON, importFromJSON } from '@/lib/utils/export';
 import { Trash2Icon, PlusIcon, DownloadIcon, UploadIcon, SunIcon, MoonIcon } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 export default function SettingsPage() {
-  const { settings, updateSettings } = useSettingsStore();
-  const { platforms, addPlatform, removePlatform } = usePlatformStore();
-  const { accounts, addAccount, removeAccount } = useAccountStore();
-  const { pillars, addPillar, removePillar } = usePillarStore();
+  const { profile } = useUser();
+  const { platforms, addPlatform, removePlatform } = usePlatforms();
+  const { accounts, addAccount, removeAccount } = useAccounts();
+  const { pillars, addPillar, removePillar } = usePillars();
   const importRef = useRef<HTMLInputElement>(null);
+  const supabase = createClient();
 
-  const [displayName, setDisplayName] = useState(settings.display_name);
-  const [niche, setNiche] = useState(settings.niche);
+  const [displayName, setDisplayName] = useState(profile?.display_name || '');
+  const [niche, setNiche] = useState(profile?.niche || '');
 
   const [platformId, setPlatformId] = useState('');
   const [platformName, setPlatformName] = useState('');
@@ -40,9 +42,19 @@ export default function SettingsPage() {
   const [pillarLabel, setPillarLabel] = useState('');
   const [pillarColor, setPillarColor] = useState('#3B82F6');
 
-  function handleSaveProfile() {
-    updateSettings({ display_name: displayName, niche });
-    toast.success('Profil berhasil diperbarui');
+  async function handleSaveProfile() {
+    if (!profile) return;
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ display_name: displayName, niche })
+      .eq('id', profile.id);
+    
+    if (error) {
+      toast.error('Gagal memperbarui profil');
+    } else {
+      toast.success('Profil berhasil diperbarui');
+    }
   }
 
   function handleAddPlatform() {
@@ -85,43 +97,13 @@ export default function SettingsPage() {
   }
 
   function handleExport() {
-    const { posts } = usePostStore.getState();
-    const { goals } = useGoalStore.getState();
-    const { ideas } = useIdeaStore.getState();
-    const { events } = useEventStore.getState();
-    const { competitors } = useCompetitorStore.getState();
-
-    const data = { posts, goals, ideas, events, competitors };
-    exportToJSON(data, 'creatorlytics-data');
-    toast.success('Data berhasil diexport');
+    // TODO: Implement export from Supabase
+    toast.info('Export feature coming soon');
   }
 
   async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const data = (await importFromJSON(file)) as Record<string, unknown>;
-      let count = 0;
-      if (Array.isArray(data.posts)) {
-        usePostStore.getState().importPosts(data.posts as never);
-        count += data.posts.length;
-      }
-      if (Array.isArray(data.goals)) {
-        for (const g of data.goals) { useGoalStore.getState().createGoal(g as never); count++; }
-      }
-      if (Array.isArray(data.ideas)) {
-        for (const i of data.ideas) { useIdeaStore.getState().createIdea(i as never); count++; }
-      }
-      if (Array.isArray(data.events)) {
-        for (const e of data.events) { useEventStore.getState().createEvent(e as never); count++; }
-      }
-      if (Array.isArray(data.competitors)) {
-        for (const c of data.competitors) { useCompetitorStore.getState().createCompetitor(c as never); count++; }
-      }
-      toast.success(`${count} data berhasil diimport`);
-    } catch {
-      toast.error('Gagal mengimport data. Pastikan file JSON valid.');
-    }
+    // TODO: Implement import to Supabase
+    toast.info('Import feature coming soon');
     if (importRef.current) importRef.current.value = '';
   }
 
@@ -152,7 +134,17 @@ export default function SettingsPage() {
             <h3 className="font-medium">Tampilan</h3>
             <div className="grid gap-2">
               <Label>ER Mode</Label>
-              <Select value={settings.er_mode} onValueChange={v => updateSettings({ er_mode: v as 'impression' | 'reach' | 'followers' })}>
+              <Select value={profile?.er_mode || 'impression'} onValueChange={async (v) => {
+                if (!profile) return;
+                const { error } = await supabase
+                  .from('profiles')
+                  .update({ er_mode: v as 'impression' | 'reach' | 'followers' })
+                  .eq('id', profile.id);
+                if (!error) {
+                  toast.success('ER mode berhasil diperbarui');
+                  window.location.reload();
+                }
+              }}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -167,15 +159,37 @@ export default function SettingsPage() {
               <Label>Theme</Label>
               <div className="flex gap-2">
                   <Button
-                    variant={settings.theme === 'dark' ? 'default' : 'outline'}
-                    onClick={() => updateSettings({ theme: 'dark' })}
+                    variant={profile?.theme === 'dark' ? 'default' : 'outline'}
+                    onClick={async () => {
+                      if (!profile) return;
+                      const { error } = await supabase
+                        .from('profiles')
+                        .update({ theme: 'dark' })
+                        .eq('id', profile.id);
+                      if (!error) {
+                        document.documentElement.classList.remove('light');
+                        document.documentElement.classList.add('dark');
+                        toast.success('Theme berhasil diperbarui');
+                      }
+                    }}
                   >
                     <MoonIcon />
                     Dark
                   </Button>
                   <Button
-                    variant={settings.theme === 'light' ? 'default' : 'outline'}
-                    onClick={() => updateSettings({ theme: 'light' })}
+                    variant={profile?.theme === 'light' ? 'default' : 'outline'}
+                    onClick={async () => {
+                      if (!profile) return;
+                      const { error } = await supabase
+                        .from('profiles')
+                        .update({ theme: 'light' })
+                        .eq('id', profile.id);
+                      if (!error) {
+                        document.documentElement.classList.remove('dark');
+                        document.documentElement.classList.add('light');
+                        toast.success('Theme berhasil diperbarui');
+                      }
+                    }}
                   >
                     <SunIcon />
                     Light
