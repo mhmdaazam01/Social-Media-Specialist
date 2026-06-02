@@ -1,0 +1,7 @@
+{
+  "console-ninja.featureSet": "Community",
+  "console-ninja.captureFunctions": true,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "files.eol": "\n"
+}

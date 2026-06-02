@@ -12,8 +12,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { useGoalStore } from '@/lib/store/goal-store';
-import { usePlatformStore } from '@/lib/store/platform-store';
+import { useGoals } from '@/lib/hooks/useGoals';
+import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { currentMonth, currentYear } from '@/lib/utils/formatting';
 import { toast } from 'sonner';
 import type { Goal } from '@/types';
@@ -45,9 +45,8 @@ const initialState: FormState = {
 };
 
 export function GoalModal({ open, onOpenChange, editGoal }: GoalModalProps) {
-  const createGoal = useGoalStore(s => s.createGoal);
-  const updateGoal = useGoalStore(s => s.updateGoal);
-  const platforms = usePlatformStore(s => s.platforms);
+  const { createGoal, updateGoal } = useGoals();
+  const { platforms } = usePlatforms();
 
   const [form, setForm] = useState<FormState>(initialState);
 
@@ -74,7 +73,7 @@ export function GoalModal({ open, onOpenChange, editGoal }: GoalModalProps) {
     setForm(prev => ({ ...prev, [key]: value }));
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!form.label.trim()) {
       toast.error('Label goal harus diisi');
       return;
@@ -98,11 +97,16 @@ export function GoalModal({ open, onOpenChange, editGoal }: GoalModalProps) {
     };
 
     if (editGoal) {
-      updateGoal(editGoal.id, data);
+      await updateGoal(editGoal.id, data);
       toast.success('Goal berhasil diperbarui');
     } else {
-      createGoal(data);
-      toast.success('Goal berhasil dibuat');
+      const result = await createGoal(data);
+      if (result) {
+        toast.success('Goal berhasil dibuat');
+      } else {
+        toast.error('Gagal membuat goal. Silakan coba lagi.');
+        return;
+      }
     }
 
     onOpenChange(false);

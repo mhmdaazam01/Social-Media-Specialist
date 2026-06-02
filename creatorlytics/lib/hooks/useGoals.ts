@@ -21,13 +21,18 @@ export function useGoals() {
   }, [user]);
 
   async function fetchGoals() {
+    console.log('🔍 [useGoals] Fetching goals...');
     const { data, error } = await supabase
       .from('goals')
       .select('*')
       .order('created_at', { ascending: false });
 
+    console.log('🔍 [useGoals] Response:', { data, error });
     if (!error && data) {
+      console.log('✅ [useGoals] Goals loaded:', data.length, 'goals');
       setGoals(data);
+    } else if (error) {
+      console.error('❌ [useGoals] Error:', error);
     }
     setLoading(false);
   }
@@ -35,15 +40,20 @@ export function useGoals() {
   async function createGoal(goal: Omit<Goal, 'id' | 'created_at'>) {
     if (!user) return null;
 
+    console.log('🔍 [useGoals] Creating goal:', goal);
     const { data, error } = await supabase
       .from('goals')
       .insert([{ ...goal, user_id: user.id }])
       .select()
       .single();
 
+    console.log('🔍 [useGoals] Create response:', { data, error });
     if (!error && data) {
+      console.log('✅ [useGoals] Goal created successfully:', data);
       setGoals([data, ...goals]);
       return data;
+    } else if (error) {
+      console.error('❌ [useGoals] Create error:', error);
     }
     return null;
   }

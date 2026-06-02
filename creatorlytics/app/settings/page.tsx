@@ -33,12 +33,8 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState(profile?.display_name || '');
   const [niche, setNiche] = useState(profile?.niche || '');
 
-  const [platformId, setPlatformId] = useState('');
   const [platformName, setPlatformName] = useState('');
-
   const [accountName, setAccountName] = useState('');
-
-  const [pillarId, setPillarId] = useState('');
   const [pillarLabel, setPillarLabel] = useState('');
   const [pillarColor, setPillarColor] = useState('#3B82F6');
 
@@ -58,12 +54,13 @@ export default function SettingsPage() {
   }
 
   function handleAddPlatform() {
-    if (!platformId.trim() || !platformName.trim()) {
-      toast.error('Platform ID dan Nama wajib diisi');
+    if (!platformName.trim()) {
+      toast.error('Nama platform wajib diisi');
       return;
     }
+    // Auto-generate ID from name: "Instagram" -> "instagram", "TikTok" -> "tiktok"
+    const platformId = platformName.toLowerCase().replace(/\s+/g, '-');
     addPlatform({ platform_id: platformId, name: platformName, emoji: '' });
-    setPlatformId('');
     setPlatformName('');
     toast.success('Platform berhasil ditambahkan');
   }
@@ -79,10 +76,12 @@ export default function SettingsPage() {
   }
 
   function handleAddPillar() {
-    if (!pillarId.trim() || !pillarLabel.trim()) {
-      toast.error('Pilar ID dan Label wajib diisi');
+    if (!pillarLabel.trim()) {
+      toast.error('Label pilar wajib diisi');
       return;
     }
+    // Auto-generate ID from label: "Edukasi" -> "edukasi", "Tips & Trik" -> "tips-trik"
+    const pillarId = pillarLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     addPillar({
       pillar_id: pillarId,
       label: pillarLabel,
@@ -90,7 +89,6 @@ export default function SettingsPage() {
       color: pillarColor,
       bg: pillarColor + '20',
     });
-    setPillarId('');
     setPillarLabel('');
     setPillarColor('#3B82F6');
     toast.success('Pilar berhasil ditambahkan');
@@ -211,9 +209,7 @@ export default function SettingsPage() {
               <div className="flex flex-col gap-2">
                 {platforms.map(p => (
                   <div key={p.id} className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
-                    <span className="text-sm">
-                      {p.name} <span className="text-xs text-muted-foreground">({p.platform_id})</span>
-                    </span>
+                    <span className="text-sm">{p.name}</span>
                     <Button variant="ghost" size="icon-xs" onClick={() => removePlatform(p.id)}>
                       <Trash2Icon />
                     </Button>
@@ -222,20 +218,17 @@ export default function SettingsPage() {
               </div>
             )}
             <Separator />
-            <div className="grid grid-cols-2 gap-2">
-              <div className="grid gap-1">
-                <Label className="text-xs">Platform ID</Label>
-                <Input value={platformId} onChange={e => setPlatformId(e.target.value)} placeholder="ig" />
-              </div>
-              <div className="grid gap-1">
-                <Label className="text-xs">Nama</Label>
-                <Input value={platformName} onChange={e => setPlatformName(e.target.value)} placeholder="Instagram" />
-              </div>
+            <div className="flex gap-2">
+              <Input 
+                value={platformName} 
+                onChange={e => setPlatformName(e.target.value)} 
+                placeholder="Nama platform (misal: Instagram)" 
+              />
+              <Button variant="outline" onClick={handleAddPlatform}>
+                <PlusIcon />
+                Tambah
+              </Button>
             </div>
-            <Button variant="outline" className="self-start" onClick={handleAddPlatform}>
-              <PlusIcon />
-              Tambah Platform
-            </Button>
           </CardContent>
         </Card>
 
@@ -285,7 +278,6 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-2">
                       <span className="size-3 rounded-full" style={{ backgroundColor: p.color }} />
                       <span className="text-sm">{p.label}</span>
-                      <span className="text-xs text-muted-foreground">({p.pillar_id})</span>
                     </div>
                     <Button variant="ghost" size="icon-xs" onClick={() => removePillar(p.id)}>
                       <Trash2Icon />
@@ -295,11 +287,7 @@ export default function SettingsPage() {
               </div>
             )}
             <Separator />
-            <div className="grid grid-cols-3 gap-2">
-              <div className="grid gap-1">
-                <Label className="text-xs">Pillar ID</Label>
-                <Input value={pillarId} onChange={e => setPillarId(e.target.value)} placeholder="educational" />
-              </div>
+            <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-1">
                 <Label className="text-xs">Label</Label>
                 <Input value={pillarLabel} onChange={e => setPillarLabel(e.target.value)} placeholder="Edukasi" />

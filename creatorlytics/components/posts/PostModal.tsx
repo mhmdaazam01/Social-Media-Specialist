@@ -143,7 +143,7 @@ export function PostModal({ open, onOpenChange, editPost }: PostModalProps) {
               </SelectTrigger>
               <SelectContent>
                 {accounts.map(a => (
-                  <SelectItem key={a.id} value={a.id}>
+                  <SelectItem key={a.id} value={a.name}>
                     {a.name}
                   </SelectItem>
                 ))}

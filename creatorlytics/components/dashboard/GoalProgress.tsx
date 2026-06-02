@@ -2,12 +2,13 @@
 
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useGoalStore } from '@/lib/store/goal-store';
-import { usePostStore } from '@/lib/store/post-store';
+import { useGoals } from '@/lib/hooks/useGoals';
+import { usePosts } from '@/lib/hooks/usePosts';
 import { currentMonth, currentYear } from '@/lib/utils/formatting';
 import { Target } from 'lucide-react';
+import type { Post } from '@/types';
 
-function calcProgress(posts: ReturnType<typeof usePostStore.getState>['posts'], metric: string): number {
+function calcProgress(posts: Post[], metric: string): number {
   switch (metric) {
     case 'reach':
       return posts.reduce((s, p) => s + p.reach, 0);
@@ -39,13 +40,42 @@ const metricLabels: Record<string, string> = {
 };
 
 export function GoalProgress() {
-  const goals = useGoalStore(s => s.goals);
-  const posts = usePostStore(s => s.posts);
+  const { goals, loading: goalsLoading } = useGoals();
+  const { posts, loading: postsLoading } = usePosts();
 
   const currentGoals = useMemo(
-    () => goals.filter(g => g.month === currentMonth() && g.year === currentYear()),
+    () => {
+      const month = currentMonth();
+      const year = currentYear();
+      console.log('🔍 [GoalProgress] Filtering goals for:', { month, year });
+      console.log('🔍 [GoalProgress] Total goals:', goals.length);
+      const filtered = goals.filter(g => {
+        console.log('🔍 [GoalProgress] Goal:', g.label, '- Month:', g.month, 'Year:', g.year);
+        return g.month === month && g.year === year;
+      });
+      console.log('✅ [GoalProgress] Filtered goals:', filtered.length);
+      return filtered;
+    },
     [goals]
   );
+
+  if (goalsLoading || postsLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target size={18} className="text-muted-foreground" />
+            Progress Goal
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <p className="text-sm text-muted-foreground">Memuat goals...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (currentGoals.length === 0) {
     return (

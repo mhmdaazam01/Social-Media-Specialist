@@ -155,7 +155,7 @@ export function CalEventModal({ open, onOpenChange, editEvent, defaultDate }: Ca
                 <SelectContent>
                   <SelectItem value="">-</SelectItem>
                   {accounts.map(a => (
-                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                    <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
