@@ -1,6 +1,5 @@
 'use client';
 
-import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
 import { useEffect } from 'react';
 import { useSettingsStore } from '@/lib/store/settings-store';
@@ -14,14 +13,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme={theme}
-      enableSystem={false}
-      disableTransitionOnChange
-    >
+    <>
       {children}
       <Toaster position="top-right" richColors />
-    </ThemeProvider>
+    </>
   );
 }

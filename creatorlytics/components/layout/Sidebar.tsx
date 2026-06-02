@@ -4,14 +4,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, BarChart3, FileText, Target, FileSpreadsheet,
-  ClipboardList, Calendar, Users, Settings, Sun, Moon,
+  ClipboardList, Calendar, Users, Settings, Sun, Moon, LogOut,
 } from 'lucide-react';
 import { NAV_ITEMS, APP_NAME } from '@/lib/constants';
-import { useSettingsStore } from '@/lib/store/settings-store';
+import { useUser } from '@/lib/hooks/useUser';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const iconMap: Record<string, React.ReactNode> = {
   LayoutDashboard: <LayoutDashboard size={20} />,
@@ -27,8 +28,8 @@ const iconMap: Record<string, React.ReactNode> = {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { settings, updateSettings } = useSettingsStore();
-  const displayName = settings.display_name || 'Kreator';
+  const { profile, signOut } = useUser();
+  const displayName = profile?.display_name || 'Kreator';
 
   return (
     <aside className="hidden lg:flex lg:flex-col w-64 h-screen border-r bg-card fixed left-0 top-0 z-30">
@@ -62,31 +63,27 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-3 border-t space-y-2">
-        <div className="flex items-center justify-between px-3 py-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center justify-center h-8 w-8 rounded-md hover:bg-accent cursor-pointer">
-              {settings.theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => updateSettings({ theme: 'light' })}>
-                <Sun size={16} className="mr-2" /> Light
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => updateSettings({ theme: 'dark' })}>
-                <Moon size={16} className="mr-2" /> Dark
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/50">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">
-            {displayName.charAt(0).toUpperCase()}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{displayName}</p>
-          </div>
-        </div>
+      <div className="p-3 border-t">
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex w-full items-center gap-3 px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
+              <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
+                {displayName.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-sm font-medium truncate">{displayName}</p>
+              <p className="text-xs text-muted-foreground truncate">{profile?.email}</p>
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={signOut} className="text-red-600 cursor-pointer">
+              <LogOut size={16} className="mr-2" />
+              Keluar
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </aside>
   );

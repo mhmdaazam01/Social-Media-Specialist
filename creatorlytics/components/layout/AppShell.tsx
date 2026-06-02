@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@/lib/hooks/useUser';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { MobileNav } from './MobileNav';
@@ -14,17 +15,29 @@ interface AppShellProps {
 
 export function AppShell({ children, title = 'Dashboard', onAddPost }: AppShellProps) {
   const [mounted, setMounted] = useState(false);
+  const { user, loading } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
+  useEffect(() => {
+    if (mounted && !loading && !user) {
+      router.replace('/login');
+    }
+  }, [mounted, user, loading, router]);
+
+  if (!mounted || loading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Memuat...</div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (

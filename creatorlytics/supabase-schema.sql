@@ -1,238 +1,329 @@
--- ══════════════════════════════════════════════════════════════
--- Creatorlytics v2 — Full Supabase Schema
--- Jalankan SQL ini di Supabase SQL Editor (satu kali)
--- ══════════════════════════════════════════════════════════════
+-- Enable UUID extension
+create extension if not exists "uuid-ossp";
 
--- ══ TABEL 1: Profiles (gabungan user_profiles + auth) ══
-CREATE TABLE IF NOT EXISTS profiles (
-  id           UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  email        TEXT,
-  full_name    TEXT DEFAULT '',
-  display_name TEXT DEFAULT '',
-  avatar_url   TEXT DEFAULT '',
-  niche        TEXT DEFAULT '',
-  er_mode      TEXT DEFAULT 'impression',
-  theme        TEXT DEFAULT 'dark',
-  created_at   TIMESTAMPTZ DEFAULT now(),
-  updated_at   TIMESTAMPTZ DEFAULT now(),
-  last_seen    TIMESTAMPTZ DEFAULT now()
+-- Profiles table (auto-created on signup)
+create table public.profiles (
+  id uuid references auth.users on delete cascade primary key,
+  email text unique not null,
+  display_name text not null default 'Kreator',
+  avatar_url text,
+  niche text default '',
+  er_mode text not null default 'impression' check (er_mode in ('impression', 'reach', 'followers')),
+  theme text not null default 'dark' check (theme in ('dark', 'light')),
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own profile"
-  ON profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users can update own profile"
-  ON profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
-
--- Auto-create profile saat user baru register
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO profiles (id, email, full_name, avatar_url, display_name)
-  VALUES (
-    NEW.id,
-    NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
-    NEW.raw_user_meta_data->>'avatar_url',
-    COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1))
-  )
-  ON CONFLICT (id) DO NOTHING;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
-
--- ══ TABEL 2: Accounts ══
-CREATE TABLE IF NOT EXISTS accounts (
-  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  name       TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
+-- Platforms table
+create table public.platforms (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  platform_id text not null,
+  name text not null,
+  emoji text default '',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(user_id, platform_id)
 );
 
--- ══ TABEL 3: Platforms ══
-CREATE TABLE IF NOT EXISTS platforms (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  platform_id TEXT NOT NULL,
-  name        TEXT NOT NULL,
-  emoji       TEXT DEFAULT ''
+-- Accounts table
+create table public.accounts (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  name text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- ══ TABEL 4: Posts ══
-CREATE TABLE IF NOT EXISTS posts (
-  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id          UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  account          TEXT NOT NULL,
-  platform         TEXT NOT NULL,
-  date             DATE,
-  name             TEXT DEFAULT '',
-  reach            INT DEFAULT 0,
-  impression       INT DEFAULT 0,
-  "like"           INT DEFAULT 0,
-  "comment"        INT DEFAULT 0,
-  "share"          INT DEFAULT 0,
-  save             INT DEFAULT 0,
-  repost           INT DEFAULT 0,
-  followers_gained INT DEFAULT 0,
-  profile_visit    INT DEFAULT 0,
-  pillar           TEXT DEFAULT 'other',
-  format           TEXT DEFAULT '',
-  caption_len      INT DEFAULT 0,
-  link             TEXT DEFAULT '',
-  created_at       TIMESTAMPTZ DEFAULT now()
+-- Pillars table
+create table public.pillars (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  pillar_id text not null,
+  label text not null,
+  emoji text default '',
+  color text not null,
+  bg text not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(user_id, pillar_id)
 );
 
-CREATE INDEX IF NOT EXISTS posts_user_id_idx ON posts(user_id);
-CREATE INDEX IF NOT EXISTS posts_date_idx ON posts(date DESC);
-CREATE INDEX IF NOT EXISTS posts_platform_idx ON posts(platform);
-CREATE INDEX IF NOT EXISTS posts_user_date_idx ON posts(user_id, date DESC);
-
--- ══ TABEL 5: Goals ══
-CREATE TABLE IF NOT EXISTS goals (
-  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  label      TEXT NOT NULL,
-  emoji      TEXT DEFAULT '',
-  target     NUMERIC DEFAULT 0,
-  platform   TEXT DEFAULT 'all',
-  metric     TEXT NOT NULL,
-  month      INT,
-  year       INT,
-  created_at TIMESTAMPTZ DEFAULT now()
+-- Posts table
+create table public.posts (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  account text not null,
+  platform text not null,
+  date text not null,
+  name text not null,
+  reach integer default 0,
+  impression integer default 0,
+  "like" integer default 0,
+  comment integer default 0,
+  share integer default 0,
+  save integer default 0,
+  repost integer default 0,
+  followers_gained integer default 0,
+  profile_visit integer default 0,
+  pillar text not null,
+  format text not null,
+  caption_len integer default 0,
+  link text default '',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- ══ TABEL 6: Content Ideas ══
-CREATE TABLE IF NOT EXISTS content_ideas (
-  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  title      TEXT NOT NULL,
-  "desc"     TEXT DEFAULT '',
-  platform   TEXT DEFAULT '',
-  pillar     TEXT DEFAULT '',
-  format     TEXT DEFAULT '',
-  "status"   TEXT DEFAULT 'idea',
-  priority   TEXT DEFAULT 'med',
-  tags       TEXT[] DEFAULT '{}',
-  brief      JSONB DEFAULT '{}',
-  ref_links  JSONB DEFAULT '[]',
-  created_at TIMESTAMPTZ DEFAULT now()
+-- Goals table
+create table public.goals (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  label text not null,
+  emoji text default '',
+  target integer not null,
+  platform text not null,
+  metric text not null,
+  month integer not null,
+  year integer not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- ══ TABEL 7: Calendar Events ══
-CREATE TABLE IF NOT EXISTS calendar_events (
-  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id        UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  title          TEXT NOT NULL,
-  platform       TEXT DEFAULT '',
-  account        TEXT DEFAULT '',
-  pillar         TEXT DEFAULT '',
-  format         TEXT DEFAULT '',
-  scheduled_date DATE,
-  scheduled_time TEXT DEFAULT '',
-  "status"       TEXT DEFAULT 'idea',
-  idea_id        UUID REFERENCES content_ideas(id) ON DELETE SET NULL,
-  notes          TEXT DEFAULT '',
-  created_at     TIMESTAMPTZ DEFAULT now()
+-- Content Ideas table
+create table public.content_ideas (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  title text not null,
+  description text default '',
+  platform text not null,
+  pillar text not null,
+  format text not null,
+  status text not null default 'idea' check (status in ('idea', 'brief', 'draft', 'ready')),
+  priority text not null default 'med' check (priority in ('low', 'med', 'high')),
+  tags text[] default '{}',
+  brief jsonb default '{}',
+  ref_links text[] default '{}',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- ══ TABEL 8: Competitors ══
-CREATE TABLE IF NOT EXISTS competitors (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  name        TEXT NOT NULL,
-  platform    TEXT NOT NULL,
-  followers   INT DEFAULT 0,
-  avg_reach   INT DEFAULT 0,
-  avg_er      NUMERIC DEFAULT 0,
-  post_freq   NUMERIC DEFAULT 0,
-  notes       TEXT DEFAULT '',
-  updated_at  TIMESTAMPTZ DEFAULT now(),
-  created_at  TIMESTAMPTZ DEFAULT now()
+-- Calendar Events table
+create table public.calendar_events (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  title text not null,
+  platform text not null,
+  account text not null,
+  pillar text not null,
+  format text not null,
+  scheduled_date text not null,
+  scheduled_time text not null,
+  status text not null default 'scheduled' check (status in ('idea', 'scheduled', 'published', 'cancelled')),
+  idea_id uuid references public.content_ideas(id) on delete set null,
+  notes text default '',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- ══ TABEL 9: Pillars ══
-CREATE TABLE IF NOT EXISTS pillars (
-  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  pillar_id  TEXT NOT NULL,
-  label      TEXT NOT NULL,
-  emoji      TEXT DEFAULT '',
-  color      TEXT DEFAULT '#6B7280',
-  bg         TEXT DEFAULT '#F9FAFB'
+-- Competitors table
+create table public.competitors (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  name text not null,
+  platform text not null,
+  followers integer default 0,
+  avg_reach integer default 0,
+  avg_er numeric default 0,
+  post_freq integer default 0,
+  notes text default '',
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- ══ ROW LEVEL SECURITY ══
+-- Row Level Security (RLS) Policies
+alter table public.profiles enable row level security;
+alter table public.platforms enable row level security;
+alter table public.accounts enable row level security;
+alter table public.pillars enable row level security;
+alter table public.posts enable row level security;
+alter table public.goals enable row level security;
+alter table public.content_ideas enable row level security;
+alter table public.calendar_events enable row level security;
+alter table public.competitors enable row level security;
 
-ALTER TABLE profiles   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE accounts        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE platforms       ENABLE ROW LEVEL SECURITY;
-ALTER TABLE posts           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE goals           ENABLE ROW LEVEL SECURITY;
-ALTER TABLE content_ideas   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE calendar_events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE competitors     ENABLE ROW LEVEL SECURITY;
-ALTER TABLE pillars         ENABLE ROW LEVEL SECURITY;
+-- Profiles policies
+create policy "Users can view own profile"
+  on public.profiles for select
+  using (auth.uid() = id);
 
--- Hapus policies lama (kalau ada)
-DO $$ BEGIN
-  DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
-  DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
-  DROP POLICY IF EXISTS "Users can view own accounts" ON accounts;
-  DROP POLICY IF EXISTS "Users can insert own accounts" ON accounts;
-  DROP POLICY IF EXISTS "Users can update own accounts" ON accounts;
-  DROP POLICY IF EXISTS "Users can delete own accounts" ON accounts;
-  DROP POLICY IF EXISTS "Users can view own platforms" ON platforms;
-  DROP POLICY IF EXISTS "Users can insert own platforms" ON platforms;
-  DROP POLICY IF EXISTS "Users can update own platforms" ON platforms;
-  DROP POLICY IF EXISTS "Users can delete own platforms" ON platforms;
-  DROP POLICY IF EXISTS "Users can view own posts" ON posts;
-  DROP POLICY IF EXISTS "Users can insert own posts" ON posts;
-  DROP POLICY IF EXISTS "Users can update own posts" ON posts;
-  DROP POLICY IF EXISTS "Users can delete own posts" ON posts;
-  DROP POLICY IF EXISTS "Users can view own goals" ON goals;
-  DROP POLICY IF EXISTS "Users can insert own goals" ON goals;
-  DROP POLICY IF EXISTS "Users can update own goals" ON goals;
-  DROP POLICY IF EXISTS "Users can delete own goals" ON goals;
-  DROP POLICY IF EXISTS "Users can view own ideas" ON content_ideas;
-  DROP POLICY IF EXISTS "Users can insert own ideas" ON content_ideas;
-  DROP POLICY IF EXISTS "Users can update own ideas" ON content_ideas;
-  DROP POLICY IF EXISTS "Users can delete own ideas" ON content_ideas;
-  DROP POLICY IF EXISTS "Users can view own events" ON calendar_events;
-  DROP POLICY IF EXISTS "Users can insert own events" ON calendar_events;
-  DROP POLICY IF EXISTS "Users can update own events" ON calendar_events;
-  DROP POLICY IF EXISTS "Users can delete own events" ON calendar_events;
-  DROP POLICY IF EXISTS "Users can view own competitors" ON competitors;
-  DROP POLICY IF EXISTS "Users can insert own competitors" ON competitors;
-  DROP POLICY IF EXISTS "Users can update own competitors" ON competitors;
-  DROP POLICY IF EXISTS "Users can delete own competitors" ON competitors;
-  DROP POLICY IF EXISTS "Users can view own pillars" ON pillars;
-  DROP POLICY IF EXISTS "Users can insert own pillars" ON pillars;
-  DROP POLICY IF EXISTS "Users can update own pillars" ON pillars;
-  DROP POLICY IF EXISTS "Users can delete own pillars" ON pillars;
-END $$;
+create policy "Users can update own profile"
+  on public.profiles for update
+  using (auth.uid() = id);
 
--- Profiles (special — only select/update)
-CREATE POLICY "Users can view own profile" ON profiles
-  FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users can update own profile" ON profiles
-  FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+-- Platforms policies
+create policy "Users can view own platforms"
+  on public.platforms for select
+  using (auth.uid() = user_id);
 
--- Helper function to generate policy SQL for other tables
-DO $$
-DECLARE
-  tables TEXT[] := ARRAY['accounts', 'platforms', 'posts', 'goals', 'content_ideas', 'calendar_events', 'competitors', 'pillars'];
-  t TEXT;
-BEGIN
-  FOREACH t IN ARRAY tables LOOP
-    EXECUTE format('CREATE POLICY "Users can view own %s" ON %I FOR SELECT USING (auth.uid() = user_id);', t, t);
-    EXECUTE format('CREATE POLICY "Users can insert own %s" ON %I FOR INSERT WITH CHECK (auth.uid() = user_id);', t, t);
-    EXECUTE format('CREATE POLICY "Users can update own %s" ON %I FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);', t, t);
-    EXECUTE format('CREATE POLICY "Users can delete own %s" ON %I FOR DELETE USING (auth.uid() = user_id);', t, t);
-  END LOOP;
-END $$;
+create policy "Users can insert own platforms"
+  on public.platforms for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update own platforms"
+  on public.platforms for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete own platforms"
+  on public.platforms for delete
+  using (auth.uid() = user_id);
+
+-- Accounts policies
+create policy "Users can view own accounts"
+  on public.accounts for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert own accounts"
+  on public.accounts for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update own accounts"
+  on public.accounts for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete own accounts"
+  on public.accounts for delete
+  using (auth.uid() = user_id);
+
+-- Pillars policies
+create policy "Users can view own pillars"
+  on public.pillars for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert own pillars"
+  on public.pillars for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update own pillars"
+  on public.pillars for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete own pillars"
+  on public.pillars for delete
+  using (auth.uid() = user_id);
+
+-- Posts policies
+create policy "Users can view own posts"
+  on public.posts for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert own posts"
+  on public.posts for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update own posts"
+  on public.posts for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete own posts"
+  on public.posts for delete
+  using (auth.uid() = user_id);
+
+-- Goals policies
+create policy "Users can view own goals"
+  on public.goals for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert own goals"
+  on public.goals for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update own goals"
+  on public.goals for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete own goals"
+  on public.goals for delete
+  using (auth.uid() = user_id);
+
+-- Content Ideas policies
+create policy "Users can view own content ideas"
+  on public.content_ideas for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert own content ideas"
+  on public.content_ideas for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update own content ideas"
+  on public.content_ideas for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete own content ideas"
+  on public.content_ideas for delete
+  using (auth.uid() = user_id);
+
+-- Calendar Events policies
+create policy "Users can view own calendar events"
+  on public.calendar_events for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert own calendar events"
+  on public.calendar_events for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update own calendar events"
+  on public.calendar_events for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete own calendar events"
+  on public.calendar_events for delete
+  using (auth.uid() = user_id);
+
+-- Competitors policies
+create policy "Users can view own competitors"
+  on public.competitors for select
+  using (auth.uid() = user_id);
+
+create policy "Users can insert own competitors"
+  on public.competitors for insert
+  with check (auth.uid() = user_id);
+
+create policy "Users can update own competitors"
+  on public.competitors for update
+  using (auth.uid() = user_id);
+
+create policy "Users can delete own competitors"
+  on public.competitors for delete
+  using (auth.uid() = user_id);
+
+-- Function to auto-create profile on signup
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, email, display_name, avatar_url)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data->>'full_name', 'Kreator'),
+    new.raw_user_meta_data->>'avatar_url'
+  );
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- Trigger to call function on new user
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+-- Function to update updated_at timestamp
+create or replace function public.handle_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+-- Trigger for profiles updated_at
+create trigger on_profile_updated
+  before update on public.profiles
+  for each row execute procedure public.handle_updated_at();
+
+-- Trigger for competitors updated_at
+create trigger on_competitor_updated
+  before update on public.competitors
+  for each row execute procedure public.handle_updated_at();

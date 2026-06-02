@@ -4,20 +4,6 @@ export type PostStatus = 'idea' | 'brief' | 'draft' | 'ready';
 export type Priority = 'low' | 'med' | 'high';
 export type EventStatus = 'idea' | 'scheduled' | 'published' | 'cancelled';
 
-export interface UserProfile {
-  id: string;
-  email: string;
-  full_name: string;
-  display_name: string;
-  avatar_url: string;
-  niche: string;
-  er_mode: ErMode;
-  theme: Theme;
-  created_at: string;
-  updated_at: string;
-  last_seen: string;
-}
-
 export interface Account {
   id: string;
   name: string;
@@ -68,7 +54,7 @@ export interface Goal {
 export interface ContentIdea {
   id: string;
   title: string;
-  desc: string;
+  description: string;
   platform: string;
   pillar: string;
   format: string;

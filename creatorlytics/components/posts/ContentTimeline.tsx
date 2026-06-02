@@ -65,37 +65,42 @@ export function ContentTimeline({ onEditPost }: ContentTimelineProps) {
         return (
           <Card key={post.id} size="sm" className={cn(isExpanded && 'border-primary/30')}>
             <CardContent>
-              <button
-                type="button"
-                className="flex w-full items-start gap-3 text-left"
-                onClick={() => setExpandedId(isExpanded ? null : post.id)}
-              >
-                <div className="mt-0.5 shrink-0">
-                  <Badge variant="secondary" className="text-[10px]">{platform?.name || post.platform}</Badge>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium truncate">{post.name || 'Tanpa Judul'}</span>
-                    {pillar && (
-                      <Badge
-                        variant="outline"
-                        className="shrink-0 text-[10px]"
-                        style={{
-                          borderColor: pillar.color,
-                          color: pillar.color,
-                          backgroundColor: pillar.bg,
-                        }}
-                      >
-                        {pillar.label}
-                      </Badge>
-                    )}
+              <div className="flex w-full items-start gap-3">
+                <button
+                  type="button"
+                  className="flex flex-1 items-start gap-3 text-left min-w-0"
+                  onClick={() => setExpandedId(isExpanded ? null : post.id)}
+                >
+                  <div className="mt-0.5 shrink-0">
+                    <Badge variant="secondary" className="text-[10px]">{platform?.name || post.platform}</Badge>
                   </div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                    <span>{formatDate(post.date)}</span>
-                    <span>Reach: {fmt(post.reach)}</span>
-                    <span>ER: {fmtPercent(er)}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium truncate">{post.name || 'Tanpa Judul'}</span>
+                      {pillar && (
+                        <Badge
+                          variant="outline"
+                          className="shrink-0 text-[10px]"
+                          style={{
+                            borderColor: pillar.color,
+                            color: pillar.color,
+                            backgroundColor: pillar.bg,
+                          }}
+                        >
+                          {pillar.label}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                      <span>{formatDate(post.date)}</span>
+                      <span>Reach: {fmt(post.reach)}</span>
+                      <span>ER: {fmtPercent(er)}</span>
+                    </div>
                   </div>
-                </div>
+                  <span className="text-muted-foreground shrink-0 ml-auto">
+                    {isExpanded ? <ChevronUpIcon className="size-4" /> : <ChevronDownIcon className="size-4" />}
+                  </span>
+                </button>
                 <div className="flex items-center gap-1 shrink-0">
                   {onEditPost && (
                     <Button
@@ -119,11 +124,8 @@ export function ContentTimeline({ onEditPost }: ContentTimelineProps) {
                   >
                     <Trash2Icon />
                   </Button>
-                  <span className="text-muted-foreground">
-                    {isExpanded ? <ChevronUpIcon className="size-4" /> : <ChevronDownIcon className="size-4" />}
-                  </span>
                 </div>
-              </button>
+              </div>
 
               {isExpanded && (
                 <div className="mt-3 grid grid-cols-2 gap-2 border-t pt-3 text-sm sm:grid-cols-3">
