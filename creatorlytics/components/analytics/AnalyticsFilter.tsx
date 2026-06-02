@@ -1,7 +1,7 @@
 'use client';
 
 import { RotateCcw } from 'lucide-react';
-import { usePlatformStore } from '@/lib/store/platform-store';
+import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import {
   Select,
   SelectContent,
@@ -25,7 +25,7 @@ export function AnalyticsFilter({
   dateRange,
   onDateRangeChange,
 }: AnalyticsFilterProps) {
-  const platforms = usePlatformStore((s) => s.platforms);
+  const { platforms } = usePlatforms();
 
   const handleReset = () => {
     onPlatformChange('all');

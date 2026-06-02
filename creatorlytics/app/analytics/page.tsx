@@ -33,9 +33,15 @@ export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
   const filteredPosts = useMemo(() => {
+    console.log('🔍 [Analytics] All posts:', posts.length);
+    console.log('🔍 [Analytics] Filter platform:', platform);
+    console.log('🔍 [Analytics] Available platforms:', platforms.map(p => ({ id: p.platform_id, name: p.name })));
+    
     let filtered = posts;
     if (platform !== 'all') {
+      console.log('🔍 [Analytics] Posts before filter:', filtered.map(p => ({ name: p.name, platform: p.platform })));
       filtered = filtered.filter((p) => p.platform === platform);
+      console.log('🔍 [Analytics] Posts after filter:', filtered.length);
     }
     if (dateRange.from) {
       filtered = filtered.filter((p) => p.date >= dateRange.from);
@@ -43,8 +49,9 @@ export default function AnalyticsPage() {
     if (dateRange.to) {
       filtered = filtered.filter((p) => p.date <= dateRange.to);
     }
+    console.log('✅ [Analytics] Final filtered posts:', filtered.length);
     return filtered;
-  }, [posts, platform, dateRange]);
+  }, [posts, platform, dateRange, platforms]);
 
   const byMonth = useMemo(() => aggregateByMonth(filteredPosts), [filteredPosts]);
   const byPillar = useMemo(() => aggregateByPillar(filteredPosts), [filteredPosts]);
