@@ -36,7 +36,6 @@ interface FormFields {
   profile_visit: number;
   pillar: string;
   format: string;
-  caption_len: number;
   link: string;
 }
 
@@ -56,9 +55,10 @@ const emptyForm: FormFields = {
   profile_visit: 0,
   pillar: '',
   format: '',
-  caption_len: 0,
   link: '',
 };
+
+const FORMAT_OPTIONS = ['Reels', 'Carousel', 'Static', 'Video', 'Story', 'Live'];
 
 export function PostModal({ open, onOpenChange, editPost }: PostModalProps) {
   const { createPost, updatePost } = usePosts();
@@ -87,7 +87,6 @@ export function PostModal({ open, onOpenChange, editPost }: PostModalProps) {
         profile_visit: editPost.profile_visit,
         pillar: editPost.pillar,
         format: editPost.format,
-        caption_len: editPost.caption_len,
         link: editPost.link,
       });
     } else {
@@ -107,11 +106,16 @@ export function PostModal({ open, onOpenChange, editPost }: PostModalProps) {
   async function handleSubmit() {
     setLoading(true);
     try {
+      const postData = {
+        ...form,
+        caption_len: 0, // Set default value since we removed it from form
+      };
+      
       if (editPost) {
-        updatePost(editPost.id, form);
+        await updatePost(editPost.id, postData);
         toast.success('Postingan berhasil diperbarui');
       } else {
-        createPost(form);
+        await createPost(postData);
         toast.success('Postingan berhasil ditambahkan');
       }
       onOpenChange(false);
@@ -135,6 +139,7 @@ export function PostModal({ open, onOpenChange, editPost }: PostModalProps) {
         </DialogHeader>
 
         <div className="grid gap-4">
+          {/* 1. Pilih Akun */}
           <div className="grid gap-2">
             <Label htmlFor="account">Akun</Label>
             <Select value={form.account} onValueChange={v => update('account', v ?? '')}>
@@ -151,6 +156,7 @@ export function PostModal({ open, onOpenChange, editPost }: PostModalProps) {
             </Select>
           </div>
 
+          {/* 2. Pilih Platform */}
           <div className="grid gap-2">
             <Label htmlFor="platform">Platform</Label>
             <Select value={form.platform} onValueChange={v => update('platform', v ?? '')}>
@@ -167,60 +173,58 @@ export function PostModal({ open, onOpenChange, editPost }: PostModalProps) {
             </Select>
           </div>
 
+          {/* 3. Pilih Tanggal */}
           <div className="grid gap-2">
             <Label htmlFor="date">Tanggal</Label>
             <Input id="date" type="date" value={form.date} onChange={e => update('date', e.target.value)} />
           </div>
 
+          {/* 4. Nama Postingan */}
           <div className="grid gap-2">
             <Label htmlFor="name">Nama Postingan</Label>
             <Input id="name" value={form.name} onChange={e => update('name', e.target.value)} placeholder="Contoh: Review Produk X" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <Label htmlFor="reach">Reach</Label>
-              <Input id="reach" type="number" min={0} value={form.reach || ''} onChange={e => handleNumber('reach', e.target.value)} />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="impression">Impression</Label>
-              <Input id="impression" type="number" min={0} value={form.impression || ''} onChange={e => handleNumber('impression', e.target.value)} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <Label htmlFor="like">Like</Label>
-              <Input id="like" type="number" min={0} value={form.like || ''} onChange={e => handleNumber('like', e.target.value)} />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="comment">Comment</Label>
-              <Input id="comment" type="number" min={0} value={form.comment || ''} onChange={e => handleNumber('comment', e.target.value)} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <Label htmlFor="share">Share</Label>
-              <Input id="share" type="number" min={0} value={form.share || ''} onChange={e => handleNumber('share', e.target.value)} />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="save">Save</Label>
-              <Input id="save" type="number" min={0} value={form.save || ''} onChange={e => handleNumber('save', e.target.value)} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <Label htmlFor="repost">Repost</Label>
-              <Input id="repost" type="number" min={0} value={form.repost || ''} onChange={e => handleNumber('repost', e.target.value)} />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="followers_gained">Followers Gained</Label>
-              <Input id="followers_gained" type="number" min={0} value={form.followers_gained || ''} onChange={e => handleNumber('followers_gained', e.target.value)} />
+          {/* 5. Isi Metrics */}
+          <div className="grid gap-3">
+            <Label className="text-sm font-medium">Metrics</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5">
+                <Label htmlFor="reach" className="text-xs text-muted-foreground">Reach</Label>
+                <Input id="reach" type="number" min={0} value={form.reach || ''} onChange={e => handleNumber('reach', e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="impression" className="text-xs text-muted-foreground">Impression</Label>
+                <Input id="impression" type="number" min={0} value={form.impression || ''} onChange={e => handleNumber('impression', e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="like" className="text-xs text-muted-foreground">Like</Label>
+                <Input id="like" type="number" min={0} value={form.like || ''} onChange={e => handleNumber('like', e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="comment" className="text-xs text-muted-foreground">Comment</Label>
+                <Input id="comment" type="number" min={0} value={form.comment || ''} onChange={e => handleNumber('comment', e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="share" className="text-xs text-muted-foreground">Share</Label>
+                <Input id="share" type="number" min={0} value={form.share || ''} onChange={e => handleNumber('share', e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="save" className="text-xs text-muted-foreground">Save</Label>
+                <Input id="save" type="number" min={0} value={form.save || ''} onChange={e => handleNumber('save', e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="repost" className="text-xs text-muted-foreground">Repost</Label>
+                <Input id="repost" type="number" min={0} value={form.repost || ''} onChange={e => handleNumber('repost', e.target.value)} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="followers_gained" className="text-xs text-muted-foreground">Followers Gained</Label>
+                <Input id="followers_gained" type="number" min={0} value={form.followers_gained || ''} onChange={e => handleNumber('followers_gained', e.target.value)} />
+              </div>
             </div>
           </div>
 
+          {/* 6. Isi Pillar Konten */}
           <div className="grid gap-2">
             <Label htmlFor="pillar">Pilar Konten</Label>
             <Select value={form.pillar} onValueChange={v => update('pillar', v ?? '')}>
@@ -237,17 +241,24 @@ export function PostModal({ open, onOpenChange, editPost }: PostModalProps) {
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <Label htmlFor="format">Format</Label>
-              <Input id="format" value={form.format} onChange={e => update('format', e.target.value)} placeholder="Reels/Carousel/Static" />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="caption_len">Panjang Caption</Label>
-              <Input id="caption_len" type="number" min={0} value={form.caption_len || ''} onChange={e => handleNumber('caption_len', e.target.value)} />
-            </div>
+          {/* 7. Format (Dropdown) */}
+          <div className="grid gap-2">
+            <Label htmlFor="format">Format</Label>
+            <Select value={form.format} onValueChange={v => update('format', v ?? '')}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Pilih format" />
+              </SelectTrigger>
+              <SelectContent>
+                {FORMAT_OPTIONS.map(f => (
+                  <SelectItem key={f} value={f}>
+                    {f}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
+          {/* 9. Isi Link */}
           <div className="grid gap-2">
             <Label htmlFor="link">Link</Label>
             <Input id="link" value={form.link} onChange={e => update('link', e.target.value)} placeholder="https://..." />

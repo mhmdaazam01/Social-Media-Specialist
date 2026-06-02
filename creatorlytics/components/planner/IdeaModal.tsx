@@ -8,9 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { useIdeaStore } from '@/lib/store/idea-store';
-import { usePlatformStore } from '@/lib/store/platform-store';
-import { usePillarStore } from '@/lib/store/pillar-store';
+import { useIdeas } from '@/lib/hooks/useIdeas';
+import { usePlatforms } from '@/lib/hooks/usePlatforms';
+import { usePillars } from '@/lib/hooks/usePillars';
+import { Plus, X } from 'lucide-react';
 import type { ContentIdea } from '@/types';
 
 interface IdeaModalProps {
@@ -28,7 +29,7 @@ interface FormFields {
   status: 'idea' | 'brief' | 'draft' | 'ready';
   priority: 'low' | 'med' | 'high';
   tags: string;
-  ref_links: string;
+  ref_links: string[];
 }
 
 const emptyForm: FormFields = {
@@ -40,13 +41,15 @@ const emptyForm: FormFields = {
   status: 'idea',
   priority: 'med',
   tags: '',
-  ref_links: '',
+  ref_links: [''],
 };
 
+const FORMAT_OPTIONS = ['Reels', 'Carousel', 'Static', 'Video', 'Story', 'Live'];
+
 export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
-  const { createIdea, updateIdea } = useIdeaStore();
-  const { platforms } = usePlatformStore();
-  const { pillars } = usePillarStore();
+  const { createIdea, updateIdea } = useIdeas();
+  const { platforms } = usePlatforms();
+  const { pillars } = usePillars();
   const [form, setForm] = useState<FormFields>(emptyForm);
   const [loading, setLoading] = useState(false);
 
@@ -62,7 +65,7 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
         status: editIdea.status,
         priority: editIdea.priority,
         tags: editIdea.tags.join(', '),
-        ref_links: editIdea.ref_links.join(', '),
+        ref_links: editIdea.ref_links.length > 0 ? editIdea.ref_links : [''],
       });
     } else {
       setForm(emptyForm);
@@ -71,6 +74,21 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
 
   function update<K extends keyof FormFields>(key: K, value: FormFields[K]) {
     setForm(prev => ({ ...prev, [key]: value }));
+  }
+
+  function handleRefLinkChange(index: number, value: string) {
+    const newLinks = [...form.ref_links];
+    newLinks[index] = value;
+    update('ref_links', newLinks);
+  }
+
+  function addRefLink() {
+    update('ref_links', [...form.ref_links, '']);
+  }
+
+  function removeRefLink(index: number) {
+    if (form.ref_links.length === 1) return; // Keep at least 1
+    update('ref_links', form.ref_links.filter((_, i) => i !== index));
   }
 
   async function handleSubmit() {
@@ -90,13 +108,13 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
         priority: form.priority,
         tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
         brief: {},
-        ref_links: form.ref_links.split(',').map(l => l.trim()).filter(Boolean),
+        ref_links: form.ref_links.map(l => l.trim()).filter(Boolean),
       };
       if (editIdea) {
-        updateIdea(editIdea.id, data);
+        await updateIdea(editIdea.id, data);
         toast.success('Ide berhasil diperbarui');
       } else {
-        createIdea(data);
+        await createIdea(data);
         toast.success('Ide berhasil ditambahkan');
       }
       onOpenChange(false);
@@ -167,7 +185,19 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
 
           <div className="grid gap-2">
             <Label htmlFor="format">Format</Label>
-            <Input id="format" value={form.format} onChange={e => update('format', e.target.value)} placeholder="Reels / Carousel / Static" />
+            <Select value={form.format} onValueChange={v => update('format', v ?? '')}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Pilih format" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">-</SelectItem>
+                {FORMAT_OPTIONS.map(f => (
+                  <SelectItem key={f} value={f}>
+                    {f}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -206,8 +236,34 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="ref_links">Link Referensi (pisahkan dengan koma)</Label>
-            <Input id="ref_links" value={form.ref_links} onChange={e => update('ref_links', e.target.value)} placeholder="https://..." />
+            <div className="flex items-center justify-between">
+              <Label>Link Referensi</Label>
+              <Button type="button" variant="ghost" size="sm" onClick={addRefLink}>
+                <Plus className="size-4" />
+                Tambah Link
+              </Button>
+            </div>
+            <div className="flex flex-col gap-2">
+              {form.ref_links.map((link, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    value={link}
+                    onChange={e => handleRefLinkChange(index, e.target.value)}
+                    placeholder="https://..."
+                  />
+                  {form.ref_links.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeRefLink(index)}
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

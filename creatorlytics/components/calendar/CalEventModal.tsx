@@ -8,10 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { useEventStore } from '@/lib/store/event-store';
-import { usePlatformStore } from '@/lib/store/platform-store';
-import { usePillarStore } from '@/lib/store/pillar-store';
-import { useAccountStore } from '@/lib/store/account-store';
+import { useEvents } from '@/lib/hooks/useEvents';
+import { usePlatforms } from '@/lib/hooks/usePlatforms';
+import { usePillars } from '@/lib/hooks/usePillars';
+import { useAccounts } from '@/lib/hooks/useAccounts';
 import { today } from '@/lib/utils/formatting';
 import type { CalendarEvent } from '@/types';
 
@@ -46,11 +46,13 @@ const emptyForm: FormFields = {
   notes: '',
 };
 
+const FORMAT_OPTIONS = ['Reels', 'Carousel', 'Static', 'Video', 'Story', 'Live'];
+
 export function CalEventModal({ open, onOpenChange, editEvent, defaultDate }: CalEventModalProps) {
-  const { createEvent, updateEvent } = useEventStore();
-  const { platforms } = usePlatformStore();
-  const { pillars } = usePillarStore();
-  const { accounts } = useAccountStore();
+  const { createEvent, updateEvent } = useEvents();
+  const { platforms } = usePlatforms();
+  const { pillars } = usePillars();
+  const { accounts } = useAccounts();
   const [form, setForm] = useState<FormFields>(emptyForm);
   const [loading, setLoading] = useState(false);
 
@@ -97,10 +99,10 @@ export function CalEventModal({ open, onOpenChange, editEvent, defaultDate }: Ca
         idea_id: editEvent?.idea_id ?? null,
       };
       if (editEvent) {
-        updateEvent(editEvent.id, data);
+        await updateEvent(editEvent.id, data);
         toast.success('Event berhasil diperbarui');
       } else {
-        createEvent(data);
+        await createEvent(data);
         toast.success('Event berhasil ditambahkan');
       }
       onOpenChange(false);
@@ -181,7 +183,19 @@ export function CalEventModal({ open, onOpenChange, editEvent, defaultDate }: Ca
             </div>
             <div className="grid gap-2">
               <Label htmlFor="format">Format</Label>
-              <Input id="format" value={form.format} onChange={e => update('format', e.target.value)} placeholder="Reels / Carousel" />
+              <Select value={form.format} onValueChange={v => update('format', v ?? '')}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih format" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">-</SelectItem>
+                  {FORMAT_OPTIONS.map(f => (
+                    <SelectItem key={f} value={f}>
+                      {f}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
