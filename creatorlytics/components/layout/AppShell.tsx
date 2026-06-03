@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/lib/hooks/useUser';
 import { Sidebar } from './Sidebar';
@@ -14,23 +14,18 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, title = 'Dashboard', onAddPost }: AppShellProps) {
-  const [mounted, setMounted] = useState(false);
   const { user, loading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (mounted && !loading && !user) {
+    if (!loading && !user) {
       router.replace('/login');
     }
-  }, [mounted, user, loading, router]);
+  }, [user, loading, router]);
 
-  if (!mounted || loading) {
+  if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground">Memuat...</div>
       </div>
     );
