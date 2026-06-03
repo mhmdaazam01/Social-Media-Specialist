@@ -9,14 +9,15 @@ import { useGoals } from '@/lib/hooks/useGoals';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { Plus, Target } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { parseDateParts } from '@/lib/utils/formatting';
 import type { Goal, Post } from '@/types';
 
 function calcActual(goal: Goal, posts: Post[]): number {
-  const monthStr = String(goal.month).padStart(2, '0');
   const filtered = posts.filter(p => {
     if (!p.date) return false;
-    const [y, m] = p.date.split('-');
-    if (parseInt(y) !== goal.year || parseInt(m) !== goal.month) return false;
+    const parts = parseDateParts(p.date);
+    if (!parts) return false;
+    if (parts.year !== goal.year || parts.month !== goal.month) return false;
     if (goal.platform !== 'all' && p.platform !== goal.platform) return false;
     return true;
   });

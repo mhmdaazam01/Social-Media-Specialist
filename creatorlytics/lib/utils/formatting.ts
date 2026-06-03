@@ -43,3 +43,24 @@ export function daysInMonth(year: number, month: number): number {
 export function firstDayOfMonth(year: number, month: number): number {
   return new Date(year, month - 1, 1).getDay();
 }
+
+export function parseDateParts(dateStr: string): { year: number; month: number } | null {
+  if (!dateStr) return null;
+  // Try YYYY-MM-DD or YYYY/MM/DD
+  let match = dateStr.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (match) {
+    return { year: parseInt(match[1], 10), month: parseInt(match[2], 10) };
+  }
+  // Try DD-MM-YYYY or DD/MM/YYYY
+  match = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (match) {
+    return { year: parseInt(match[3], 10), month: parseInt(match[2], 10) };
+  }
+  // Fallback to JS Date parsing
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) {
+    return { year: d.getFullYear(), month: d.getMonth() + 1 };
+  }
+  return null;
+}
+

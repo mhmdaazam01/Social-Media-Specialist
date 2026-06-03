@@ -4,26 +4,39 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGoals } from '@/lib/hooks/useGoals';
 import { usePosts } from '@/lib/hooks/usePosts';
-import { currentMonth, currentYear } from '@/lib/utils/formatting';
+import { currentMonth, currentYear, parseDateParts } from '@/lib/utils/formatting';
 import { Target } from 'lucide-react';
-import type { Post } from '@/types';
+import type { Post, Goal } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
-function calcProgress(posts: Post[], metric: string): number {
-  switch (metric) {
+function calcProgress(posts: Post[], goal: Goal): number {
+  const filtered = posts.filter(p => {
+    if (!p.date) return false;
+    const parts = parseDateParts(p.date);
+    if (!parts) return false;
+    if (parts.year !== goal.year || parts.month !== goal.month) return false;
+    if (goal.platform !== 'all' && p.platform !== goal.platform) return false;
+    return true;
+  });
+
+  switch (goal.metric) {
     case 'reach':
-      return posts.reduce((s, p) => s + p.reach, 0);
+      return filtered.reduce((s, p) => s + p.reach, 0);
     case 'impression':
-      return posts.reduce((s, p) => s + p.impression, 0);
+      return filtered.reduce((s, p) => s + p.impression, 0);
     case 'followers':
     case 'followers_gained':
-      return posts.reduce((s, p) => s + p.followers_gained, 0);
+      return filtered.reduce((s, p) => s + p.followers_gained, 0);
     case 'engagement':
     case 'interactions':
-      return posts.reduce((s, p) => s + p.like + p.comment + p.save + p.share, 0);
+      return filtered.reduce((s, p) => s + p.like + p.comment + p.save + p.share, 0);
     case 'posts':
     case 'post':
-      return posts.length;
+      return filtered.length;
+    case 'likes':
+      return filtered.reduce((s, p) => s + p.like, 0);
+    case 'comments':
+      return filtered.reduce((s, p) => s + p.comment, 0);
     default:
       return 0;
   }
@@ -38,6 +51,8 @@ const metricLabels: Record<string, string> = {
   interactions: 'Interactions',
   posts: 'Posts',
   post: 'Posts',
+  likes: 'Likes',
+  comments: 'Comments',
 };
 
 export function GoalProgress() {
@@ -122,7 +137,7 @@ export function GoalProgress() {
       <CardContent>
         <div className="flex flex-col gap-4">
           {currentGoals.map(goal => {
-            const current = calcProgress(posts, goal.metric);
+            const current = calcProgress(posts, goal);
             const pct = Math.min(Math.round((current / goal.target) * 100), 100);
             const metricLabel = metricLabels[goal.metric] || goal.metric;
 
