@@ -21,6 +21,10 @@ export default function ContentPage() {
   const { posts, loading, deletePost } = usePosts();
   const [view, setView] = useState<'timeline' | 'table'>('timeline');
 
+  const handleImport = useCallback(() => {
+    // Refresh after import
+  }, []);
+
   if (loading) {
     return (
       <AppShell title="Konten">
@@ -59,6 +63,7 @@ export default function ContentPage() {
       </AppShell>
     );
   }
+
   const sorted = [...posts].sort((a, b) => b.date.localeCompare(a.date));
 
   function handleAddPost() {
@@ -75,10 +80,6 @@ export default function ContentPage() {
     setModalOpen(open);
     if (!open) setEditPost(null);
   }
-
-  const handleImport = useCallback(() => {
-    // Refresh after import
-  }, []);
 
   return (
     <AppShell title="Konten">

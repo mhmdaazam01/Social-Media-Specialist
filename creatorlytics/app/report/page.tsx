@@ -25,6 +25,28 @@ export default function ReportPage() {
   const { profile } = useUser();
   const erMode = profile?.er_mode || 'impression';
 
+  const totalPosts = posts.length;
+  const totalReach = posts.reduce((s, p) => s + p.reach, 0);
+  const totalFollowersGained = posts.reduce((s, p) => s + p.followers_gained, 0);
+  const avgER = totalPosts > 0 ? calcTotalER(posts, erMode) : 0;
+
+  const platformData = useMemo(() => aggregateByPlatform(posts), [posts]);
+
+  const topPosts = useMemo(() => [...posts].sort((a, b) => b.reach - a.reach).slice(0, 5), [posts]);
+
+  const monthlyData = useMemo(() => {
+    const grouped: Record<string, { posts: number; reach: number; followers: number }> = {};
+    for (const p of posts) {
+      if (!p.date) continue;
+      const month = p.date.substring(0, 7);
+      if (!grouped[month]) grouped[month] = { posts: 0, reach: 0, followers: 0 };
+      grouped[month].posts++;
+      grouped[month].reach += p.reach;
+      grouped[month].followers += p.followers_gained;
+    }
+    return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
+  }, [posts]);
+
   if (loading) {
     return (
       <AppShell title="Report">
@@ -54,28 +76,6 @@ export default function ReportPage() {
       </AppShell>
     );
   }
-
-  const totalPosts = posts.length;
-  const totalReach = posts.reduce((s, p) => s + p.reach, 0);
-  const totalFollowersGained = posts.reduce((s, p) => s + p.followers_gained, 0);
-  const avgER = totalPosts > 0 ? calcTotalER(posts, erMode) : 0;
-
-  const platformData = useMemo(() => aggregateByPlatform(posts), [posts]);
-
-  const topPosts = useMemo(() => [...posts].sort((a, b) => b.reach - a.reach).slice(0, 5), [posts]);
-
-  const monthlyData = useMemo(() => {
-    const grouped: Record<string, { posts: number; reach: number; followers: number }> = {};
-    for (const p of posts) {
-      if (!p.date) continue;
-      const month = p.date.substring(0, 7);
-      if (!grouped[month]) grouped[month] = { posts: 0, reach: 0, followers: 0 };
-      grouped[month].posts++;
-      grouped[month].reach += p.reach;
-      grouped[month].followers += p.followers_gained;
-    }
-    return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
-  }, [posts]);
 
   return (
     <AppShell title="Report">

@@ -44,6 +44,51 @@ export default function AnalyticsPage() {
 
   const loading = postsLoading || platformsLoading;
 
+  const filteredPosts = useMemo(() => {
+    console.log('🔍 [Analytics] All posts:', posts.length);
+    console.log('🔍 [Analytics] Filter platform:', platform);
+    console.log('🔍 [Analytics] Available platforms:', platforms.map(p => ({ id: p.platform_id, name: p.name })));
+    
+    let filtered = posts;
+    if (platform !== 'all') {
+      console.log('🔍 [Analytics] Posts before filter:', filtered.map(p => ({ name: p.name, platform: p.platform })));
+      filtered = filtered.filter((p) => p.platform === platform);
+      console.log('🔍 [Analytics] Posts after filter:', filtered.length);
+    }
+    if (dateRange.from) {
+      filtered = filtered.filter((p) => p.date >= dateRange.from);
+    }
+    if (dateRange.to) {
+      filtered = filtered.filter((p) => p.date <= dateRange.to);
+    }
+    console.log('✅ [Analytics] Final filtered posts:', filtered.length);
+    return filtered;
+  }, [posts, platform, dateRange, platforms]);
+
+  const byMonth = useMemo(() => aggregateByMonth(filteredPosts), [filteredPosts]);
+  const byPillar = useMemo(() => aggregateByPillar(filteredPosts), [filteredPosts]);
+  const byPlatform = useMemo(() => aggregateByPlatform(filteredPosts), [filteredPosts]);
+
+  const totalReach = useMemo(
+    () => filteredPosts.reduce((s, p) => s + p.reach, 0),
+    [filteredPosts]
+  );
+
+  const avgER = useMemo(
+    () => calcTotalER(filteredPosts, 'impression'),
+    [filteredPosts]
+  );
+
+  const bestPlatform = useMemo(() => {
+    if (byPlatform.length === 0) return null;
+    return byPlatform.reduce((best, curr) => (curr.avgER > best.avgER ? curr : best));
+  }, [byPlatform]);
+
+  const platformName = (id: string) => {
+    const p = platforms.find((pl) => pl.platform_id === id);
+    return p ? p.name : id;
+  };
+
   if (loading) {
     return (
       <AppShell title="Analytics">
@@ -110,51 +155,6 @@ export default function AnalyticsPage() {
       </AppShell>
     );
   }
-
-  const filteredPosts = useMemo(() => {
-    console.log('🔍 [Analytics] All posts:', posts.length);
-    console.log('🔍 [Analytics] Filter platform:', platform);
-    console.log('🔍 [Analytics] Available platforms:', platforms.map(p => ({ id: p.platform_id, name: p.name })));
-    
-    let filtered = posts;
-    if (platform !== 'all') {
-      console.log('🔍 [Analytics] Posts before filter:', filtered.map(p => ({ name: p.name, platform: p.platform })));
-      filtered = filtered.filter((p) => p.platform === platform);
-      console.log('🔍 [Analytics] Posts after filter:', filtered.length);
-    }
-    if (dateRange.from) {
-      filtered = filtered.filter((p) => p.date >= dateRange.from);
-    }
-    if (dateRange.to) {
-      filtered = filtered.filter((p) => p.date <= dateRange.to);
-    }
-    console.log('✅ [Analytics] Final filtered posts:', filtered.length);
-    return filtered;
-  }, [posts, platform, dateRange, platforms]);
-
-  const byMonth = useMemo(() => aggregateByMonth(filteredPosts), [filteredPosts]);
-  const byPillar = useMemo(() => aggregateByPillar(filteredPosts), [filteredPosts]);
-  const byPlatform = useMemo(() => aggregateByPlatform(filteredPosts), [filteredPosts]);
-
-  const totalReach = useMemo(
-    () => filteredPosts.reduce((s, p) => s + p.reach, 0),
-    [filteredPosts]
-  );
-
-  const avgER = useMemo(
-    () => calcTotalER(filteredPosts, 'impression'),
-    [filteredPosts]
-  );
-
-  const bestPlatform = useMemo(() => {
-    if (byPlatform.length === 0) return null;
-    return byPlatform.reduce((best, curr) => (curr.avgER > best.avgER ? curr : best));
-  }, [byPlatform]);
-
-  const platformName = (id: string) => {
-    const p = platforms.find((pl) => pl.platform_id === id);
-    return p ? p.name : id;
-  };
 
   return (
     <AppShell title="Analytics">

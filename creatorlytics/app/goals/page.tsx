@@ -50,6 +50,14 @@ export default function GoalsPage() {
 
   const loading = goalsLoading || postsLoading;
 
+  const items = useMemo(() => {
+    return goals.map(goal => {
+      const actual = calcActual(goal, posts);
+      const progress = goal.target > 0 ? Math.round((actual / goal.target) * 100) : 0;
+      return { goal, progress };
+    });
+  }, [goals, posts]);
+
   if (loading) {
     return (
       <AppShell title="Goals">
@@ -85,14 +93,6 @@ export default function GoalsPage() {
       </AppShell>
     );
   }
-
-  const items = useMemo(() => {
-    return goals.map(goal => {
-      const actual = calcActual(goal, posts);
-      const progress = goal.target > 0 ? Math.round((actual / goal.target) * 100) : 0;
-      return { goal, progress };
-    });
-  }, [goals, posts]);
 
   function handleEdit(goal: Goal) {
     setEditGoal(goal);
