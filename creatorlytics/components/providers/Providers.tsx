@@ -2,10 +2,10 @@
 
 import { Toaster } from '@/components/ui/sonner';
 import { useEffect } from 'react';
-import { useUser } from '@/lib/hooks/useUser';
+import { UserProvider, useUser } from '@/lib/context/UserContext';
 import { DataProvider } from '@/lib/context/DataContext';
 
-export function Providers({ children }: { children: React.ReactNode }) {
+function ThemeSync({ children }: { children: React.ReactNode }) {
   const { profile } = useUser();
   const theme = profile?.theme || 'dark';
 
@@ -14,10 +14,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
     document.documentElement.classList.add(theme);
   }, [theme]);
 
+  return <>{children}</>;
+}
+
+export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <DataProvider>
-      {children}
-      <Toaster position="top-right" richColors />
-    </DataProvider>
+    <UserProvider>
+      <ThemeSync>
+        <DataProvider>
+          {children}
+          <Toaster position="top-right" richColors />
+        </DataProvider>
+      </ThemeSync>
+    </UserProvider>
   );
 }
