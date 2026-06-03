@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useGoals } from '@/lib/hooks/useGoals';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { Plus, Target } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Goal, Post } from '@/types';
 
 function calcActual(goal: Goal, posts: Post[]): number {
@@ -41,11 +42,49 @@ function calcActual(goal: Goal, posts: Post[]): number {
 }
 
 export default function GoalsPage() {
-  const { goals, deleteGoal } = useGoals();
-  const { posts } = usePosts();
+  const { goals, loading: goalsLoading, deleteGoal } = useGoals();
+  const { posts, loading: postsLoading } = usePosts();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editGoal, setEditGoal] = useState<Goal | null>(null);
+
+  const loading = goalsLoading || postsLoading;
+
+  if (loading) {
+    return (
+      <AppShell title="Goals">
+        <div className="flex flex-col gap-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-xl border bg-card p-6 shadow-sm flex flex-col gap-4">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                    <Skeleton className="h-4.5 w-32" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                  <Skeleton className="h-5 w-14 rounded-full" />
+                </div>
+                <div className="space-y-2 pt-2">
+                  <div className="flex justify-between text-xs">
+                    <Skeleton className="h-3.5 w-16" />
+                    <Skeleton className="h-3.5 w-8" />
+                  </div>
+                  <Skeleton className="h-2 w-full rounded-full" />
+                </div>
+                <div className="flex justify-between items-center pt-2">
+                  <Skeleton className="h-3.5 w-24" />
+                  <div className="flex gap-2">
+                    <Skeleton className="size-8 rounded-lg" />
+                    <Skeleton className="size-8 rounded-lg" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
 
   const items = useMemo(() => {
     return goals.map(goal => {

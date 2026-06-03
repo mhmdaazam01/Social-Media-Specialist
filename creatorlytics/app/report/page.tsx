@@ -18,11 +18,42 @@ import { calcTotalER, fmt, aggregateByPlatform } from '@/lib/utils/analytics';
 import { formatMonth } from '@/lib/utils/formatting';
 import { FileText, BarChart3, Activity, Users, Printer } from 'lucide-react';
 import { useMemo } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ReportPage() {
-  const { posts } = usePosts();
+  const { posts, loading } = usePosts();
   const { profile } = useUser();
   const erMode = profile?.er_mode || 'impression';
+
+  if (loading) {
+    return (
+      <AppShell title="Report">
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-6 w-36" />
+            <div className="flex gap-2">
+              <Skeleton className="h-9 w-24" />
+              <Skeleton className="h-9 w-28" />
+            </div>
+          </div>
+
+          {[1, 2, 3].map((slide) => (
+            <div key={slide} className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
+              <Skeleton className="h-5.5 w-40" />
+              <div className="space-y-3 pt-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex justify-between border-b pb-2 last:border-0">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </AppShell>
+    );
+  }
 
   const totalPosts = posts.length;
   const totalReach = posts.reduce((s, p) => s + p.reach, 0);

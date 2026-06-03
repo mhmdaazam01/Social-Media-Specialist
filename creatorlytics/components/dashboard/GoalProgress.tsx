@@ -7,6 +7,7 @@ import { usePosts } from '@/lib/hooks/usePosts';
 import { currentMonth, currentYear } from '@/lib/utils/formatting';
 import { Target } from 'lucide-react';
 import type { Post } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function calcProgress(posts: Post[], metric: string): number {
   switch (metric) {
@@ -69,8 +70,17 @@ export function GoalProgress() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <p className="text-sm text-muted-foreground">Memuat goals...</p>
+          <div className="flex flex-col gap-4">
+            {[1, 2].map((i) => (
+              <div key={i} className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-8" />
+                </div>
+                <Skeleton className="h-2 w-full rounded-full" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

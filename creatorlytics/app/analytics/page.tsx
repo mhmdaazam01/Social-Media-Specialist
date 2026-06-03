@@ -1,11 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { AppShell } from '@/components/layout/AppShell';
 import { AnalyticsFilter } from '@/components/analytics/AnalyticsFilter';
-import { TrendChart } from '@/components/analytics/TrendChart';
 import { TopContentTable } from '@/components/analytics/TopContentTable';
-import { PillarChart } from '@/components/analytics/PillarChart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -17,6 +16,7 @@ import {
 } from '@/components/ui/table';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   aggregateByMonth,
   aggregateByPillar,
@@ -26,11 +26,90 @@ import {
   fmtPercent,
 } from '@/lib/utils/analytics';
 
+const TrendChart = dynamic(() => import('@/components/analytics/TrendChart').then(mod => mod.TrendChart), {
+  ssr: false,
+  loading: () => <Skeleton className="h-80 w-full" />,
+});
+
+const PillarChart = dynamic(() => import('@/components/analytics/PillarChart').then(mod => mod.PillarChart), {
+  ssr: false,
+  loading: () => <Skeleton className="h-72 w-full" />,
+});
+
 export default function AnalyticsPage() {
-  const { posts } = usePosts();
-  const { platforms } = usePlatforms();
+  const { posts, loading: postsLoading } = usePosts();
+  const { platforms, loading: platformsLoading } = usePlatforms();
   const [platform, setPlatform] = useState('all');
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
+
+  const loading = postsLoading || platformsLoading;
+
+  if (loading) {
+    return (
+      <AppShell title="Analytics">
+        <div className="space-y-6">
+          <div className="rounded-xl border bg-card p-4 shadow-sm flex flex-wrap gap-4 items-center justify-between">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-10 w-64" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="rounded-xl border bg-card p-6 shadow-sm flex flex-col gap-2">
+                <Skeleton className="h-3.5 w-20" />
+                <Skeleton className="h-7 w-24" />
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-80 w-full" />
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-72 w-full" />
+            </div>
+
+            <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
+              <Skeleton className="h-5 w-40" />
+              <div className="space-y-3 pt-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex justify-between border-b pb-2 last:border-0">
+                    <Skeleton className="h-4 w-20" />
+                    <div className="flex gap-4">
+                      <Skeleton className="h-4 w-10" />
+                      <Skeleton className="h-4 w-14" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
+            <Skeleton className="h-5 w-36" />
+            <div className="space-y-3 pt-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex justify-between border-b pb-2 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="size-4 rounded" />
+                    <Skeleton className="h-4 w-40" />
+                  </div>
+                  <div className="flex gap-4">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
 
   const filteredPosts = useMemo(() => {
     console.log('🔍 [Analytics] All posts:', posts.length);

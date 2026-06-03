@@ -12,13 +12,53 @@ import { CSVImport } from '@/components/posts/CSVImport';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { postsToCSV } from '@/lib/utils/export';
 import { PlusIcon, DownloadIcon } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Post } from '@/types';
 
 export default function ContentPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editPost, setEditPost] = useState<Post | null>(null);
-  const { posts, deletePost } = usePosts();
+  const { posts, loading, deletePost } = usePosts();
   const [view, setView] = useState<'timeline' | 'table'>('timeline');
+
+  if (loading) {
+    return (
+      <AppShell title="Konten">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-10 w-20" />
+              <Skeleton className="h-10 w-28" />
+            </div>
+            <Skeleton className="h-10 w-32" />
+          </div>
+
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-24" />
+            <Skeleton className="h-9 w-20" />
+          </div>
+
+          <div className="rounded-lg border bg-card p-6 space-y-5">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex justify-between items-center border-b pb-4 last:border-0 last:pb-0">
+                <div className="flex gap-4 items-center">
+                  <Skeleton className="size-10 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4.5 w-32" />
+                    <Skeleton className="h-3.5 w-24" />
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <Skeleton className="h-4 w-12" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
   const sorted = [...posts].sort((a, b) => b.date.localeCompare(a.date));
 
   function handleAddPost() {

@@ -50,10 +50,10 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                'flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 active:scale-[0.98] cursor-pointer',
                 isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  ? 'bg-primary/10 text-primary shadow-sm'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:translate-x-1'
               )}
             >
               {iconMap[item.icon]}
@@ -65,7 +65,7 @@ export function Sidebar() {
 
       <div className="p-3 border-t">
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex w-full items-center gap-3 px-3 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer">
+          <DropdownMenuTrigger className="flex w-full items-center gap-3 px-3 py-3 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-200 active:scale-[0.98] cursor-pointer outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring">
             <Avatar className="h-8 w-8">
               <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
               <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
