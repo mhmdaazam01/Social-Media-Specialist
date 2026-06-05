@@ -1,19 +1,51 @@
 import type { Post, Goal } from '@/types';
+import type { ErMode } from '@/types';
 import { calcER } from './analytics';
 
 export interface Insight {
   type: 'tip' | 'achievement' | 'warning' | 'trend';
-  icon: string;
   title: string;
   description: string;
 }
 
-export function generateInsights(posts: Post[], goals: Goal[], erMode: 'impression' | 'reach' | 'followers'): Insight[] {
+/** Shared goal progress calculator — single source of truth */
+export function calcGoalProgress(goal: Goal, posts: Post[]): number {
+  const filtered = posts.filter(p => {
+    if (!p.date) return false;
+    const [py, pm] = p.date.split('-').map(Number);
+    if (py !== goal.year || pm !== goal.month) return false;
+    if (goal.platform !== 'all' && p.platform !== goal.platform) return false;
+    return true;
+  });
+
+  switch (goal.metric) {
+    case 'followers':
+    case 'followers_gained':
+      return filtered.reduce((s, p) => s + p.followers_gained, 0);
+    case 'reach':
+      return filtered.reduce((s, p) => s + p.reach, 0);
+    case 'impression':
+      return filtered.reduce((s, p) => s + p.impression, 0);
+    case 'engagement':
+    case 'interactions':
+      return filtered.reduce((s, p) => s + p.like + p.comment + p.save + p.share, 0);
+    case 'posts':
+    case 'post':
+      return filtered.length;
+    case 'likes':
+      return filtered.reduce((s, p) => s + p.like, 0);
+    case 'comments':
+      return filtered.reduce((s, p) => s + p.comment, 0);
+    default:
+      return 0;
+  }
+}
+
+export function generateInsights(posts: Post[], goals: Goal[], erMode: ErMode): Insight[] {
   const insights: Insight[] = [];
   if (posts.length === 0) {
     insights.push({
       type: 'tip',
-      icon: 'Lightbulb',
       title: 'Belum ada data',
       description: 'Mulai dengan menambahkan postingan pertama kamu!',
     });
@@ -28,14 +60,12 @@ export function generateInsights(posts: Post[], goals: Goal[], erMode: 'impressi
   if (recentER > totalER) {
     insights.push({
       type: 'trend',
-      icon: 'TrendingUp',
       title: 'ER meningkat!',
       description: `Engagement rate 10 post terakhir (${recentER.toFixed(1)}%) lebih tinggi dari rata-rata (${totalER.toFixed(1)}%). Pertahankan!`,
     });
   } else if (recentER < totalER * 0.8) {
     insights.push({
       type: 'warning',
-      icon: 'AlertTriangle',
       title: 'ER menurun',
       description: `Engagement rate 10 post terakhir (${recentER.toFixed(1)}%) lebih rendah dari rata-rata (${totalER.toFixed(1)}%). Coba variasi konten baru.`,
     });
@@ -45,7 +75,6 @@ export function generateInsights(posts: Post[], goals: Goal[], erMode: 'impressi
   if (bestPost && bestPost.name) {
     insights.push({
       type: 'achievement',
-      icon: 'Trophy',
       title: 'Post Terbaik',
       description: `"${bestPost.name}" punya ER ${calcER(bestPost, erMode).toFixed(1)}% — analisa apa yang bikin performa bagus.`,
     });
@@ -62,7 +91,6 @@ export function generateInsights(posts: Post[], goals: Goal[], erMode: 'impressi
   if (bestPlatform) {
     insights.push({
       type: 'tip',
-      icon: 'BarChart3',
       title: 'Platform Terbaik',
       description: `Rata-rata ER tertinggi di ${bestPlatform.platform.toUpperCase()} (${bestPlatform.avgER.toFixed(1)}%). Fokus di sini!`,
     });
@@ -74,7 +102,6 @@ export function generateInsights(posts: Post[], goals: Goal[], erMode: 'impressi
     if (commentRatio < 0.05) {
       insights.push({
         type: 'tip',
-        icon: 'MessageSquare',
         title: 'Tingkatkan Komentar',
         description: 'Rasio komentar masih rendah. Coba tambahkan pertanyaan di caption untuk dorong diskusi.',
       });
@@ -82,14 +109,13 @@ export function generateInsights(posts: Post[], goals: Goal[], erMode: 'impressi
   }
 
   if (goals.length > 0) {
-    const activeGoals = goals.filter(g => {
-      const now = new Date();
-      return g.year === now.getFullYear() && g.month >= now.getMonth() + 1;
-    });
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    const activeGoals = goals.filter(g => g.year === currentYear && g.month === currentMonth);
     if (activeGoals.length === 0) {
       insights.push({
         type: 'tip',
-        icon: 'Target',
         title: 'Buat Goals Baru',
         description: 'Kamu tidak punya goals untuk bulan ini. Yuk atur target!',
       });

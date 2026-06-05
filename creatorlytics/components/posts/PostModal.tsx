@@ -12,6 +12,7 @@ import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { usePillars } from '@/lib/hooks/usePillars';
 import { useAccounts } from '@/lib/hooks/useAccounts';
 import { today } from '@/lib/utils/formatting';
+import { FORMAT_OPTIONS } from '@/lib/constants';
 import type { Post } from '@/types';
 
 interface PostModalProps {
@@ -58,8 +59,6 @@ const emptyForm: FormFields = {
   link: '',
 };
 
-const FORMAT_OPTIONS = ['Reels', 'Carousel', 'Static', 'Video', 'Story', 'Live'];
-
 export function PostModal({ open, onOpenChange, editPost }: PostModalProps) {
   const { createPost, updatePost } = usePosts();
   const { platforms } = usePlatforms();
@@ -104,6 +103,18 @@ export function PostModal({ open, onOpenChange, editPost }: PostModalProps) {
   }
 
   async function handleSubmit() {
+    if (!form.name.trim()) {
+      toast.error('Nama postingan wajib diisi');
+      return;
+    }
+    if (!form.platform) {
+      toast.error('Platform wajib dipilih');
+      return;
+    }
+    if (!form.date) {
+      toast.error('Tanggal wajib diisi');
+      return;
+    }
     setLoading(true);
     try {
       const postData = {

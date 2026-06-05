@@ -7,6 +7,7 @@ import { InsightEngine } from '@/components/dashboard/InsightEngine';
 import { GoalProgress } from '@/components/dashboard/GoalProgress';
 import { TopContent } from '@/components/dashboard/TopContent';
 import { WeeklyNarrative } from '@/components/dashboard/WeeklyNarrative';
+import { PostModal } from '@/components/posts/PostModal';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { useUser } from '@/lib/hooks/useUser';
 import { calcTotalER, fmt } from '@/lib/utils/analytics';
@@ -28,13 +29,12 @@ export default function DashboardPage() {
               <div key={i} className="rounded-xl border bg-card p-6 shadow-sm flex items-start justify-between gap-4">
                 <div className="flex flex-col gap-2">
                   <Skeleton className="h-3.5 w-20" />
-                  <Skeleton className="h-7 w-28 animate-pulse bg-muted" />
+                  <Skeleton className="h-7 w-28" />
                 </div>
                 <Skeleton className="size-9 rounded-lg" />
               </div>
             ))}
           </div>
-
           <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
             <div className="flex items-center gap-2">
               <Skeleton className="size-5 rounded-full" />
@@ -52,7 +52,6 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
-
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-2">
@@ -71,10 +70,8 @@ export default function DashboardPage() {
                 ))}
               </div>
             </div>
-
             <GoalProgress />
           </div>
-
           <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
             <div className="flex items-center gap-2">
               <Skeleton className="size-5 rounded-full" />
@@ -134,6 +131,8 @@ export default function DashboardPage() {
 
         <WeeklyNarrative />
       </div>
+
+      <PostModal open={showPostModal} onOpenChange={setShowPostModal} />
     </AppShell>
   );
 }

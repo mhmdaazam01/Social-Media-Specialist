@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from './useUser';
+import { toast } from 'sonner';
 import type { Pillar } from '@/types';
 
 export function usePillars() {
@@ -18,6 +19,7 @@ export function usePillars() {
       setPillars([]);
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   async function fetchPillars() {
@@ -26,7 +28,9 @@ export function usePillars() {
       .select('*')
       .order('created_at', { ascending: true });
 
-    if (!error && data) {
+    if (error) {
+      toast.error('Gagal memuat pilar konten');
+    } else if (data) {
       setPillars(data);
     }
     setLoading(false);
@@ -41,8 +45,12 @@ export function usePillars() {
       .select()
       .single();
 
-    if (!error && data) {
-      setPillars([...pillars, data]);
+    if (error) {
+      toast.error('Gagal menambahkan pilar');
+      return null;
+    }
+    if (data) {
+      setPillars(prev => [...prev, data]);
       return data;
     }
     return null;
@@ -54,8 +62,10 @@ export function usePillars() {
       .delete()
       .eq('id', id);
 
-    if (!error) {
-      setPillars(pillars.filter(p => p.id !== id));
+    if (error) {
+      toast.error('Gagal menghapus pilar');
+    } else {
+      setPillars(prev => prev.filter(p => p.id !== id));
     }
   }
 

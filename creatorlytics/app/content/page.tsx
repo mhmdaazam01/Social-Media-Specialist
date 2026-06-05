@@ -9,6 +9,7 @@ import { PostModal } from '@/components/posts/PostModal';
 import { ContentTimeline } from '@/components/posts/ContentTimeline';
 import { PostRow } from '@/components/posts/PostRow';
 import { CSVImport } from '@/components/posts/CSVImport';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { postsToCSV } from '@/lib/utils/export';
 import { PlusIcon, DownloadIcon } from 'lucide-react';
@@ -18,12 +19,26 @@ import type { Post } from '@/types';
 export default function ContentPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editPost, setEditPost] = useState<Post | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState<Post | null>(null);
   const { posts, loading, deletePost } = usePosts();
   const [view, setView] = useState<'timeline' | 'table'>('timeline');
 
   const handleImport = useCallback(() => {
     // Refresh after import
   }, []);
+
+  function confirmDelete(post: Post) {
+    setPostToDelete(post);
+    setDeleteDialogOpen(true);
+  }
+
+  function handleDeleteConfirmed() {
+    if (postToDelete) {
+      deletePost(postToDelete.id);
+      setPostToDelete(null);
+    }
+  }
 
   if (loading) {
     return (
@@ -105,7 +120,7 @@ export default function ContentPage() {
           </TabsList>
 
           <TabsContent value="timeline">
-            <ContentTimeline onEditPost={handleEditPost} />
+            <ContentTimeline onEditPost={handleEditPost} onDeletePost={confirmDelete} />
           </TabsContent>
 
           <TabsContent value="table">
@@ -136,7 +151,7 @@ export default function ContentPage() {
                         post={post}
                         index={i}
                         onEdit={handleEditPost}
-                        onDelete={deletePost}
+                        onDelete={confirmDelete}
                       />
                     ))
                   )}
@@ -150,6 +165,16 @@ export default function ContentPage() {
           open={modalOpen}
           onOpenChange={handleCloseModal}
           editPost={editPost}
+        />
+
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={handleDeleteConfirmed}
+          title="Hapus Postingan"
+          description={`Apakah Anda yakin ingin menghapus postingan "${postToDelete?.name}"? Tindakan ini tidak dapat dibatalkan.`}
+          confirmText="Hapus"
+          cancelText="Batal"
         />
       </div>
     </AppShell>

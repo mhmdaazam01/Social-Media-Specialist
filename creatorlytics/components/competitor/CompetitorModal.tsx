@@ -75,10 +75,14 @@ export function CompetitorModal({ open, onOpenChange, editCompetitor }: Competit
     setLoading(true);
     try {
       if (editCompetitor) {
-        updateCompetitor(editCompetitor.id, form);
+        await updateCompetitor(editCompetitor.id, form);
         toast.success('Kompetitor berhasil diperbarui');
       } else {
-        createCompetitor(form);
+        const result = await createCompetitor(form);
+        if (!result) {
+          toast.error('Gagal menambahkan kompetitor. Coba lagi.');
+          return;
+        }
         toast.success('Kompetitor berhasil ditambahkan');
       }
       onOpenChange(false);

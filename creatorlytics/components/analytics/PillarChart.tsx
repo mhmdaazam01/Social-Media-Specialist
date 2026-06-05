@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fmt, fmtPercent } from '@/lib/utils/analytics';
+import { usePillars } from '@/lib/hooks/usePillars';
 
 interface PillarChartProps {
   data: {
@@ -22,6 +23,8 @@ interface PillarChartProps {
 }
 
 export function PillarChart({ data }: PillarChartProps) {
+  const { pillars } = usePillars();
+
   if (!data || data.length === 0) {
     return (
       <Card>
@@ -37,6 +40,16 @@ export function PillarChart({ data }: PillarChartProps) {
     );
   }
 
+  // Enrich data with pillar colors
+  const enrichedData = data.map(item => {
+    const pillarInfo = pillars.find(p => p.pillar_id === item.pillar);
+    return {
+      ...item,
+      pillarLabel: pillarInfo?.label || item.pillar,
+      pillarColor: pillarInfo?.color || '#3B82F6',
+    };
+  });
+
   return (
     <Card>
       <CardHeader>
@@ -45,10 +58,10 @@ export function PillarChart({ data }: PillarChartProps) {
       <CardContent>
         <div className="h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
+            <BarChart data={enrichedData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
-                dataKey="pillar"
+                dataKey="pillarLabel"
                 fontSize={12}
                 angle={-20}
                 textAnchor="end"

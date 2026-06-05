@@ -13,21 +13,14 @@ import { useUser } from '@/lib/hooks/useUser';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { useAccounts } from '@/lib/hooks/useAccounts';
 import { usePillars } from '@/lib/hooks/usePillars';
-import { usePosts } from '@/lib/hooks/usePosts';
-import { useGoals } from '@/lib/hooks/useGoals';
-import { useIdeas } from '@/lib/hooks/useIdeas';
-import { useEvents } from '@/lib/hooks/useEvents';
-import { useCompetitors } from '@/lib/hooks/useCompetitors';
-import { exportToJSON, importFromJSON } from '@/lib/utils/export';
-import { Trash2Icon, PlusIcon, DownloadIcon, UploadIcon, SunIcon, MoonIcon } from 'lucide-react';
+import { Trash2Icon, PlusIcon, SunIcon, MoonIcon } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 export default function SettingsPage() {
-  const { profile } = useUser();
+  const { profile, refreshProfile } = useUser();
   const { platforms, addPlatform, removePlatform } = usePlatforms();
   const { accounts, addAccount, removeAccount } = useAccounts();
   const { pillars, addPillar, removePillar } = usePillars();
-  const importRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
 
   const [displayName, setDisplayName] = useState(profile?.display_name || '');
@@ -40,16 +33,45 @@ export default function SettingsPage() {
 
   async function handleSaveProfile() {
     if (!profile) return;
-    
     const { error } = await supabase
       .from('profiles')
       .update({ display_name: displayName, niche })
       .eq('id', profile.id);
-    
     if (error) {
       toast.error('Gagal memperbarui profil');
     } else {
+      await refreshProfile();
       toast.success('Profil berhasil diperbarui');
+    }
+  }
+
+  async function handleErModeChange(v: string) {
+    if (!profile) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ er_mode: v as 'impression' | 'reach' | 'followers' })
+      .eq('id', profile.id);
+    if (error) {
+      toast.error('Gagal memperbarui ER mode');
+    } else {
+      await refreshProfile();
+      toast.success('ER mode berhasil diperbarui');
+    }
+  }
+
+  async function handleThemeChange(theme: 'dark' | 'light') {
+    if (!profile) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ theme })
+      .eq('id', profile.id);
+    if (error) {
+      toast.error('Gagal memperbarui tema');
+    } else {
+      document.documentElement.classList.remove('dark', 'light');
+      document.documentElement.classList.add(theme);
+      await refreshProfile();
+      toast.success('Tema berhasil diperbarui');
     }
   }
 
@@ -58,7 +80,6 @@ export default function SettingsPage() {
       toast.error('Nama platform wajib diisi');
       return;
     }
-    // Auto-generate ID from name: "Instagram" -> "instagram", "TikTok" -> "tiktok"
     const platformId = platformName.toLowerCase().replace(/\s+/g, '-');
     addPlatform({ platform_id: platformId, name: platformName, emoji: '' });
     setPlatformName('');
@@ -80,7 +101,6 @@ export default function SettingsPage() {
       toast.error('Label pilar wajib diisi');
       return;
     }
-    // Auto-generate ID from label: "Edukasi" -> "edukasi", "Tips & Trik" -> "tips-trik"
     const pillarId = pillarLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     addPillar({
       pillar_id: pillarId,
@@ -94,20 +114,10 @@ export default function SettingsPage() {
     toast.success('Pilar berhasil ditambahkan');
   }
 
-  function handleExport() {
-    // TODO: Implement export from Supabase
-    toast.info('Export feature coming soon');
-  }
-
-  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
-    // TODO: Implement import to Supabase
-    toast.info('Import feature coming soon');
-    if (importRef.current) importRef.current.value = '';
-  }
-
   return (
     <AppShell title="Pengaturan">
       <div className="mx-auto flex max-w-2xl flex-col gap-6">
+
         {/* Profil */}
         <Card>
           <CardContent className="flex flex-col gap-4">
@@ -132,17 +142,7 @@ export default function SettingsPage() {
             <h3 className="font-medium">Tampilan</h3>
             <div className="grid gap-2">
               <Label>ER Mode</Label>
-              <Select value={profile?.er_mode || 'impression'} onValueChange={async (v) => {
-                if (!profile) return;
-                const { error } = await supabase
-                  .from('profiles')
-                  .update({ er_mode: v as 'impression' | 'reach' | 'followers' })
-                  .eq('id', profile.id);
-                if (!error) {
-                  toast.success('ER mode berhasil diperbarui');
-                  window.location.reload();
-                }
-              }}>
+              <Select value={profile?.er_mode || 'impression'} onValueChange={handleErModeChange}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -154,44 +154,22 @@ export default function SettingsPage() {
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label>Theme</Label>
+              <Label>Tema</Label>
               <div className="flex gap-2">
-                  <Button
-                    variant={profile?.theme === 'dark' ? 'default' : 'outline'}
-                    onClick={async () => {
-                      if (!profile) return;
-                      const { error } = await supabase
-                        .from('profiles')
-                        .update({ theme: 'dark' })
-                        .eq('id', profile.id);
-                      if (!error) {
-                        document.documentElement.classList.remove('light');
-                        document.documentElement.classList.add('dark');
-                        toast.success('Theme berhasil diperbarui');
-                      }
-                    }}
-                  >
-                    <MoonIcon />
-                    Dark
-                  </Button>
-                  <Button
-                    variant={profile?.theme === 'light' ? 'default' : 'outline'}
-                    onClick={async () => {
-                      if (!profile) return;
-                      const { error } = await supabase
-                        .from('profiles')
-                        .update({ theme: 'light' })
-                        .eq('id', profile.id);
-                      if (!error) {
-                        document.documentElement.classList.remove('dark');
-                        document.documentElement.classList.add('light');
-                        toast.success('Theme berhasil diperbarui');
-                      }
-                    }}
-                  >
-                    <SunIcon />
-                    Light
-                  </Button>
+                <Button
+                  variant={profile?.theme === 'dark' ? 'default' : 'outline'}
+                  onClick={() => handleThemeChange('dark')}
+                >
+                  <MoonIcon />
+                  Dark
+                </Button>
+                <Button
+                  variant={profile?.theme === 'light' ? 'default' : 'outline'}
+                  onClick={() => handleThemeChange('light')}
+                >
+                  <SunIcon />
+                  Light
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -210,7 +188,7 @@ export default function SettingsPage() {
                 {platforms.map(p => (
                   <div key={p.id} className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
                     <span className="text-sm">{p.name}</span>
-                    <Button variant="ghost" size="icon-xs" onClick={() => removePlatform(p.id)}>
+                    <Button variant="ghost" size="icon-xs" aria-label={`Hapus ${p.name}`} onClick={() => removePlatform(p.id)}>
                       <Trash2Icon />
                     </Button>
                   </div>
@@ -219,10 +197,11 @@ export default function SettingsPage() {
             )}
             <Separator />
             <div className="flex gap-2">
-              <Input 
-                value={platformName} 
-                onChange={e => setPlatformName(e.target.value)} 
-                placeholder="Nama platform (misal: Instagram)" 
+              <Input
+                value={platformName}
+                onChange={e => setPlatformName(e.target.value)}
+                placeholder="Nama platform (misal: Instagram)"
+                onKeyDown={e => e.key === 'Enter' && handleAddPlatform()}
               />
               <Button variant="outline" onClick={handleAddPlatform}>
                 <PlusIcon />
@@ -245,7 +224,7 @@ export default function SettingsPage() {
                 {accounts.map(a => (
                   <div key={a.id} className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
                     <span className="text-sm">{a.name}</span>
-                    <Button variant="ghost" size="icon-xs" onClick={() => removeAccount(a.id)}>
+                    <Button variant="ghost" size="icon-xs" aria-label={`Hapus ${a.name}`} onClick={() => removeAccount(a.id)}>
                       <Trash2Icon />
                     </Button>
                   </div>
@@ -254,7 +233,12 @@ export default function SettingsPage() {
             )}
             <Separator />
             <div className="flex gap-2">
-              <Input value={accountName} onChange={e => setAccountName(e.target.value)} placeholder="Nama akun baru" />
+              <Input
+                value={accountName}
+                onChange={e => setAccountName(e.target.value)}
+                placeholder="Nama akun baru"
+                onKeyDown={e => e.key === 'Enter' && handleAddAccount()}
+              />
               <Button variant="outline" onClick={handleAddAccount}>
                 <PlusIcon />
                 Tambah
@@ -279,7 +263,7 @@ export default function SettingsPage() {
                       <span className="size-3 rounded-full" style={{ backgroundColor: p.color }} />
                       <span className="text-sm">{p.label}</span>
                     </div>
-                    <Button variant="ghost" size="icon-xs" onClick={() => removePillar(p.id)}>
+                    <Button variant="ghost" size="icon-xs" aria-label={`Hapus ${p.label}`} onClick={() => removePillar(p.id)}>
                       <Trash2Icon />
                     </Button>
                   </div>
@@ -290,7 +274,12 @@ export default function SettingsPage() {
             <div className="grid grid-cols-2 gap-2">
               <div className="grid gap-1">
                 <Label className="text-xs">Label</Label>
-                <Input value={pillarLabel} onChange={e => setPillarLabel(e.target.value)} placeholder="Edukasi" />
+                <Input
+                  value={pillarLabel}
+                  onChange={e => setPillarLabel(e.target.value)}
+                  placeholder="Edukasi"
+                  onKeyDown={e => e.key === 'Enter' && handleAddPillar()}
+                />
               </div>
               <div className="grid gap-1">
                 <Label className="text-xs">Warna</Label>
@@ -301,32 +290,6 @@ export default function SettingsPage() {
               <PlusIcon />
               Tambah Pilar
             </Button>
-          </CardContent>
-        </Card>
-
-        <Separator />
-
-        {/* Data */}
-        <Card>
-          <CardContent className="flex flex-col gap-4">
-            <h3 className="font-medium">Data</h3>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={handleExport}>
-                <DownloadIcon />
-                Export All Data
-              </Button>
-              <Button variant="outline" onClick={() => importRef.current?.click()}>
-                <UploadIcon />
-                Import Data
-              </Button>
-              <input
-                ref={importRef}
-                type="file"
-                accept=".json"
-                className="hidden"
-                onChange={handleImport}
-              />
-            </div>
           </CardContent>
         </Card>
       </div>

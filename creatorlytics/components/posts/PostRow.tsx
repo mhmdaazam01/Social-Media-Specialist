@@ -14,7 +14,7 @@ interface PostRowProps {
   post: Post;
   index: number;
   onEdit?: (post: Post) => void;
-  onDelete?: (id: string) => void;
+  onDelete?: (post: Post) => void;
 }
 
 export function PostRow({ post, index, onEdit, onDelete }: PostRowProps) {
@@ -39,7 +39,7 @@ export function PostRow({ post, index, onEdit, onDelete }: PostRowProps) {
             </Button>
           )}
           {onDelete && (
-            <Button variant="ghost" size="icon-xs" onClick={() => onDelete(post.id)}>
+            <Button variant="ghost" size="icon-xs" onClick={() => onDelete(post)}>
               <Trash2Icon />
             </Button>
           )}

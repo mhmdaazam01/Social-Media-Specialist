@@ -13,6 +13,7 @@ import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { usePillars } from '@/lib/hooks/usePillars';
 import { useAccounts } from '@/lib/hooks/useAccounts';
 import { today } from '@/lib/utils/formatting';
+import { FORMAT_OPTIONS } from '@/lib/constants';
 import type { CalendarEvent } from '@/types';
 
 interface CalEventModalProps {
@@ -45,8 +46,6 @@ const emptyForm: FormFields = {
   status: 'idea',
   notes: '',
 };
-
-const FORMAT_OPTIONS = ['Reels', 'Carousel', 'Static', 'Video', 'Story', 'Live'];
 
 export function CalEventModal({ open, onOpenChange, editEvent, defaultDate }: CalEventModalProps) {
   const { createEvent, updateEvent } = useEvents();

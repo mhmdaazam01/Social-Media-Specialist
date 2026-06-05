@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
 
@@ -28,7 +28,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (!error && data) {
+      setProfile(data);
+    }
+    setLoading(false);
+  }, [supabase]);
 
   useEffect(() => {
     // Get initial session
@@ -55,20 +68,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
-
-  async function fetchProfile(userId: string) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (!error && data) {
-      setProfile(data);
-    }
-    setLoading(false);
-  }
+  }, [supabase, fetchProfile]);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
@@ -78,7 +78,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (user) {
       await fetchProfile(user.id);
     }
-  }, [user]);
+  }, [user, fetchProfile]);
 
   return (
     <UserContext.Provider value={{ user, profile, loading, signOut, refreshProfile }}>

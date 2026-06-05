@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from './useUser';
+import { toast } from 'sonner';
 import type { ContentIdea } from '@/types';
 
 export function useIdeas() {
@@ -18,6 +19,7 @@ export function useIdeas() {
       setIdeas([]);
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   async function fetchIdeas() {
@@ -26,7 +28,9 @@ export function useIdeas() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
+    if (error) {
+      toast.error('Gagal memuat ide konten');
+    } else if (data) {
       setIdeas(data);
     }
     setLoading(false);
@@ -41,8 +45,12 @@ export function useIdeas() {
       .select()
       .single();
 
-    if (!error && data) {
-      setIdeas([data, ...ideas]);
+    if (error) {
+      toast.error('Gagal menambahkan ide');
+      return null;
+    }
+    if (data) {
+      setIdeas(prev => [data, ...prev]);
       return data;
     }
     return null;
@@ -54,8 +62,10 @@ export function useIdeas() {
       .update(updates)
       .eq('id', id);
 
-    if (!error) {
-      setIdeas(ideas.map(i => i.id === id ? { ...i, ...updates } : i));
+    if (error) {
+      toast.error('Gagal memperbarui ide');
+    } else {
+      setIdeas(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i));
     }
   }
 
@@ -65,8 +75,10 @@ export function useIdeas() {
       .delete()
       .eq('id', id);
 
-    if (!error) {
-      setIdeas(ideas.filter(i => i.id !== id));
+    if (error) {
+      toast.error('Gagal menghapus ide');
+    } else {
+      setIdeas(prev => prev.filter(i => i.id !== id));
     }
   }
 

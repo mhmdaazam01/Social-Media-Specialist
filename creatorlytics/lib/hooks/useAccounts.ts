@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from './useUser';
+import { toast } from 'sonner';
 import type { Account } from '@/types';
 
 export function useAccounts() {
@@ -18,6 +19,7 @@ export function useAccounts() {
       setAccounts([]);
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   async function fetchAccounts() {
@@ -26,7 +28,9 @@ export function useAccounts() {
       .select('*')
       .order('created_at', { ascending: true });
 
-    if (!error && data) {
+    if (error) {
+      toast.error('Gagal memuat akun');
+    } else if (data) {
       setAccounts(data);
     }
     setLoading(false);
@@ -41,8 +45,12 @@ export function useAccounts() {
       .select()
       .single();
 
-    if (!error && data) {
-      setAccounts([...accounts, data]);
+    if (error) {
+      toast.error('Gagal menambahkan akun');
+      return null;
+    }
+    if (data) {
+      setAccounts(prev => [...prev, data]);
       return data;
     }
     return null;
@@ -54,8 +62,10 @@ export function useAccounts() {
       .delete()
       .eq('id', id);
 
-    if (!error) {
-      setAccounts(accounts.filter(a => a.id !== id));
+    if (error) {
+      toast.error('Gagal menghapus akun');
+    } else {
+      setAccounts(prev => prev.filter(a => a.id !== id));
     }
   }
 

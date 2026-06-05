@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
+import { useUser } from '@/lib/hooks/useUser';
 import type { Post } from '@/types';
 import { formatDate } from '@/lib/utils/formatting';
 import { calcER, fmt, fmtPercent } from '@/lib/utils/analytics';
@@ -25,6 +26,8 @@ type SortDir = 'asc' | 'desc';
 
 export function TopContentTable({ posts }: TopContentTableProps) {
   const { platforms } = usePlatforms();
+  const { profile } = useUser();
+  const erMode = profile?.er_mode || 'impression';
   const [sortKey, setSortKey] = useState<SortKey>('er');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
@@ -38,7 +41,7 @@ export function TopContentTable({ posts }: TopContentTableProps) {
   };
 
   const sorted = useMemo(() => {
-    const items = posts.map((p) => ({ ...p, er: calcER(p, 'impression') }));
+    const items = posts.map((p) => ({ ...p, er: calcER(p, erMode) }));
     items.sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
@@ -58,7 +61,7 @@ export function TopContentTable({ posts }: TopContentTableProps) {
       return sortDir === 'desc' ? -cmp : cmp;
     });
     return items.slice(0, 20);
-  }, [posts, sortKey, sortDir]);
+  }, [posts, sortKey, sortDir, erMode]);
 
   const sortIndicator = (key: SortKey) => {
     if (sortKey !== key) return '';
@@ -135,7 +138,7 @@ export function TopContentTable({ posts }: TopContentTableProps) {
                 <TableCell>{formatDate(post.date)}</TableCell>
                 <TableCell className="text-right font-medium">{fmt(post.reach)}</TableCell>
                 <TableCell className="text-right font-medium">{fmt(post.like)}</TableCell>
-                <TableCell className="text-right font-medium">{fmtPercent(calcER(post, 'impression'))}</TableCell>
+                <TableCell className="text-right font-medium">{fmtPercent(post.er)}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{post.pillar}</Badge>
                 </TableCell>
