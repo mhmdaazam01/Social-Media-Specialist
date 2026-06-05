@@ -2,118 +2,75 @@
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { useGoals } from '@/lib/hooks/useGoals';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
-import { usePillars } from '@/lib/hooks/usePillars';
 import { calcER } from '@/lib/utils/analytics';
 import { currentMonth, currentYear } from '@/lib/utils/formatting';
 import { 
-  Sparkles, Calendar, Target, Flame, Lightbulb, Copy, Check, BarChart2, MessageSquare, TrendingUp 
+  Calendar, Target, Flame, Lightbulb, BarChart2, MessageSquare, TrendingUp 
 } from 'lucide-react';
-import { toast } from 'sonner';
-
-// Tones for caption generator
-const TONES = [
-  { id: 'casual', label: 'Santai & Akrab' },
-  { id: 'professional', label: 'Profesional & Edukatif' },
-  { id: 'inspiring', label: 'Inspiratif & Emosional' },
-  { id: 'hype', label: 'Antusias & Hype' },
-];
 
 const DAYS_OF_WEEK = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-const HOUR_BLOCKS = [
-  { label: 'Subuh (00-06)', min: 0, max: 6 },
-  { label: 'Pagi (06-12)', min: 6, max: 12 },
-  { label: 'Siang (12-18)', min: 12, max: 18 },
-  { label: 'Malam (18-24)', min: 18, max: 24 },
-];
 
 export function AIInsightsTab() {
   const { posts } = usePosts();
   const { goals } = useGoals();
   const { platforms } = usePlatforms();
-  const { pillars } = usePillars();
 
-  // Caption Generator State
-  const [selectedPlatform, setSelectedPlatform] = useState('all');
-  const [selectedPillar, setSelectedPillar] = useState('all');
-  const [selectedTone, setSelectedTone] = useState('casual');
-  const [generatedIdeas, setGeneratedIdeas] = useState<any[]>([]);
-  const [generating, setGenerating] = useState(false);
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-
-  // 1. Heatmap Calculation (Posting Day & Hour Block)
+  // 1. Heatmap per Hari dalam Seminggu
   const heatmapData = useMemo(() => {
-    // Initialize empty grid
-    const grid: Record<number, Record<number, { count: number; sumER: number }>> = {};
+    // day 1 = Senin ... day 7 = Minggu
+    const grid: Record<number, { count: number; sumER: number }> = {};
     for (let day = 1; day <= 7; day++) {
-      grid[day] = {};
-      for (let blockIdx = 0; blockIdx < 4; blockIdx++) {
-        grid[day][blockIdx] = { count: 0, sumER: 0 };
-      }
+      grid[day] = { count: 0, sumER: 0 };
     }
 
     posts.forEach(p => {
-      if (!p.created_at) return;
-      const dateObj = new Date(p.created_at);
-      
-      // getDay() returns 0 for Sunday, 1 for Monday... map Sunday to 7
+      // Gunakan p.date (format 'YYYY-MM-DD') karena tidak ada kolom jam
+      const dateStr = p.date || p.created_at;
+      if (!dateStr) return;
+      const dateObj = new Date(dateStr);
+      if (isNaN(dateObj.getTime())) return;
+
+      // getDay(): 0 = Minggu, 1 = Senin ... 6 = Sabtu → map ke 1–7 (Senin=1, Minggu=7)
       let day = dateObj.getDay();
-      if (day === 0) day = 7; 
+      if (day === 0) day = 7;
 
-      const hour = dateObj.getHours();
-      let blockIdx = 0;
-      if (hour >= 6 && hour < 12) blockIdx = 1;
-      else if (hour >= 12 && hour < 18) blockIdx = 2;
-      else if (hour >= 18 && hour < 24) blockIdx = 3;
-
-      const er = calcER(p, 'impression'); // default to impression ER
-      grid[day][blockIdx].count += 1;
-      grid[day][blockIdx].sumER += er;
+      const er = calcER(p, 'impression');
+      grid[day].count += 1;
+      grid[day].sumER += er;
     });
 
-    // Find max value to determine opacity levels
     let maxAvgER = 0;
-    const finalGrid: Array<{ day: number; blockIdx: number; avgER: number; count: number }> = [];
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const day = i + 1;
+      const cell = grid[day];
+      const avgER = cell.count > 0 ? cell.sumER / cell.count : 0;
+      if (avgER > maxAvgER) maxAvgER = avgER;
+      return { day, avgER, count: cell.count };
+    });
 
-    for (let day = 1; day <= 7; day++) {
-      for (let blockIdx = 0; blockIdx < 4; blockIdx++) {
-        const cell = grid[day][blockIdx];
-        const avgER = cell.count > 0 ? cell.sumER / cell.count : 0;
-        if (avgER > maxAvgER) maxAvgER = avgER;
-        finalGrid.push({ day, blockIdx, avgER, count: cell.count });
-      }
-    }
-
-    return { grid: finalGrid, maxAvgER };
+    // second pass to set maxAvgER correctly
+    const max = Math.max(...days.map(d => d.avgER));
+    return { days, maxAvgER: max };
   }, [posts]);
 
-  // Determine best time to post
-  const bestTime = useMemo(() => {
+  // Hari posting terbaik berdasarkan avg ER
+  const bestDay = useMemo(() => {
     if (posts.length === 0) {
-      return { day: 'Rabu', time: '18:00 - 21:00', reason: 'Rekomendasi global berdasarkan engagement rate rata-rata kreator Indonesia.' };
+      return { day: 'Rabu', reason: 'Rekomendasi global berdasarkan engagement rate rata-rata kreator Indonesia.' };
     }
 
-    const sortedGrid = [...heatmapData.grid].sort((a, b) => b.avgER - a.avgER);
-    const top = sortedGrid[0];
+    const top = [...heatmapData.days].sort((a, b) => b.avgER - a.avgER)[0];
 
     if (!top || top.avgER === 0) {
-      return { day: 'Rabu', time: '18:00 - 21:00', reason: 'Rekomendasi global berdasarkan engagement rate rata-rata.' };
+      return { day: 'Rabu', reason: 'Belum cukup data untuk menentukan hari terbaik.' };
     }
 
-    const dayName = DAYS_OF_WEEK[top.day - 1];
-    let timeStr = '18:00 - 24:00';
-    if (top.blockIdx === 0) timeStr = '00:00 - 06:00';
-    else if (top.blockIdx === 1) timeStr = '06:00 - 12:00';
-    else if (top.blockIdx === 2) timeStr = '12:00 - 18:00';
-
     return {
-      day: dayName,
-      time: timeStr,
-      reason: `Waktu ini memiliki rata-rata ER tertinggi sebesar ${top.avgER.toFixed(2)}% dari total ${top.count} postingan.`
+      day: DAYS_OF_WEEK[top.day - 1],
+      reason: `Hari ini memiliki rata-rata ER tertinggi sebesar ${top.avgER.toFixed(2)}% dari total ${top.count} postingan.`
     };
   }, [heatmapData, posts]);
 
@@ -216,51 +173,6 @@ export function AIInsightsTab() {
     return list.sort((a, b) => b.avgER - a.avgER).slice(0, 5);
   }, [posts]);
 
-  // 4. Generate Content Ideas (Offline Prompt Engine)
-  const generateAIIdeas = () => {
-    setGenerating(true);
-    
-    // Simulate generation time
-    setTimeout(() => {
-      const platform = selectedPlatform === 'all' ? 'Instagram' : platforms.find(p => p.platform_id === selectedPlatform)?.name || 'Media Sosial';
-      const pillar = selectedPillar === 'all' ? 'Edukasi' : pillars.find(p => p.pillar_id === selectedPillar)?.label || 'Umum';
-      const tone = TONES.find(t => t.id === selectedTone)?.label || 'Santai';
-
-      // Advanced Offline prompt logic using niche-specific template libraries
-      const templateIdeas = [
-        {
-          title: `Behind-the-scenes: Rahasia Proses ${pillar}`,
-          hook: `Nggak banyak yang tahu, tapi ini cara kami bikin konten ${pillar}... 🤫`,
-          description: `Tunjukkan proses pembuatan, persiapan, atau riset Anda dengan gaya yang ${tone}. Ini membangun kedekatan luar biasa dengan audience.`,
-          caption: `Banyak yang nanya, "Gimana sih caranya dapet insight konten kayak gini?" 🤔\n\nSebenernya gak ada rahasia sulap kok! Kuncinya ada di konsistensi dan riset mendalam. Hari ini aku mau share proses di balik layar pembuatan konten ${pillar} ini.\n\nSimak langkah-langkahnya di slide ya! Mana nih proses yang paling bikin kamu penasaran? Tulis di kolom komentar! 👇\n\n#BehindTheScenes #CreatorLife #ContentTips #IndonesiaKreatif`
-        },
-        {
-          title: `Mitos vs Fakta Mengenai ${pillar}`,
-          hook: `Jangan percaya mitos ini kalau kamu mau berkembang! ❌`,
-          description: `Hancurkan kesalahpahaman umum di bidang Anda. Audiens menyukai konten pembongkaran mitos karena bersifat informatif dan bernilai edukasi tinggi.`,
-          caption: `Sering denger gak sih kalau kita harus lakuin ini buat sukses? 🤥\n\nNah, kali ini aku mau bongkar mitos vs fakta seputar dunia ${pillar} yang sering banget disalahpahami orang. Wajib disimak biar kamu nggak salah jalan lagi!\n\nSave post ini dulu biar gak lupa ya! Tag temen kamu juga yang masih percaya mitos ini! 🚀\n\n#MitosFakta #Edukasikreatif #TipsPintar #CreatorIndonesia`
-        },
-        {
-          title: `3 Langkah Mudah untuk Memulai ${pillar}`,
-          hook: `Mau mulai tapi bingung dari mana? Cobain 3 cara gampang ini! ✨`,
-          description: `Panduan taktis dan mudah ditiru. Sangat cocok untuk mendulang saves karena audiens menyukai tutorial yang actionable.`,
-          caption: `Banyak yang pengen mulai tapi keburu overthinking duluan. Tenang, gak sesulit itu kok! 😉\n\nIni dia 3 langkah taktis paling gampang buat kamu yang mau langsung praktek hari ini juga:\n1️⃣ Langkah Pertama: Cari core masalah.\n2️⃣ Langkah Kedua: Buat core framework sederhana.\n3️⃣ Langkah Ketiga: Posting tanpa mikirin hasil dulu.\n\nDetail lengkapnya udah aku kupas tuntas di visual ya. Langkah mana nih yang mau kamu coba duluan? 👇\n\n#TutorialMudah #MulaiAjaDulu #TipsProduktif #GrowthMindset`
-        }
-      ];
-
-      setGeneratedIdeas(templateIdeas);
-      setGenerating(false);
-      toast.success('Rekomendasi Konten AI berhasil dibuat!');
-    }, 800);
-  };
-
-  const copyToClipboard = (text: string, index: number) => {
-    navigator.clipboard.writeText(text);
-    setCopiedIndex(index);
-    toast.success('Caption disalin ke clipboard!');
-    setTimeout(() => setCopiedIndex(null), 2000);
-  };
-
   return (
     <div className="space-y-6">
       {/* SECTION 1: BEST POSTING TIME HEATMAP */}
@@ -269,10 +181,10 @@ export function AIInsightsTab() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground font-semibold">
               <Calendar className="size-5 text-indigo-500" />
-              Heatmap Waktu Posting Terbaik
+              Heatmap Hari Posting Terbaik
             </CardTitle>
             <CardDescription>
-              Frekuensi dan rata-rata Engagement Rate (ER) berdasarkan hari dan waktu publikasi.
+              Rata-rata Engagement Rate (ER) berdasarkan hari dalam seminggu saat postingan dipublikasikan.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -280,65 +192,51 @@ export function AIInsightsTab() {
               <div className="flex h-56 flex-col items-center justify-center text-center text-muted-foreground">
                 <BarChart2 className="size-10 text-muted-foreground/40 mb-2" />
                 <p className="text-sm">Belum ada data postingan.</p>
-                <p className="text-xs mt-1">Saran waktu akan terhitung otomatis setelah Anda menambahkan data.</p>
+                <p className="text-xs mt-1">Hari terbaik akan terhitung otomatis setelah Anda menambahkan data.</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Heatmap Grid */}
-                <div className="overflow-x-auto">
-                  <div className="min-w-[450px]">
-                    <div className="grid grid-cols-5 gap-1 mb-2 text-center text-xs font-medium text-muted-foreground">
-                      <div></div>
-                      {HOUR_BLOCKS.map((h, i) => (
-                        <div key={i}>{h.label}</div>
-                      ))}
-                    </div>
-                    {DAYS_OF_WEEK.map((dayName, dayIdx) => {
-                      const dayVal = dayIdx + 1;
-                      return (
-                        <div key={dayIdx} className="grid grid-cols-5 gap-1 items-center mb-1 text-center">
-                          <div className="text-left text-xs font-semibold text-muted-foreground pr-2">{dayName}</div>
-                          {HOUR_BLOCKS.map((_, blockIdx) => {
-                            const cell = heatmapData.grid.find(c => c.day === dayVal && c.blockIdx === blockIdx);
-                            const count = cell ? cell.count : 0;
-                            const avgER = cell ? cell.avgER : 0;
-                            
-                            // Color intensity based on performance
-                            let bgStyle = 'bg-muted/30';
-                            let textStyle = 'text-muted-foreground/50';
-                            
-                            if (count > 0 && heatmapData.maxAvgER > 0) {
-                              const ratio = avgER / heatmapData.maxAvgER;
-                              if (ratio > 0.75) {
-                                bgStyle = 'bg-indigo-600 text-indigo-50 font-bold';
-                              } else if (ratio > 0.4) {
-                                bgStyle = 'bg-indigo-500/60 text-indigo-100';
-                              } else {
-                                bgStyle = 'bg-indigo-500/25 text-indigo-700 dark:text-indigo-300';
-                              }
-                              textStyle = '';
-                            }
+                {/* Heatmap Bar per Hari */}
+                <div className="space-y-2">
+                  {heatmapData.days.map(({ day, avgER, count }) => {
+                    const dayName = DAYS_OF_WEEK[day - 1];
+                    const ratio = heatmapData.maxAvgER > 0 ? avgER / heatmapData.maxAvgER : 0;
+                    const isBest = ratio === 1 && avgER > 0;
 
-                            return (
-                              <div
-                                key={blockIdx}
-                                className={`h-10 rounded-md flex flex-col items-center justify-center text-xs transition-all duration-300 ${bgStyle} ${textStyle}`}
-                                title={`${dayName} pada blok ini: Rata-rata ER ${avgER.toFixed(2)}% (${count} posts)`}
-                              >
-                                <span>{avgER > 0 ? `${avgER.toFixed(1)}%` : '-'}</span>
-                                {count > 0 && <span className="text-[9px] opacity-70">{count} post</span>}
-                              </div>
-                            );
-                          })}
+                    let barColor = 'bg-muted/40';
+                    if (count > 0) {
+                      if (ratio > 0.75) barColor = 'bg-indigo-600';
+                      else if (ratio > 0.4) barColor = 'bg-indigo-500/60';
+                      else barColor = 'bg-indigo-500/25';
+                    }
+
+                    return (
+                      <div key={day} className="flex items-center gap-3">
+                        <span className={`w-14 text-xs font-semibold shrink-0 ${isBest ? 'text-indigo-500' : 'text-muted-foreground'}`}>
+                          {dayName}
+                        </span>
+                        <div className="flex-1 h-8 rounded-md bg-muted/20 overflow-hidden relative">
+                          <div
+                            className={`h-full rounded-md transition-all duration-500 ${barColor}`}
+                            style={{ width: count > 0 ? `${Math.max(ratio * 100, 4)}%` : '0%' }}
+                          />
+                          {count > 0 && (
+                            <span className="absolute inset-0 flex items-center px-3 text-[11px] font-medium text-foreground/80">
+                              {avgER.toFixed(2)}% ER · {count} post
+                            </span>
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
+                        {isBest && (
+                          <span className="text-[10px] font-bold text-indigo-500 shrink-0">★ Terbaik</span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
 
-                <div className="flex gap-2 justify-end text-[10px] text-muted-foreground">
-                  <div className="flex items-center gap-1"><div className="size-2 rounded bg-muted/40" /> 0% / No Data</div>
-                  <div className="flex items-center gap-1"><div className="size-2 rounded bg-indigo-500/20" /> Rendah</div>
+                <div className="flex gap-3 justify-end text-[10px] text-muted-foreground pt-1">
+                  <div className="flex items-center gap-1"><div className="size-2 rounded bg-muted/40" /> No Data</div>
+                  <div className="flex items-center gap-1"><div className="size-2 rounded bg-indigo-500/25" /> Rendah</div>
                   <div className="flex items-center gap-1"><div className="size-2 rounded bg-indigo-500/60" /> Sedang</div>
                   <div className="flex items-center gap-1"><div className="size-2 rounded bg-indigo-600" /> Terbaik</div>
                 </div>
@@ -352,28 +250,28 @@ export function AIInsightsTab() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground font-semibold">
               <Flame className="size-5 text-amber-500 animate-pulse" />
-              Waktu Posting Terbaik
+              Hari Posting Terbaik
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="p-4 rounded-xl bg-card border flex flex-col gap-2">
               <span className="text-xs font-semibold text-indigo-500 uppercase tracking-wider">Rekomendasi Utama</span>
-              <span className="text-2xl font-extrabold text-foreground">{bestTime.day}, {bestTime.time}</span>
-              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{bestTime.reason}</p>
+              <span className="text-2xl font-extrabold text-foreground">{bestDay.day}</span>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{bestDay.reason}</p>
             </div>
 
             <div className="space-y-3">
-              <span className="text-xs font-semibold text-muted-foreground">Tips AI untuk Anda:</span>
+              <span className="text-xs font-semibold text-muted-foreground">Tips untuk Anda:</span>
               <div className="flex gap-3 items-start text-xs">
                 <Lightbulb className="size-5 text-amber-400 shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
-                  Postingan dengan metrik ER tinggi cenderung dipublikasikan saat audiens Anda sedang istirahat siang atau bersantai di malam hari.
+                  Audiens cenderung lebih aktif di hari-hari tertentu. Postingan yang ditayangkan saat engagement tinggi mendapat distribusi algoritma yang lebih baik.
                 </p>
               </div>
               <div className="flex gap-3 items-start text-xs">
                 <TrendingUp className="size-5 text-indigo-400 shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
-                  Konsisten upload di hari <strong>{bestTime.day}</strong> selama 3 minggu berturut-turut untuk melatih algoritma membaca konten Anda.
+                  Konsisten posting di hari <strong>{bestDay.day}</strong> selama 3 minggu berturut-turut untuk melatih algoritma mengenali pola konten Anda.
                 </p>
               </div>
             </div>
@@ -466,129 +364,7 @@ export function AIInsightsTab() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* SECTION 3: AI CONTENT GENERATOR */}
-        <Card className="lg:col-span-2 border-none shadow-md bg-card/60 backdrop-blur-md flex flex-col justify-between">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-foreground font-semibold">
-              <Sparkles className="size-5 text-indigo-500 animate-spin-slow" />
-              Asisten AI Pembuat Konten & Caption
-            </CardTitle>
-            <CardDescription>
-              Buat ide postingan unik dan template caption siap pakai yang disesuaikan dengan niche & pilar Anda.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 flex-1">
-            {/* Input Selection */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-muted-foreground">Platform</label>
-                <Select value={selectedPlatform} onValueChange={(v) => setSelectedPlatform(v ?? 'all')}>
-                  <SelectTrigger className="w-full text-xs">
-                    <SelectValue placeholder="Pilih Platform" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua Platform</SelectItem>
-                    {platforms.map(p => (
-                      <SelectItem key={p.id} value={p.platform_id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-muted-foreground">Pilar Konten</label>
-                <Select value={selectedPillar} onValueChange={(v) => setSelectedPillar(v ?? 'all')}>
-                  <SelectTrigger className="w-full text-xs">
-                    <SelectValue placeholder="Pilih Pilar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua Pilar</SelectItem>
-                    {pillars.map(p => (
-                      <SelectItem key={p.id} value={p.pillar_id}>
-                        {p.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-muted-foreground">Tone</label>
-                <Select value={selectedTone} onValueChange={(v) => setSelectedTone(v ?? 'casual')}>
-                  <SelectTrigger className="w-full text-xs">
-                    <SelectValue placeholder="Pilih Tone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TONES.map(t => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <Button onClick={generateAIIdeas} disabled={generating} className="w-full text-xs h-9">
-              {generating ? 'Menghubungkan ke Asisten AI...' : 'Buat Rekomendasi Ide & Caption'}
-            </Button>
-
-            {/* Generated Output */}
-            {generatedIdeas.length > 0 && (
-              <div className="space-y-4 pt-4 border-t">
-                <span className="text-xs font-semibold text-indigo-500 uppercase tracking-wider">Hasil Rekomendasi Konten AI</span>
-                <div className="space-y-4">
-                  {generatedIdeas.map((idea, index) => (
-                    <div key={index} className="rounded-xl border p-4 space-y-3 bg-card">
-                      <div>
-                        <div className="flex justify-between items-start gap-2">
-                          <span className="font-semibold text-sm text-foreground">{idea.title}</span>
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-muted/60 text-muted-foreground uppercase">
-                            Hook Terbaik
-                          </span>
-                        </div>
-                        <p className="text-xs text-indigo-500 font-medium italic mt-1">"{idea.hook}"</p>
-                        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{idea.description}</p>
-                      </div>
-
-                      <div className="pt-2 border-t space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-[11px] font-semibold text-muted-foreground">Template Caption Instagram/TikTok</span>
-                          <Button 
-                            variant="ghost" 
-                            size="icon-xs" 
-                            onClick={() => copyToClipboard(idea.caption, index)}
-                            className="h-7 w-20 gap-1 text-[11px]"
-                          >
-                            {copiedIndex === index ? (
-                              <>
-                                <Check className="size-3 text-emerald-500" />
-                                <span className="text-emerald-500">Salin!</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="size-3" />
-                                <span>Salin</span>
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                        <pre className="text-xs bg-muted/50 p-3 rounded-lg font-sans whitespace-pre-wrap leading-relaxed select-all text-muted-foreground/90 border max-h-40 overflow-y-auto">
-                          {idea.caption}
-                        </pre>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* SECTION 4: FORMAT EFFICIENCY MATRIX */}
+      {/* SECTION 4: FORMAT EFFICIENCY MATRIX */}
         <Card className="border-none shadow-md bg-card/60 backdrop-blur-md flex flex-col justify-between">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground font-semibold">
@@ -638,7 +414,6 @@ export function AIInsightsTab() {
             </div>
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 }
