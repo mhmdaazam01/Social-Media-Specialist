@@ -5,14 +5,18 @@ import { AppShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/button';
 import { CompetitorCard } from '@/components/competitor/CompetitorCard';
 import { CompetitorModal } from '@/components/competitor/CompetitorModal';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useCompetitors } from '@/lib/hooks/useCompetitors';
 import { PlusIcon, UsersIcon } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Competitor } from '@/types';
 
 export default function CompetitorPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editCompetitor, setEditCompetitor] = useState<Competitor | null>(null);
-  const { competitors, deleteCompetitor } = useCompetitors();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [competitorToDelete, setCompetitorToDelete] = useState<Competitor | null>(null);
+  const { competitors, loading: competitorsLoading, deleteCompetitor } = useCompetitors();
 
   function handleAdd() {
     setEditCompetitor(null);
@@ -24,8 +28,16 @@ export default function CompetitorPage() {
     setModalOpen(true);
   }
 
-  function handleDelete(id: string) {
-    deleteCompetitor(id);
+  function confirmDelete(competitor: Competitor) {
+    setCompetitorToDelete(competitor);
+    setDeleteDialogOpen(true);
+  }
+
+  function handleDeleteConfirmed() {
+    if (competitorToDelete) {
+      deleteCompetitor(competitorToDelete.id);
+      setCompetitorToDelete(null);
+    }
   }
 
   function handleCloseModal(open: boolean) {
@@ -44,7 +56,26 @@ export default function CompetitorPage() {
           </Button>
         </div>
 
-        {competitors.length === 0 ? (
+        {competitorsLoading ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-xl border bg-card p-5 space-y-3">
+                <div className="flex justify-between items-start">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-4 w-16 rounded-full" />
+                </div>
+                <div className="space-y-2">
+                  {[1, 2, 3].map((j) => (
+                    <div key={j} className="flex justify-between">
+                      <Skeleton className="h-3.5 w-20" />
+                      <Skeleton className="h-3.5 w-16" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : competitors.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <UsersIcon className="mb-3 size-10 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
@@ -58,7 +89,7 @@ export default function CompetitorPage() {
                 key={c.id}
                 competitor={c}
                 onEdit={handleEdit}
-                onDelete={handleDelete}
+                onDelete={() => confirmDelete(c)}
               />
             ))}
           </div>
@@ -68,6 +99,16 @@ export default function CompetitorPage() {
           open={modalOpen}
           onOpenChange={handleCloseModal}
           editCompetitor={editCompetitor}
+        />
+
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          onConfirm={handleDeleteConfirmed}
+          title="Hapus Kompetitor"
+          description={`Apakah Anda yakin ingin menghapus "${competitorToDelete?.name}"? Tindakan ini tidak dapat dibatalkan.`}
+          confirmText="Hapus"
+          cancelText="Batal"
         />
       </div>
     </AppShell>

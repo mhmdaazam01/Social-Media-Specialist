@@ -9,38 +9,8 @@ import { useGoals } from '@/lib/hooks/useGoals';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { Plus, Target } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { parseDateParts } from '@/lib/utils/formatting';
-import type { Goal, Post } from '@/types';
-
-function calcActual(goal: Goal, posts: Post[]): number {
-  const filtered = posts.filter(p => {
-    if (!p.date) return false;
-    const parts = parseDateParts(p.date);
-    if (!parts) return false;
-    if (parts.year !== goal.year || parts.month !== goal.month) return false;
-    if (goal.platform !== 'all' && p.platform !== goal.platform) return false;
-    return true;
-  });
-
-  switch (goal.metric) {
-    case 'followers':
-      return filtered.reduce((s, p) => s + p.followers_gained, 0);
-    case 'reach':
-      return filtered.reduce((s, p) => s + p.reach, 0);
-    case 'impression':
-      return filtered.reduce((s, p) => s + p.impression, 0);
-    case 'engagement':
-      return filtered.reduce((s, p) => s + p.like + p.comment + p.share + p.save, 0);
-    case 'posts':
-      return filtered.length;
-    case 'likes':
-      return filtered.reduce((s, p) => s + p.like, 0);
-    case 'comments':
-      return filtered.reduce((s, p) => s + p.comment, 0);
-    default:
-      return 0;
-  }
-}
+import { calcGoalProgress } from '@/lib/utils/insights';
+import type { Goal } from '@/types';
 
 export default function GoalsPage() {
   const { goals, loading: goalsLoading, deleteGoal } = useGoals();
@@ -53,11 +23,25 @@ export default function GoalsPage() {
 
   const items = useMemo(() => {
     return goals.map(goal => {
-      const actual = calcActual(goal, posts);
+      const actual = calcGoalProgress(goal, posts);
       const progress = goal.target > 0 ? Math.round((actual / goal.target) * 100) : 0;
-      return { goal, progress };
+      return { goal, progress, actual };
     });
   }, [goals, posts]);
+
+  function handleEdit(goal: Goal) {
+    setEditGoal(goal);
+    setModalOpen(true);
+  }
+
+  function handleAdd() {
+    setEditGoal(null);
+    setModalOpen(true);
+  }
+
+  function handleDelete(id: string) {
+    deleteGoal(id);
+  }
 
   if (loading) {
     return (
@@ -95,20 +79,6 @@ export default function GoalsPage() {
     );
   }
 
-  function handleEdit(goal: Goal) {
-    setEditGoal(goal);
-    setModalOpen(true);
-  }
-
-  function handleAdd() {
-    setEditGoal(null);
-    setModalOpen(true);
-  }
-
-  function handleDelete(id: string) {
-    deleteGoal(id);
-  }
-
   return (
     <AppShell title="Goals">
       <div className="flex flex-col gap-6">
@@ -124,17 +94,22 @@ export default function GoalsPage() {
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {items.map(({ goal, progress }) => (
+              {items.map(({ goal, progress, actual }) => (
                 <GoalCard
                   key={goal.id}
                   goal={goal}
                   progress={progress}
+                  actual={actual}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                 />
               ))}
             </div>
-            <Button className="fixed bottom-20 right-6 lg:bottom-6 lg:right-6 z-40 shadow-lg" size="lg" onClick={handleAdd}>
+            <Button
+              className="fixed bottom-20 right-6 lg:bottom-6 lg:right-6 z-40 shadow-lg"
+              size="lg"
+              onClick={handleAdd}
+            >
               <Plus className="size-5" />
               Goal Baru
             </Button>

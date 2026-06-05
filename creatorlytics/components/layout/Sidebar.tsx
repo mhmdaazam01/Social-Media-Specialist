@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, BarChart3, FileText, Target, FileSpreadsheet,
-  ClipboardList, Calendar, Users, Settings, Sun, Moon, LogOut,
+  ClipboardList, Calendar, Users, Settings, LogOut,
 } from 'lucide-react';
 import { NAV_ITEMS, APP_NAME } from '@/lib/constants';
 import { useUser } from '@/lib/hooks/useUser';

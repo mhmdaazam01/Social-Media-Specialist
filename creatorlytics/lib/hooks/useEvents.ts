@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from './useUser';
+import { toast } from 'sonner';
 import type { CalendarEvent } from '@/types';
 
 export function useEvents() {
@@ -18,6 +19,7 @@ export function useEvents() {
       setEvents([]);
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   async function fetchEvents() {
@@ -26,7 +28,9 @@ export function useEvents() {
       .select('*')
       .order('scheduled_date', { ascending: true });
 
-    if (!error && data) {
+    if (error) {
+      toast.error('Gagal memuat kalender');
+    } else if (data) {
       setEvents(data);
     }
     setLoading(false);
@@ -41,8 +45,12 @@ export function useEvents() {
       .select()
       .single();
 
-    if (!error && data) {
-      setEvents([...events, data]);
+    if (error) {
+      toast.error('Gagal menambahkan event');
+      return null;
+    }
+    if (data) {
+      setEvents(prev => [...prev, data]);
       return data;
     }
     return null;
@@ -54,8 +62,10 @@ export function useEvents() {
       .update(updates)
       .eq('id', id);
 
-    if (!error) {
-      setEvents(events.map(e => e.id === id ? { ...e, ...updates } : e));
+    if (error) {
+      toast.error('Gagal memperbarui event');
+    } else {
+      setEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
     }
   }
 
@@ -65,8 +75,10 @@ export function useEvents() {
       .delete()
       .eq('id', id);
 
-    if (!error) {
-      setEvents(events.filter(e => e.id !== id));
+    if (error) {
+      toast.error('Gagal menghapus event');
+    } else {
+      setEvents(prev => prev.filter(e => e.id !== id));
     }
   }
 

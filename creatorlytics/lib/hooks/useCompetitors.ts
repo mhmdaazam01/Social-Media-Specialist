@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from './useUser';
+import { toast } from 'sonner';
 import type { Competitor } from '@/types';
 
 export function useCompetitors() {
@@ -18,6 +19,7 @@ export function useCompetitors() {
       setCompetitors([]);
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   async function fetchCompetitors() {
@@ -26,7 +28,9 @@ export function useCompetitors() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
+    if (error) {
+      toast.error('Gagal memuat data kompetitor');
+    } else if (data) {
       setCompetitors(data);
     }
     setLoading(false);
@@ -41,8 +45,12 @@ export function useCompetitors() {
       .select()
       .single();
 
-    if (!error && data) {
-      setCompetitors([data, ...competitors]);
+    if (error) {
+      toast.error('Gagal menambahkan kompetitor');
+      return null;
+    }
+    if (data) {
+      setCompetitors(prev => [data, ...prev]);
       return data;
     }
     return null;
@@ -54,8 +62,10 @@ export function useCompetitors() {
       .update(updates)
       .eq('id', id);
 
-    if (!error) {
-      setCompetitors(competitors.map(c => c.id === id ? { ...c, ...updates } : c));
+    if (error) {
+      toast.error('Gagal memperbarui kompetitor');
+    } else {
+      setCompetitors(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
     }
   }
 
@@ -65,8 +75,10 @@ export function useCompetitors() {
       .delete()
       .eq('id', id);
 
-    if (!error) {
-      setCompetitors(competitors.filter(c => c.id !== id));
+    if (error) {
+      toast.error('Gagal menghapus kompetitor');
+    } else {
+      setCompetitors(prev => prev.filter(c => c.id !== id));
     }
   }
 

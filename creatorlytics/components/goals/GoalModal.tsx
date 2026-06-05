@@ -85,6 +85,14 @@ export function GoalModal({ open, onOpenChange, editGoal }: GoalModalProps) {
     }
     const month = parseInt(form.month, 10);
     const year = parseInt(form.year, 10);
+    if (isNaN(month) || month < 1 || month > 12) {
+      toast.error('Bulan harus antara 1–12');
+      return;
+    }
+    if (isNaN(year) || year < 2020 || year > 2100) {
+      toast.error('Tahun tidak valid');
+      return;
+    }
 
     const data = {
       label: form.label.trim(),

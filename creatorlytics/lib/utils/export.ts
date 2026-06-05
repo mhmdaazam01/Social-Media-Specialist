@@ -1,4 +1,4 @@
-import type { Post, Goal, ContentIdea, CalendarEvent, Competitor } from '@/types';
+import type { Post } from '@/types';
 
 export function exportToCSV(data: Record<string, unknown>[], filename: string): void {
   if (data.length === 0) return;
@@ -44,7 +44,7 @@ export function importFromJSON(file: File): Promise<unknown> {
 }
 
 export function postsToCSV(posts: Post[]): void {
-  const data = posts.map(p => ({
+  const data: Record<string, unknown>[] = posts.map(p => ({
     tanggal: p.date,
     nama: p.name,
     platform: p.platform,
@@ -60,5 +60,5 @@ export function postsToCSV(posts: Post[]): void {
     pillar: p.pillar,
     format: p.format,
   }));
-  exportToCSV(data as unknown as Record<string, unknown>[], 'creatorlytics-posts');
+  exportToCSV(data, 'creatorlytics-posts');
 }

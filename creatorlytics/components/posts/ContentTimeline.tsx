@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,16 +17,20 @@ import type { Post } from '@/types';
 
 interface ContentTimelineProps {
   onEditPost?: (post: Post) => void;
+  onDeletePost?: (post: Post) => void;
 }
 
-export function ContentTimeline({ onEditPost }: ContentTimelineProps) {
-  const { posts, deletePost } = usePosts();
+export function ContentTimeline({ onEditPost, onDeletePost }: ContentTimelineProps) {
+  const { posts } = usePosts();
   const { platforms } = usePlatforms();
   const { pillars } = usePillars();
   const { profile } = useUser();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const sorted = [...posts].sort((a, b) => b.date.localeCompare(a.date));
+  const sorted = useMemo(
+    () => [...posts].sort((a, b) => b.date.localeCompare(a.date)),
+    [posts]
+  );
   const erMode = profile?.er_mode || 'impression';
 
   function getPlatform(platformId: string) {
@@ -38,11 +42,11 @@ export function ContentTimeline({ onEditPost }: ContentTimelineProps) {
   }
 
   function handleDelete(post: Post) {
-    deletePost(post.id);
-
-    toast('Postingan dihapus', {
-      description: `"${post.name}" berhasil dihapus`,
-    });
+    if (onDeletePost) {
+      onDeletePost(post);
+    } else {
+      toast.error('Tidak dapat menghapus postingan');
+    }
   }
 
   if (sorted.length === 0) {

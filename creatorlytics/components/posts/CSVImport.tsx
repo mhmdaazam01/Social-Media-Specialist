@@ -46,7 +46,7 @@ export function CSVImport({ onImport }: CSVImportProps) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       try {
         const text = reader.result as string;
         const rows = parseCSV(text);
@@ -75,9 +75,13 @@ export function CSVImport({ onImport }: CSVImportProps) {
           link: row.link || '',
         }));
 
-        const count = importPosts(posts);
-        toast.success(`Berhasil mengimpor ${count} postingan`);
-        onImport();
+        const count = await importPosts(posts);
+        if (count > 0) {
+          toast.success(`Berhasil mengimpor ${count} postingan`);
+          onImport();
+        } else {
+          toast.error('Gagal mengimpor data. Cek koneksi dan coba lagi.');
+        }
       } catch {
         toast.error('Gagal membaca file CSV');
       }

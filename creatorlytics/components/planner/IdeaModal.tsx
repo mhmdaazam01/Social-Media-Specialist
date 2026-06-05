@@ -11,7 +11,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { useIdeas } from '@/lib/hooks/useIdeas';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { usePillars } from '@/lib/hooks/usePillars';
-import { Plus, X } from 'lucide-react';
+import { FORMAT_OPTIONS } from '@/lib/constants';
 import type { ContentIdea } from '@/types';
 
 interface IdeaModalProps {
@@ -43,8 +43,6 @@ const emptyForm: FormFields = {
   tags: '',
   ref_links: [''],
 };
-
-const FORMAT_OPTIONS = ['Reels', 'Carousel', 'Static', 'Video', 'Story', 'Live'];
 
 export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
   const { createIdea, updateIdea } = useIdeas();
