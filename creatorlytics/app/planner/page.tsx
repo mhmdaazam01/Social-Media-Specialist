@@ -29,7 +29,8 @@ export default function PlannerPage() {
     setModalOpen(true);
   }
 
-  function confirmDelete(idea: ContentIdea) {
+  function confirmDelete(id: string) {
+    const idea = ideas.find(i => i.id === id) ?? null;
     setIdeaToDelete(idea);
     setDeleteDialogOpen(true);
   }
