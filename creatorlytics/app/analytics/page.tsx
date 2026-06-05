@@ -26,6 +26,9 @@ import {
   fmtPercent,
 } from '@/lib/utils/analytics';
 
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { AIInsightsTab } from '@/components/analytics/AIInsightsTab';
+
 const TrendChart = dynamic(() => import('@/components/analytics/TrendChart').then(mod => mod.TrendChart), {
   ssr: false,
   loading: () => <Skeleton className="h-80 w-full" />,
@@ -158,104 +161,115 @@ export default function AnalyticsPage() {
 
   return (
     <AppShell title="Analytics">
-      <div className="space-y-6">
-        <AnalyticsFilter
-          platform={platform}
-          onPlatformChange={setPlatform}
-          dateRange={dateRange}
-          onDateRangeChange={setDateRange}
-        />
+      <Tabs defaultValue="performance" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="performance">Performa Konten</TabsTrigger>
+          <TabsTrigger value="ai">AI & Rekomendasi Pintar</TabsTrigger>
+        </TabsList>
 
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground font-normal">
-                Total Posts
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-medium">
-                {filteredPosts.length}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground font-normal">
-                Total Reach
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-medium">
-                {fmt(totalReach)}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground font-normal">
-                Rata-rata ER
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-medium">
-                {fmtPercent(avgER)}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground font-normal">
-                Platform Terbaik
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-medium">
-                {bestPlatform ? platformName(bestPlatform.platform) : '-'}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <TabsContent value="performance" className="space-y-6">
+          <AnalyticsFilter
+            platform={platform}
+            onPlatformChange={setPlatform}
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+          />
 
-        <TrendChart data={byMonth} />
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <PillarChart data={byPillar} />
-          <Card>
-            <CardHeader>
-              <CardTitle>Perbandingan Platform</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {byPlatform.length === 0 ? (
-                <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-                  Belum ada data.
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground font-normal">
+                  Total Posts
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-medium">
+                  {filteredPosts.length}
                 </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Platform</TableHead>
-                      <TableHead className="text-right">Posts</TableHead>
-                      <TableHead className="text-right">Rata-rata ER</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {byPlatform.map((p) => (
-                      <TableRow key={p.platform}>
-                        <TableCell>{platformName(p.platform)}</TableCell>
-                        <TableCell className="text-right font-medium">{p.count}</TableCell>
-                        <TableCell className="text-right font-medium">{fmtPercent(p.avgER)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground font-normal">
+                  Total Reach
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-medium">
+                  {fmt(totalReach)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground font-normal">
+                  Rata-rata ER
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-medium">
+                  {fmtPercent(avgER)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground font-normal">
+                  Platform Terbaik
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-medium">
+                  {bestPlatform ? platformName(bestPlatform.platform) : '-'}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        <TopContentTable posts={filteredPosts} />
-      </div>
+          <TrendChart data={byMonth} />
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <PillarChart data={byPillar} />
+            <Card>
+              <CardHeader>
+                <CardTitle>Perbandingan Platform</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {byPlatform.length === 0 ? (
+                  <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
+                    Belum ada data.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Platform</TableHead>
+                        <TableHead className="text-right">Posts</TableHead>
+                        <TableHead className="text-right">Rata-rata ER</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {byPlatform.map((p) => (
+                        <TableRow key={p.platform}>
+                          <TableCell>{platformName(p.platform)}</TableCell>
+                          <TableCell className="text-right font-medium">{p.count}</TableCell>
+                          <TableCell className="text-right font-medium">{fmtPercent(p.avgER)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <TopContentTable posts={filteredPosts} />
+        </TabsContent>
+
+        <TabsContent value="ai">
+          <AIInsightsTab />
+        </TabsContent>
+      </Tabs>
     </AppShell>
   );
 }
