@@ -12,6 +12,7 @@ import { useIdeas } from '@/lib/hooks/useIdeas';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { usePillars } from '@/lib/hooks/usePillars';
 import { FORMAT_OPTIONS } from '@/lib/constants';
+import { Plus, X } from 'lucide-react';
 import type { ContentIdea } from '@/types';
 
 interface IdeaModalProps {
