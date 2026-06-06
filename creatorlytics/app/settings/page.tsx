@@ -45,8 +45,8 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleErModeChange(v: string) {
-    if (!profile) return;
+  async function handleErModeChange(v: string | null) {
+    if (!profile || !v) return;
     const { error } = await supabase
       .from('profiles')
       .update({ er_mode: v as 'impression' | 'reach' | 'followers' })
