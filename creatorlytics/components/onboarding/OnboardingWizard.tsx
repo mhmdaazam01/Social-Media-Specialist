@@ -299,7 +299,12 @@ export function OnboardingWizard() {
                           className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${c.bg} ${c.color}`}
                         >
                           {p.emoji} {p.label}
-                          <button onClick={() => removePillarItem(p.label)} className="ml-1 opacity-60 hover:opacity-100">
+                          <button
+                            type="button"
+                            onClick={() => removePillarItem(p.label)}
+                            className="ml-1 opacity-60 hover:opacity-100"
+                            aria-label={`Hapus pilar ${p.label}`}
+                          >
                             <X className="size-3" />
                           </button>
                         </span>
@@ -346,6 +351,7 @@ export function OnboardingWizard() {
 
           {step === 4 && (
             <button
+              type="button"
               onClick={finish}
               disabled={saving}
               className="w-full text-center text-xs text-muted-foreground hover:text-foreground mt-2 transition-colors"
