@@ -29,6 +29,25 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        {/* Inline script: reads theme cookie BEFORE paint to eliminate flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+(function() {
+  try {
+    var cookie = document.cookie.match(/(?:^|;\\s*)theme=([^;]*)/);
+    var theme = cookie ? cookie[1] : 'dark';
+    if (theme !== 'light') theme = 'dark';
+    document.documentElement.classList.add(theme);
+  } catch(e) {
+    document.documentElement.classList.add('dark');
+  }
+})();
+            `.trim(),
+          }}
+        />
+      </head>
       <body className="min-h-full">
         <Providers>{children}</Providers>
       </body>

@@ -68,6 +68,8 @@ export default function SettingsPage() {
     if (error) {
       toast.error('Gagal memperbarui tema');
     } else {
+      // Persist to cookie so layout script can read it on next load (no flash)
+      document.cookie = `theme=${theme};path=/;max-age=31536000;SameSite=Lax`;
       document.documentElement.classList.remove('dark', 'light');
       document.documentElement.classList.add(theme);
       await refreshProfile();
