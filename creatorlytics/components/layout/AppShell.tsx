@@ -6,6 +6,7 @@ import { useUser } from '@/lib/hooks/useUser';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { MobileNav } from './MobileNav';
+import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -14,7 +15,7 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, title = 'Dashboard', onAddPost }: AppShellProps) {
-  const { user, loading } = useUser();
+  const { user, profile, loading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
@@ -35,6 +36,8 @@ export function AppShell({ children, title = 'Dashboard', onAddPost }: AppShellP
     return null;
   }
 
+  const showOnboarding = profile !== null && profile.is_onboarded === false;
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
@@ -45,6 +48,7 @@ export function AppShell({ children, title = 'Dashboard', onAddPost }: AppShellP
         </main>
       </div>
       <MobileNav />
+      {showOnboarding && <OnboardingWizard />}
     </div>
   );
 }

@@ -12,6 +12,7 @@ interface Profile {
   niche: string;
   er_mode: 'impression' | 'reach' | 'followers';
   theme: 'dark' | 'light';
+  is_onboarded: boolean;
 }
 
 interface UserContextType {
