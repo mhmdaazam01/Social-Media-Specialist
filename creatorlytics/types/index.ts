@@ -51,6 +51,23 @@ export interface Goal {
   created_at: string;
 }
 
+export interface ContentBrief {
+  deadline: string;
+  narasi: string;
+  target_usia: string;
+  target_minat: string;
+  target_painpoint: string;
+  tone: string;
+  format_video: string;
+  durasi: string;
+  repurpose: string;
+  ref_visual: string;
+  timeline_script: string;
+  timeline_shoot: string;
+  timeline_edit: string;
+  timeline_publish: string;
+}
+
 export interface ContentIdea {
   id: string;
   title: string;
@@ -61,7 +78,7 @@ export interface ContentIdea {
   status: PostStatus;
   priority: Priority;
   tags: string[];
-  brief: Record<string, unknown>;
+  brief: ContentBrief | Record<string, unknown>;
   ref_links: string[];
   created_at: string;
 }

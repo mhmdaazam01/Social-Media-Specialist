@@ -9,6 +9,7 @@ interface KanbanBoardProps {
   ideas: ContentIdea[];
   onEdit: (idea: ContentIdea) => void;
   onDelete: (id: string) => void;
+  onBrief: (idea: ContentIdea) => void;
 }
 
 const columns = ['idea', 'brief', 'draft', 'ready'] as const;
@@ -20,7 +21,7 @@ const columnLabels: Record<string, string> = {
   ready: 'Ready',
 };
 
-export function KanbanBoard({ ideas, onEdit, onDelete }: KanbanBoardProps) {
+export function KanbanBoard({ ideas, onEdit, onDelete, onBrief }: KanbanBoardProps) {
   const grouped = useMemo(() => {
     const map: Record<string, ContentIdea[]> = { idea: [], brief: [], draft: [], ready: [] };
     for (const idea of ideas) {
@@ -52,6 +53,7 @@ export function KanbanBoard({ ideas, onEdit, onDelete }: KanbanBoardProps) {
                     idea={idea}
                     onClick={() => onEdit(idea)}
                     onDelete={onDelete}
+                    onBrief={onBrief}
                   />
                 ))
               )}
