@@ -13,27 +13,35 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { ContentIdea } from '@/types';
 
 export default function PlannerPage() {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editIdea, setEditIdea] = useState<ContentIdea | null>(null);
+  const { ideas, loading: ideasLoading, deleteIdea } = useIdeas();
+
+  // Brief modal (view/edit brief) — opened by clicking the card
   const [briefOpen, setBriefOpen] = useState(false);
   const [briefIdea, setBriefIdea] = useState<ContentIdea | null>(null);
+
+  // Idea modal (edit metadata) — opened by the pencil button on card
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editIdea, setEditIdea] = useState<ContentIdea | null>(null);
+
+  // Delete confirm
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [ideaToDelete, setIdeaToDelete] = useState<ContentIdea | null>(null);
-  const { ideas, loading: ideasLoading, deleteIdea } = useIdeas();
 
   function handleAdd() {
     setEditIdea(null);
     setModalOpen(true);
   }
 
+  // Klik card → BriefModal (view mode)
+  function handleView(idea: ContentIdea) {
+    setBriefIdea(idea);
+    setBriefOpen(true);
+  }
+
+  // Pencil button → IdeaModal (edit metadata)
   function handleEdit(idea: ContentIdea) {
     setEditIdea(idea);
     setModalOpen(true);
-  }
-
-  function handleBrief(idea: ContentIdea) {
-    setBriefIdea(idea);
-    setBriefOpen(true);
   }
 
   function confirmDelete(id: string) {
@@ -49,7 +57,7 @@ export default function PlannerPage() {
     }
   }
 
-  function handleClose(open: boolean) {
+  function handleModalClose(open: boolean) {
     setModalOpen(open);
     if (!open) setEditIdea(null);
   }
@@ -67,7 +75,7 @@ export default function PlannerPage() {
 
         {ideasLoading ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
+            {[1, 2, 3, 4].map(i => (
               <div key={i} className="rounded-xl border bg-card p-4 space-y-3">
                 <Skeleton className="h-4 w-24 rounded-full" />
                 <Skeleton className="h-5 w-full" />
@@ -88,22 +96,24 @@ export default function PlannerPage() {
         ) : (
           <KanbanBoard
             ideas={ideas}
+            onView={handleView}
             onEdit={handleEdit}
             onDelete={confirmDelete}
-            onBrief={handleBrief}
           />
         )}
 
-        <IdeaModal
-          open={modalOpen}
-          onOpenChange={handleClose}
-          editIdea={editIdea}
-        />
-
+        {/* Brief modal — view/edit content brief */}
         <BriefModal
           open={briefOpen}
           onOpenChange={setBriefOpen}
           idea={briefIdea}
+        />
+
+        {/* Idea modal — edit metadata (title, platform, status, etc.) */}
+        <IdeaModal
+          open={modalOpen}
+          onOpenChange={handleModalClose}
+          editIdea={editIdea}
         />
 
         <ConfirmDialog
