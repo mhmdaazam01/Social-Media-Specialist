@@ -11,6 +11,7 @@ import {
   useSensor,
   useSensors,
   closestCorners,
+  useDroppable,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -100,6 +101,10 @@ function KanbanColumn({
   onEdit: (idea: ContentIdea) => void;
   onDelete: (id: string) => void;
 }) {
+  const { setNodeRef } = useDroppable({
+    id: status,
+  });
+
   const ids = ideas.map(i => i.id);
 
   return (
@@ -116,7 +121,7 @@ function KanbanColumn({
       {/* Drop zone */}
       <ScrollArea className="h-[calc(100vh-220px)]">
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-          <div className="flex flex-col gap-2 pr-3 min-h-[80px]">
+          <div ref={setNodeRef} className="flex flex-col gap-2 pr-3 min-h-[80px]">
             {ideas.length === 0 ? (
               <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-border/40 py-8 text-xs text-muted-foreground/50">
                 Drag ide ke sini

@@ -121,6 +121,11 @@ export default function CalendarPage() {
           onOpenChange={handleClose}
           editEvent={editEvent}
           defaultDate={selectedDate}
+          onDelete={(evt) => {
+            setEventToDelete(evt);
+            setDeleteDialogOpen(true);
+            setModalOpen(false);
+          }}
         />
 
         <ConfirmDialog

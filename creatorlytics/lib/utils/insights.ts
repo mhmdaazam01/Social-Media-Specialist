@@ -53,7 +53,7 @@ export function generateInsights(posts: Post[], goals: Goal[], erMode: ErMode): 
   }
 
   const totalER = posts.reduce((s, p) => s + calcER(p, erMode), 0) / posts.length;
-  const latestPosts = [...posts].sort((a, b) => b.date.localeCompare(a.date));
+  const latestPosts = [...posts].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const recent = latestPosts.slice(0, Math.min(10, posts.length));
   const recentER = recent.reduce((s, p) => s + calcER(p, erMode), 0) / recent.length;
 

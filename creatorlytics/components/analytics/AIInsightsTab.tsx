@@ -302,7 +302,7 @@ export function AIInsightsTab() {
                 
                 if (status === 'ahead') {
                   statusColor = 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
-                  statusText = 'Target Tercapai! 🎉';
+                  statusText = 'Target Tercapai!';
                 } else if (status === 'on-track') {
                   statusColor = 'text-blue-500 bg-blue-500/10 border-blue-500/20';
                   statusText = 'On Track';

@@ -5,10 +5,9 @@ export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Skip middleware if env vars not set
+  // Fail-closed if env vars not set
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Supabase env vars not found');
-    return NextResponse.next({ request });
+    throw new Error('Konfigurasi Supabase tidak lengkap. Aplikasi tidak dapat dijalankan secara aman.');
   }
 
   let supabaseResponse = NextResponse.next({

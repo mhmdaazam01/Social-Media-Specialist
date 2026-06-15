@@ -28,7 +28,7 @@ export function ContentTimeline({ onEditPost, onDeletePost }: ContentTimelinePro
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const sorted = useMemo(
-    () => [...posts].sort((a, b) => b.date.localeCompare(a.date)),
+    () => [...posts].sort((a, b) => (b.date || '').localeCompare(a.date || '')),
     [posts]
   );
   const erMode = profile?.er_mode || 'impression';

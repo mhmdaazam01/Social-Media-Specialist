@@ -79,7 +79,7 @@ export default function ContentPage() {
     );
   }
 
-  const sorted = [...posts].sort((a, b) => b.date.localeCompare(a.date));
+  const sorted = [...posts].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   function handleAddPost() {
     setEditPost(null);

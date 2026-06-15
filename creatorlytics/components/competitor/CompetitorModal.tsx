@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useCompetitors } from '@/lib/hooks/useCompetitors';
+import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import type { Competitor } from '@/types';
 
 interface CompetitorModalProps {
@@ -38,6 +40,7 @@ const emptyForm: FormFields = {
 
 export function CompetitorModal({ open, onOpenChange, editCompetitor }: CompetitorModalProps) {
   const { createCompetitor, updateCompetitor } = useCompetitors();
+  const { platforms } = usePlatforms();
   const [form, setForm] = useState<FormFields>(emptyForm);
   const [loading, setLoading] = useState(false);
 
@@ -115,7 +118,19 @@ export function CompetitorModal({ open, onOpenChange, editCompetitor }: Competit
 
           <div className="grid gap-2">
             <Label htmlFor="platform">Platform</Label>
-            <Input id="platform" value={form.platform} onChange={e => update('platform', e.target.value)} placeholder="Instagram / TikTok / YouTube" />
+            <Select value={form.platform} onValueChange={v => update('platform', v ?? '')}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Pilih platform" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">-</SelectItem>
+                {platforms.map(p => (
+                  <SelectItem key={p.platform_id} value={p.platform_id}>
+                    {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

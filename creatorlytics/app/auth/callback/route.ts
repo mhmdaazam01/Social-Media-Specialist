@@ -7,7 +7,12 @@ export async function GET(request: Request) {
   
   try {
     const code = requestUrl.searchParams.get('code');
-    const next = requestUrl.searchParams.get('next') ?? '/dashboard';
+    let next = requestUrl.searchParams.get('next') ?? '/dashboard';
+    
+    // Prevent open redirect
+    if (!next.startsWith('/') || next.startsWith('//')) {
+      next = '/dashboard';
+    }
 
     if (code) {
       const supabase = await createClient();

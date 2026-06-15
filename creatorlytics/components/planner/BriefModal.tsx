@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import {
   Pencil, X, Calendar, Target,
   MessageSquare, Video, ImageIcon, Clock, FileText,
-  Tag, Link2,
+  Tag, Link2, ClipboardList, Megaphone, Smartphone, CalendarDays,
 } from 'lucide-react';
 import type { ContentIdea, ContentBrief } from '@/types';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
@@ -113,7 +113,7 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
           <div className="flex items-start justify-between gap-3 pr-6">
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
-                📄 Content Brief
+                Content Brief
               </p>
               <DialogTitle className="text-lg font-bold leading-snug">{idea.title}</DialogTitle>
               <div className="flex flex-wrap items-center gap-1.5 mt-2">
@@ -172,7 +172,7 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
             <hr className="border-border/60" />
 
             {/* OVERVIEW */}
-            <ViewSection emoji="📋" title="Overview">
+            <ViewSection icon={<ClipboardList className="size-3.5" />} title="Overview">
               <ViewRow label="Judul" value={idea.title} />
               {form.narasi
                 ? <ViewRow label="Narasi" value={form.narasi} multiline />
@@ -185,26 +185,26 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
 
             {/* TARGET AUDIENCE */}
             {(form.target_usia || form.target_minat || form.target_painpoint) ? (
-              <ViewSection emoji="🎯" title="Target Audience">
+              <ViewSection icon={<Target className="size-3.5" />} title="Target Audience">
                 {form.target_usia && <ViewRow label="Usia" value={form.target_usia} />}
                 {form.target_minat && <ViewRow label="Minat" value={form.target_minat} />}
                 {form.target_painpoint && <ViewRow label="Pain point" value={form.target_painpoint} />}
               </ViewSection>
             ) : (
-              <ViewSection emoji="🎯" title="Target Audience">
+              <ViewSection icon={<Target className="size-3.5" />} title="Target Audience">
                 <p className="text-xs text-muted-foreground/60 italic">Belum diisi — klik &quot;Isi Brief&quot; untuk melengkapi.</p>
               </ViewSection>
             )}
 
             {/* TONE OF VOICE */}
-            <ViewSection emoji="🗣️" title="Tone of Voice">
+            <ViewSection icon={<Megaphone className="size-3.5" />} title="Tone of Voice">
               {form.tone
                 ? <p className="text-sm leading-relaxed">{form.tone}</p>
                 : <p className="text-xs text-muted-foreground/60 italic">Belum diisi.</p>}
             </ViewSection>
 
             {/* FORMAT */}
-            <ViewSection emoji="📱" title="Format Produksi">
+            <ViewSection icon={<Smartphone className="size-3.5" />} title="Format Produksi">
               {(form.format_video || form.durasi || form.repurpose || idea.format) ? (
                 <>
                   {(form.format_video || idea.format) && (
@@ -219,7 +219,7 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
             </ViewSection>
 
             {/* REFERENSI VISUAL */}
-            <ViewSection emoji="🖼️" title="Referensi Visual">
+            <ViewSection icon={<ImageIcon className="size-3.5" />} title="Referensi Visual">
               {form.ref_visual || (idea.ref_links && idea.ref_links.filter(Boolean).length > 0) ? (
                 <>
                   {form.ref_visual && (
@@ -248,7 +248,7 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
             </ViewSection>
 
             {/* TIMELINE */}
-            <ViewSection emoji="📅" title="Timeline Produksi">
+            <ViewSection icon={<CalendarDays className="size-3.5" />} title="Timeline Produksi">
               {(form.timeline_script || form.timeline_shoot || form.timeline_edit || form.timeline_publish) ? (
                 <div className="space-y-2">
                   {form.timeline_script && <TimelineRow label="Draft script" date={form.timeline_script} />}
@@ -263,7 +263,7 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
 
             {/* TAGS */}
             {idea.tags && idea.tags.length > 0 && (
-              <ViewSection emoji="🏷️" title="Tags">
+              <ViewSection icon={<Tag className="size-3.5" />} title="Tags">
                 <div className="flex flex-wrap gap-1.5">
                   {idea.tags.map(tag => (
                     <span key={tag} className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
@@ -388,11 +388,11 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
 
 /* ── Sub-components ─────────────────────────────────────────────────────── */
 
-function ViewSection({ emoji, title, children }: { emoji: string; title: string; children: React.ReactNode }) {
+function ViewSection({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border bg-card/60 p-4 space-y-2.5">
-      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-        {emoji} {title}
+      <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+        <span className="text-muted-foreground">{icon}</span> {title}
       </p>
       {children}
     </div>

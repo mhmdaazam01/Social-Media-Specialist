@@ -21,6 +21,7 @@ interface CalEventModalProps {
   onOpenChange: (open: boolean) => void;
   editEvent?: CalendarEvent | null;
   defaultDate?: string;
+  onDelete?: (event: CalendarEvent) => void;
 }
 
 interface FormFields {
@@ -47,7 +48,7 @@ const emptyForm: FormFields = {
   notes: '',
 };
 
-export function CalEventModal({ open, onOpenChange, editEvent, defaultDate }: CalEventModalProps) {
+export function CalEventModal({ open, onOpenChange, editEvent, defaultDate, onDelete }: CalEventModalProps) {
   const { createEvent, updateEvent } = useEvents();
   const { platforms } = usePlatforms();
   const { pillars } = usePillars();
@@ -232,13 +233,22 @@ export function CalEventModal({ open, onOpenChange, editEvent, defaultDate }: Ca
           </div>
         </div>
 
-        <DialogFooter showCloseButton>
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            Batal
-          </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Menyimpan...' : editEvent ? 'Simpan Perubahan' : 'Tambah Event'}
-          </Button>
+        <DialogFooter className="sm:justify-between">
+          {editEvent && onDelete ? (
+            <Button type="button" variant="destructive" onClick={() => onDelete(editEvent)}>
+              Hapus
+            </Button>
+          ) : (
+            <div />
+          )}
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => handleOpenChange(false)}>
+              Batal
+            </Button>
+            <Button onClick={handleSubmit} disabled={loading}>
+              {loading ? 'Menyimpan...' : editEvent ? 'Simpan Perubahan' : 'Tambah Event'}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

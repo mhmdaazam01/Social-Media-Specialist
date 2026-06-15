@@ -10,19 +10,81 @@ interface CSVImportProps {
   onImport: () => void;
 }
 
+/**
+ * RFC 4180 compliant CSV parser.
+ * Handles quoted fields with commas, newlines, and escaped double quotes.
+ */
 function parseCSV(text: string): Record<string, string>[] {
-  const lines = text.trim().split('\n');
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.trim());
-  const result: Record<string, string>[] = [];
-  for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-    if (values.length === headers.length) {
-      const row: Record<string, string> = {};
-      headers.forEach((h, idx) => { row[h] = values[idx]; });
-      result.push(row);
+  const rows: string[][] = [];
+  let current: string[] = [];
+  let field = '';
+  let inQuotes = false;
+  let i = 0;
+
+  while (i < text.length) {
+    const ch = text[i];
+
+    if (inQuotes) {
+      if (ch === '"') {
+        // Check for escaped quote ""
+        if (i + 1 < text.length && text[i + 1] === '"') {
+          field += '"';
+          i += 2;
+        } else {
+          inQuotes = false;
+          i++;
+        }
+      } else {
+        field += ch;
+        i++;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+        i++;
+      } else if (ch === ',') {
+        current.push(field.trim());
+        field = '';
+        i++;
+      } else if (ch === '\r' || ch === '\n') {
+        current.push(field.trim());
+        field = '';
+        if (current.some(c => c !== '')) {
+          rows.push(current);
+        }
+        current = [];
+        // Handle \r\n
+        if (ch === '\r' && i + 1 < text.length && text[i + 1] === '\n') {
+          i += 2;
+        } else {
+          i++;
+        }
+      } else {
+        field += ch;
+        i++;
+      }
     }
   }
+
+  // Push last field/row
+  current.push(field.trim());
+  if (current.some(c => c !== '')) {
+    rows.push(current);
+  }
+
+  if (rows.length < 2) return [];
+
+  const headers = rows[0];
+  const result: Record<string, string>[] = [];
+
+  for (let r = 1; r < rows.length; r++) {
+    const values = rows[r];
+    if (values.length !== headers.length) continue;
+    const row: Record<string, string> = {};
+    headers.forEach((h, idx) => { row[h] = values[idx]; });
+    result.push(row);
+  }
+
   return result;
 }
 
