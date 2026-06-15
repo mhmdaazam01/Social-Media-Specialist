@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -148,8 +148,10 @@ export function KanbanBoard({ ideas, onView, onEdit, onDelete }: KanbanBoardProp
   const [activeIdea, setActiveIdea] = useState<ContentIdea | null>(null);
 
   // Sync when parent ideas prop changes (new idea added, deleted, etc.)
-  useMemo(() => {
-    setLocalIdeas(ideas);
+  useEffect(() => {
+    queueMicrotask(() => {
+      setLocalIdeas(ideas);
+    });
   }, [ideas]);
 
   const grouped = useMemo(() => {

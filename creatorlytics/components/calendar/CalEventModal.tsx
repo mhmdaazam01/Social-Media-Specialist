@@ -57,21 +57,23 @@ export function CalEventModal({ open, onOpenChange, editEvent, defaultDate }: Ca
 
   useEffect(() => {
     if (!open) return;
-    if (editEvent) {
-      setForm({
-        title: editEvent.title,
-        platform: editEvent.platform,
-        account: editEvent.account,
-        pillar: editEvent.pillar,
-        format: editEvent.format,
-        scheduled_date: editEvent.scheduled_date,
-        scheduled_time: editEvent.scheduled_time,
-        status: editEvent.status,
-        notes: editEvent.notes,
-      });
-    } else {
-      setForm({ ...emptyForm, scheduled_date: defaultDate || today() });
-    }
+    queueMicrotask(() => {
+      if (editEvent) {
+        setForm({
+          title: editEvent.title,
+          platform: editEvent.platform,
+          account: editEvent.account,
+          pillar: editEvent.pillar,
+          format: editEvent.format,
+          scheduled_date: editEvent.scheduled_date,
+          scheduled_time: editEvent.scheduled_time,
+          status: editEvent.status,
+          notes: editEvent.notes,
+        });
+      } else {
+        setForm({ ...emptyForm, scheduled_date: defaultDate || today() });
+      }
+    });
   }, [open, editEvent, defaultDate]);
 
   function update<K extends keyof FormFields>(key: K, value: FormFields[K]) {

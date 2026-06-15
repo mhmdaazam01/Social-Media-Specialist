@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { useGoals } from '@/lib/hooks/useGoals';
@@ -42,16 +42,13 @@ export function AIInsightsTab() {
       grid[day].sumER += er;
     });
 
-    let maxAvgER = 0;
     const days = Array.from({ length: 7 }, (_, i) => {
       const day = i + 1;
       const cell = grid[day];
       const avgER = cell.count > 0 ? cell.sumER / cell.count : 0;
-      if (avgER > maxAvgER) maxAvgER = avgER;
       return { day, avgER, count: cell.count };
     });
 
-    // second pass to set maxAvgER correctly
     const max = Math.max(...days.map(d => d.avgER));
     return { days, maxAvgER: max };
   }, [posts]);

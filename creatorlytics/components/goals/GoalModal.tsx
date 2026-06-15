@@ -66,7 +66,11 @@ export function GoalModal({ open, onOpenChange, editGoal }: GoalModalProps) {
   }, [editGoal]);
 
   useEffect(() => {
-    if (open) reset();
+    if (open) {
+      queueMicrotask(() => {
+        reset();
+      });
+    }
   }, [open, reset]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {

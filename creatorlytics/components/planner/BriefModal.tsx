@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useIdeas } from '@/lib/hooks/useIdeas';
 import { toast } from 'sonner';
 import {
-  Pencil, X, Calendar, Smartphone, Target,
+  Pencil, X, Calendar, Target,
   MessageSquare, Video, ImageIcon, Clock, FileText,
   Tag, Link2,
 } from 'lucide-react';
@@ -67,8 +67,13 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
   const pillar = pillars.find(p => p.pillar_id === idea?.pillar);
 
   useEffect(() => {
-    if (!open) { setMode('view'); return; }
-    if (idea) setForm(getBrief(idea));
+    queueMicrotask(() => {
+      if (!open) {
+        setMode('view');
+        return;
+      }
+      if (idea) setForm(getBrief(idea));
+    });
   }, [open, idea]);
 
   function upd<K extends keyof ContentBrief>(key: K, val: string) {
@@ -187,7 +192,7 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
               </ViewSection>
             ) : (
               <ViewSection emoji="🎯" title="Target Audience">
-                <p className="text-xs text-muted-foreground/60 italic">Belum diisi — klik "Isi Brief" untuk melengkapi.</p>
+                <p className="text-xs text-muted-foreground/60 italic">Belum diisi — klik &quot;Isi Brief&quot; untuk melengkapi.</p>
               </ViewSection>
             )}
 

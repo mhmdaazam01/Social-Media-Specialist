@@ -12,16 +12,6 @@ export function useAccounts() {
   const { user } = useUser();
   const supabase = createClient();
 
-  useEffect(() => {
-    if (user) {
-      fetchAccounts();
-    } else {
-      setAccounts([]);
-      setLoading(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
   async function fetchAccounts() {
     const { data, error } = await supabase
       .from('accounts')
@@ -35,6 +25,20 @@ export function useAccounts() {
     }
     setLoading(false);
   }
+
+  useEffect(() => {
+    if (user) {
+      queueMicrotask(() => {
+        fetchAccounts();
+      });
+    } else {
+      queueMicrotask(() => {
+        setAccounts([]);
+        setLoading(false);
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   async function addAccount(name: string) {
     if (!user) return null;

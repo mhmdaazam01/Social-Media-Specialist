@@ -13,7 +13,7 @@ export function WeeklyNarrative() {
   const { profile } = useUser();
   const erMode = profile?.er_mode || 'impression';
 
-  const { weekPosts, totalPosts, avgER, totalReach, bestDay } = useMemo(() => {
+  const { totalPosts, avgER, totalReach, bestDay } = useMemo(() => {
     const now = new Date();
     const weekStart = startOfWeek(now, { weekStartsOn: 1 });
     const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
@@ -49,7 +49,7 @@ export function WeeklyNarrative() {
         })
       : null;
 
-    return { weekPosts, totalPosts, avgER, totalReach, bestDay };
+    return { totalPosts, avgER, totalReach, bestDay };
   }, [posts, erMode]);
 
   if (totalPosts === 0) {

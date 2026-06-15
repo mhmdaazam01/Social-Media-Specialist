@@ -43,19 +43,21 @@ export function CompetitorModal({ open, onOpenChange, editCompetitor }: Competit
 
   useEffect(() => {
     if (!open) return;
-    if (editCompetitor) {
-      setForm({
-        name: editCompetitor.name,
-        platform: editCompetitor.platform,
-        followers: editCompetitor.followers,
-        avg_reach: editCompetitor.avg_reach,
-        avg_er: editCompetitor.avg_er,
-        post_freq: editCompetitor.post_freq,
-        notes: editCompetitor.notes,
-      });
-    } else {
-      setForm(emptyForm);
-    }
+    queueMicrotask(() => {
+      if (editCompetitor) {
+        setForm({
+          name: editCompetitor.name,
+          platform: editCompetitor.platform,
+          followers: editCompetitor.followers,
+          avg_reach: editCompetitor.avg_reach,
+          avg_er: editCompetitor.avg_er,
+          post_freq: editCompetitor.post_freq,
+          notes: editCompetitor.notes,
+        });
+      } else {
+        setForm(emptyForm);
+      }
+    });
   }, [open, editCompetitor]);
 
   function update<K extends keyof FormFields>(key: K, value: FormFields[K]) {

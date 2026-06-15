@@ -69,28 +69,30 @@ export function PostModal({ open, onOpenChange, editPost }: PostModalProps) {
 
   useEffect(() => {
     if (!open) return;
-    if (editPost) {
-      setForm({
-        account: editPost.account,
-        platform: editPost.platform,
-        date: editPost.date,
-        name: editPost.name,
-        reach: editPost.reach,
-        impression: editPost.impression,
-        like: editPost.like,
-        comment: editPost.comment,
-        share: editPost.share,
-        save: editPost.save,
-        repost: editPost.repost,
-        followers_gained: editPost.followers_gained,
-        profile_visit: editPost.profile_visit,
-        pillar: editPost.pillar,
-        format: editPost.format,
-        link: editPost.link,
-      });
-    } else {
-      setForm(emptyForm);
-    }
+    queueMicrotask(() => {
+      if (editPost) {
+        setForm({
+          account: editPost.account,
+          platform: editPost.platform,
+          date: editPost.date,
+          name: editPost.name,
+          reach: editPost.reach,
+          impression: editPost.impression,
+          like: editPost.like,
+          comment: editPost.comment,
+          share: editPost.share,
+          save: editPost.save,
+          repost: editPost.repost,
+          followers_gained: editPost.followers_gained,
+          profile_visit: editPost.profile_visit,
+          pillar: editPost.pillar,
+          format: editPost.format,
+          link: editPost.link,
+        });
+      } else {
+        setForm(emptyForm);
+      }
+    });
   }, [open, editPost]);
 
   function update<K extends keyof FormFields>(key: K, value: FormFields[K]) {

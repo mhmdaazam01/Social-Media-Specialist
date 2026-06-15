@@ -54,21 +54,23 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
 
   useEffect(() => {
     if (!open) return;
-    if (editIdea) {
-      setForm({
-        title: editIdea.title,
-        description: editIdea.description,
-        platform: editIdea.platform,
-        pillar: editIdea.pillar,
-        format: editIdea.format,
-        status: editIdea.status,
-        priority: editIdea.priority,
-        tags: editIdea.tags.join(', '),
-        ref_links: editIdea.ref_links.length > 0 ? editIdea.ref_links : [''],
-      });
-    } else {
-      setForm(emptyForm);
-    }
+    queueMicrotask(() => {
+      if (editIdea) {
+        setForm({
+          title: editIdea.title,
+          description: editIdea.description,
+          platform: editIdea.platform,
+          pillar: editIdea.pillar,
+          format: editIdea.format,
+          status: editIdea.status,
+          priority: editIdea.priority,
+          tags: editIdea.tags.join(', '),
+          ref_links: editIdea.ref_links.length > 0 ? editIdea.ref_links : [''],
+        });
+      } else {
+        setForm(emptyForm);
+      }
+    });
   }, [open, editIdea]);
 
   function update<K extends keyof FormFields>(key: K, value: FormFields[K]) {

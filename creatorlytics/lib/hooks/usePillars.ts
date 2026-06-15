@@ -12,16 +12,6 @@ export function usePillars() {
   const { user } = useUser();
   const supabase = createClient();
 
-  useEffect(() => {
-    if (user) {
-      fetchPillars();
-    } else {
-      setPillars([]);
-      setLoading(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
   async function fetchPillars() {
     const { data, error } = await supabase
       .from('pillars')
@@ -35,6 +25,20 @@ export function usePillars() {
     }
     setLoading(false);
   }
+
+  useEffect(() => {
+    if (user) {
+      queueMicrotask(() => {
+        fetchPillars();
+      });
+    } else {
+      queueMicrotask(() => {
+        setPillars([]);
+        setLoading(false);
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   async function addPillar(pillar: Omit<Pillar, 'id'>) {
     if (!user) return null;

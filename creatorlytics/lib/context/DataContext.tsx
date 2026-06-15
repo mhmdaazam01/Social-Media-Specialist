@@ -44,21 +44,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [platformsLoading, setPlatformsLoading] = useState(true);
   const [hasFetched, setHasFetched] = useState(false);
 
-  // Fetch all data once when user is available
-  useEffect(() => {
-    if (user && !hasFetched) {
-      fetchAll();
-    } else if (!user) {
-      setPosts([]);
-      setGoals([]);
-      setPlatforms([]);
-      setPostsLoading(false);
-      setGoalsLoading(false);
-      setPlatformsLoading(false);
-    }
-  }, [user, hasFetched]);
-
-  async function fetchAll() {
+  const fetchAll = useCallback(async () => {
     const [postsRes, goalsRes, platformsRes] = await Promise.all([
       supabase.from('posts').select('*').order('date', { ascending: false }),
       supabase.from('goals').select('*').order('created_at', { ascending: false }),
@@ -73,7 +59,25 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setGoalsLoading(false);
     setPlatformsLoading(false);
     setHasFetched(true);
-  }
+  }, [supabase]);
+
+  // Fetch all data once when user is available
+  useEffect(() => {
+    if (user && !hasFetched) {
+      queueMicrotask(() => {
+        fetchAll();
+      });
+    } else if (!user) {
+      queueMicrotask(() => {
+        setPosts([]);
+        setGoals([]);
+        setPlatforms([]);
+        setPostsLoading(false);
+        setGoalsLoading(false);
+        setPlatformsLoading(false);
+      });
+    }
+  }, [user, hasFetched, fetchAll]);
 
   // --- Posts CRUD ---
   const createPost = useCallback(async (post: Omit<Post, 'id' | 'created_at'>) => {

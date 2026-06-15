@@ -12,16 +12,6 @@ export function useEvents() {
   const { user } = useUser();
   const supabase = createClient();
 
-  useEffect(() => {
-    if (user) {
-      fetchEvents();
-    } else {
-      setEvents([]);
-      setLoading(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
   async function fetchEvents() {
     const { data, error } = await supabase
       .from('calendar_events')
@@ -35,6 +25,20 @@ export function useEvents() {
     }
     setLoading(false);
   }
+
+  useEffect(() => {
+    if (user) {
+      queueMicrotask(() => {
+        fetchEvents();
+      });
+    } else {
+      queueMicrotask(() => {
+        setEvents([]);
+        setLoading(false);
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   async function createEvent(event: Omit<CalendarEvent, 'id' | 'created_at'>) {
     if (!user) return null;

@@ -12,16 +12,6 @@ export function useIdeas() {
   const { user } = useUser();
   const supabase = createClient();
 
-  useEffect(() => {
-    if (user) {
-      fetchIdeas();
-    } else {
-      setIdeas([]);
-      setLoading(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
   async function fetchIdeas() {
     const { data, error } = await supabase
       .from('content_ideas')
@@ -35,6 +25,20 @@ export function useIdeas() {
     }
     setLoading(false);
   }
+
+  useEffect(() => {
+    if (user) {
+      queueMicrotask(() => {
+        fetchIdeas();
+      });
+    } else {
+      queueMicrotask(() => {
+        setIdeas([]);
+        setLoading(false);
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   async function createIdea(idea: Omit<ContentIdea, 'id' | 'created_at'>) {
     if (!user) return null;

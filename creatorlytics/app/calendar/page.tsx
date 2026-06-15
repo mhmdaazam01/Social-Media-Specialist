@@ -67,10 +67,7 @@ export default function CalendarPage() {
     setModalOpen(true);
   }
 
-  function confirmDelete(event: CalendarEvent) {
-    setEventToDelete(event);
-    setDeleteDialogOpen(true);
-  }
+
 
   function handleDeleteConfirmed() {
     if (eventToDelete) {

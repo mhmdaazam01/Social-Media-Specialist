@@ -12,16 +12,6 @@ export function useCompetitors() {
   const { user } = useUser();
   const supabase = createClient();
 
-  useEffect(() => {
-    if (user) {
-      fetchCompetitors();
-    } else {
-      setCompetitors([]);
-      setLoading(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
   async function fetchCompetitors() {
     const { data, error } = await supabase
       .from('competitors')
@@ -35,6 +25,20 @@ export function useCompetitors() {
     }
     setLoading(false);
   }
+
+  useEffect(() => {
+    if (user) {
+      queueMicrotask(() => {
+        fetchCompetitors();
+      });
+    } else {
+      queueMicrotask(() => {
+        setCompetitors([]);
+        setLoading(false);
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   async function createCompetitor(competitor: Omit<Competitor, 'id' | 'created_at' | 'updated_at'>) {
     if (!user) return null;
