@@ -32,13 +32,13 @@ export function Sidebar() {
   const displayName = profile?.display_name || 'Kreator';
 
   return (
-    <aside className="hidden lg:flex lg:flex-col w-64 h-screen border-r bg-card fixed left-0 top-0 z-30">
-      <div className="p-5 border-b">
+    <aside className="hidden lg:flex lg:flex-col w-64 h-screen border-r border-cly-border bg-cly-rail fixed left-0 top-0 z-30">
+      <div className="p-5 border-b border-cly-border">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
+          <div className="w-8 h-8 rounded-lg bg-cly-brand flex items-center justify-center text-white font-bold text-sm">
             C
           </div>
-          <span className="font-bold text-lg">{APP_NAME}</span>
+          <span className="font-bold text-lg text-cly-text">{APP_NAME}</span>
         </Link>
       </div>
 
@@ -50,10 +50,10 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all duration-200 active:scale-[0.98] cursor-pointer',
+                'flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-semibold transition-all duration-200 active:scale-[0.98] cursor-pointer',
                 isActive
-                  ? 'bg-primary/10 text-primary shadow-sm'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:translate-x-1'
+                  ? 'bg-cly-brand-tint text-cly-brand border-l-2 border-cly-brand'
+                  : 'text-cly-text-2 hover:bg-cly-muted hover:text-cly-text'
               )}
             >
               {iconMap[item.icon]}
@@ -63,18 +63,18 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-3 border-t">
+      <div className="p-3 border-t border-cly-border">
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex w-full items-center gap-3 px-3 py-3 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-200 active:scale-[0.98] cursor-pointer outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring">
+          <DropdownMenuTrigger className="flex w-full items-center gap-3 px-3 py-3 rounded-lg bg-cly-muted hover:bg-cly-muted-2 transition-all duration-200 active:scale-[0.98] cursor-pointer outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring">
             <Avatar className="h-8 w-8">
               <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
-              <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
+              <AvatarFallback className="bg-cly-brand-tint text-cly-brand text-xs font-bold">
                 {displayName.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-medium truncate">{displayName}</p>
-              <p className="text-xs text-muted-foreground truncate">{profile?.email}</p>
+              <p className="text-sm font-medium truncate text-cly-text">{displayName}</p>
+              <p className="text-xs text-cly-text-3 truncate">{profile?.email}</p>
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">

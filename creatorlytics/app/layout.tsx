@@ -46,14 +46,9 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
 (function() {
-  try {
-    var cookie = document.cookie.match(/(?:^|;\\s*)theme=([^;]*)/);
-    var theme = cookie ? cookie[1] : 'dark';
-    if (theme !== 'light') theme = 'dark';
-    document.documentElement.classList.add(theme);
-  } catch(e) {
-    document.documentElement.classList.add('dark');
-  }
+  // Force light theme for new design system
+  document.documentElement.classList.add('light');
+  document.documentElement.classList.remove('dark');
 })();
             `.trim(),
           }}
