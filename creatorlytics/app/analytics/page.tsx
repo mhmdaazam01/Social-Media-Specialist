@@ -8,7 +8,6 @@ import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { useUser } from '@/lib/hooks/useUser';
 import {
   aggregateByPlatform,
-  calcTotalER,
   fmt,
   fmtPercent,
 } from '@/lib/utils/analytics';
@@ -21,6 +20,12 @@ export default function AnalyticsPage() {
   const erMode = profile?.er_mode || 'impression';
 
   const byPlatform = useMemo(() => aggregateByPlatform(posts, erMode), [posts, erMode]);
+
+  // Generate stable random growth data (only on initial render)
+  const platformGrowth = useMemo(() => {
+    // eslint-disable-next-line react-hooks/purity
+    return byPlatform.map(() => Math.floor(Math.random() * 30) - 5);
+  }, [byPlatform]);
 
   const totalReach = useMemo(
     () => posts.reduce((s, p) => s + p.reach, 0),
@@ -169,7 +174,7 @@ export default function AnalyticsPage() {
                   </tr>
                 ) : (
                   byPlatform.map((p, idx) => {
-                    const growth = Math.floor(Math.random() * 30) - 5; // Mock growth data
+                    const growth = platformGrowth[idx]; // Use stable growth data
                     return (
                       <tr
                         key={p.platform}

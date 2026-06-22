@@ -1,18 +1,17 @@
 'use client';
 
 import { createClient } from '@/lib/supabase/client';
-import { useUser } from '@/lib/hooks/useUser';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { APP_NAME } from '@/lib/constants';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
-  const { user, loading: userLoading } = useUser();
-  const router = useRouter();
+  // TODO: AUTH TEMPORARILY DISABLED FOR DEVELOPMENT
+  // const { user, loading: userLoading } = useUser();
+  // const router = useRouter();
   const supabase = createClient();
 
   // TODO: AUTH TEMPORARILY DISABLED FOR DEVELOPMENT

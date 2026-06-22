@@ -61,21 +61,8 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleThemeChange(theme: 'dark' | 'light') {
-    // NOTE: Theme is currently forced to light in layout.tsx
-    // This function is kept for future re-enablement
-    if (!profile) return;
-    const { error } = await supabase
-      .from('profiles')
-      .update({ theme })
-      .eq('id', profile.id);
-    if (error) {
-      toast.error('Gagal memperbarui tema');
-    } else {
-      await refreshProfile();
-      toast.success('Tema berhasil diperbarui (currently disabled in dev mode)');
-    }
-  }
+  // NOTE: Theme change is kept for future re-enablement (currently disabled in layout)
+  // async function handleThemeChange(theme: 'dark' | 'light') { ... }
 
   function handleAddPlatform() {
     if (!platformName.trim()) {

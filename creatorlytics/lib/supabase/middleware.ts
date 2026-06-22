@@ -14,6 +14,8 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
+  // TODO: AUTH TEMPORARILY DISABLED - supabase auth not used during development
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const supabase = createServerClient(
     supabaseUrl,
     supabaseAnonKey,
@@ -36,11 +38,9 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Refresh session jika expired
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   // TODO: AUTH TEMPORARILY DISABLED FOR DEVELOPMENT
+  // const { data: { user } } = await supabase.auth.getUser();
+
   // Uncomment below to re-enable auth protection
   
   // // Redirect ke login jika belum login dan bukan di halaman public

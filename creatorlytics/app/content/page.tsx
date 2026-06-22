@@ -8,7 +8,7 @@ import { CSVImport } from '@/components/posts/CSVImport';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { postsToCSV } from '@/lib/utils/export';
-import { PlusIcon, DownloadIcon, Search, Pencil, Trash2, Upload } from 'lucide-react';
+import { PlusIcon, DownloadIcon, Search, Pencil, Trash2 } from 'lucide-react';
 import { fmt, fmtPercent } from '@/lib/utils/analytics';
 import type { Post } from '@/types';
 

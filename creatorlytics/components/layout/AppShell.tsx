@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useUser } from '@/lib/hooks/useUser';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
@@ -15,8 +13,10 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, title = 'Dashboard', onAddPost }: AppShellProps) {
-  const { user, profile, loading } = useUser();
-  const router = useRouter();
+  const { profile } = useUser();
+  // TODO: AUTH TEMPORARILY DISABLED FOR DEVELOPMENT
+  // const { user, profile, loading } = useUser();
+  // const router = useRouter();
 
   // TODO: AUTH TEMPORARILY DISABLED FOR DEVELOPMENT
   // useEffect(() => {

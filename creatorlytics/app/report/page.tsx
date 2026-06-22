@@ -8,7 +8,7 @@ import { usePosts } from '@/lib/hooks/usePosts';
 import { useUser } from '@/lib/hooks/useUser';
 import { calcTotalER, fmt, fmtPercent, aggregateByPlatform } from '@/lib/utils/analytics';
 import { formatMonth } from '@/lib/utils/formatting';
-import { FileText, Printer, Download } from 'lucide-react';
+import { FileText, Printer } from 'lucide-react';
 
 export default function ReportPage() {
   const { posts, loading } = usePosts();

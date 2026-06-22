@@ -2,14 +2,14 @@
 
 import './landing.css';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser } from '@/lib/hooks/useUser';
 import { createClient } from '@/lib/supabase/client';
 
 export default function LandingPage() {
   const { user, loading } = useUser();
-  const router = useRouter();
+  // TODO: AUTH TEMPORARILY DISABLED FOR DEVELOPMENT
+  // const router = useRouter();
   const [authLoading, setAuthLoading] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeTab, setActiveTab] = useState('analytics');

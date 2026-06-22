@@ -11,7 +11,7 @@ import { Badge, PlatformBadge } from '@/components/cly';
 import type { ContentIdea, PostStatus } from '@/types';
 
 export default function PlannerPage() {
-  const { ideas, loading: ideasLoading, deleteIdea } = useIdeas();
+  const { ideas, deleteIdea } = useIdeas();
 
   // Brief modal (view/edit brief) — opened by clicking the card
   const [briefOpen, setBriefOpen] = useState(false);

@@ -19,7 +19,7 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null);
-  const { events, loading: eventsLoading, deleteEvent } = useEvents();
+  const { events, deleteEvent } = useEvents();
 
   const monthName = new Date(year, month - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
@@ -167,7 +167,6 @@ export default function CalendarPage() {
             <div className="grid grid-cols-7 gap-1">
               {calendarDays.map((day, i) => {
                 const isToday = day.dateStr === today();
-                const hasEvents = day.events.length > 0;
                 const hasConflict = day.dateStr ? conflicts.has(day.dateStr) : false;
 
                 return (
