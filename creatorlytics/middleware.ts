@@ -1,8 +1,13 @@
-import { type NextRequest } from 'next/server'
-import { updateSession } from '@/lib/supabase/middleware'
+import { type NextRequest, NextResponse } from 'next/server'
+// import { updateSession } from '@/lib/supabase/middleware'
 
+// TODO: AUTH TEMPORARILY DISABLED FOR DEVELOPMENT
 export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+  // Skip all auth checks for development
+  return NextResponse.next()
+  
+  // Uncomment below to re-enable auth:
+  // return await updateSession(request)
 }
 
 export const config = {

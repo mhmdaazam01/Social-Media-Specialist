@@ -18,23 +18,24 @@ export function AppShell({ children, title = 'Dashboard', onAddPost }: AppShellP
   const { user, profile, loading } = useUser();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace('/login');
-    }
-  }, [user, loading, router]);
+  // TODO: AUTH TEMPORARILY DISABLED FOR DEVELOPMENT
+  // useEffect(() => {
+  //   if (!loading && !user) {
+  //     router.replace('/login');
+  //   }
+  // }, [user, loading, router]);
 
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Memuat...</div>
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="flex h-screen items-center justify-center bg-background">
+  //       <div className="animate-pulse text-muted-foreground">Memuat...</div>
+  //     </div>
+  //   );
+  // }
 
-  if (!user) {
-    return null;
-  }
+  // if (!user) {
+  //   return null;
+  // }
 
   const showOnboarding = profile !== null && profile.is_onboarded === false;
 

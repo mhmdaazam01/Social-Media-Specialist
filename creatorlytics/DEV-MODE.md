@@ -6,16 +6,25 @@ Untuk fokus ke UI development tanpa masalah auth loop, auth protection sudah di-
 
 ## Files Modified:
 
-### 1. `lib/supabase/middleware.ts`
-- ✅ Redirect logic sudah di-comment
+### 1. `middleware.ts` (ROOT - This is the main one!)
+- ✅ Completely bypassed - returns NextResponse.next() immediately
+- No auth checks at all
+
+### 2. `lib/supabase/middleware.ts`
+- ✅ Redirect logic sudah di-comment (not used now)
 - Middleware masih refresh session tapi tidak enforce login
 
-### 2. `app/page.tsx` (Landing Page)
+### 3. `components/layout/AppShell.tsx`
+- ✅ useEffect redirect ke `/login` di-disable
+- ✅ Loading/user checks di-disable
+- Semua protected pages sekarang accessible
+
+### 4. `app/page.tsx` (Landing Page)
 - ✅ useEffect redirect ke `/dashboard` di-disable
 - ✅ Loading check di-disable
 - Landing page bisa diakses tanpa auth
 
-### 3. `app/login/page.tsx`
+### 5. `app/login/page.tsx`
 - ✅ useEffect redirect ke `/dashboard` di-disable  
 - ✅ Loading/user checks di-disable
 - Login page bisa diakses langsung
