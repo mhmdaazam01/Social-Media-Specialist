@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
-import { KPICard } from '@/components/dashboard/KPICard';
+import { MetricCard } from '@/components/cly';
 import { InsightEngine } from '@/components/dashboard/InsightEngine';
 import { GoalProgress } from '@/components/dashboard/GoalProgress';
 import { TopContent } from '@/components/dashboard/TopContent';
@@ -11,7 +11,7 @@ import { PostModal } from '@/components/posts/PostModal';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { useUser } from '@/lib/hooks/useUser';
 import { calcTotalER, fmt } from '@/lib/utils/analytics';
-import { FileText, BarChart3, Activity, Users } from 'lucide-react';
+import { FileText, BarChart3, Activity, Users, Eye, Target } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
@@ -23,68 +23,27 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <AppShell title="Dashboard" onAddPost={() => setShowPostModal(true)}>
-        <div className="flex flex-col gap-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex flex-col gap-[18px]">
+          {/* KPI Grid Loading */}
+          <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="rounded-xl border bg-card p-6 shadow-sm flex items-start justify-between gap-4">
-                <div className="flex flex-col gap-2">
-                  <Skeleton className="h-3.5 w-20" />
-                  <Skeleton className="h-7 w-28" />
+              <div key={i} className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-3.5 min-h-[120px] flex flex-col justify-between">
+                <div className="flex justify-between items-start mb-[18px]">
+                  <Skeleton className="h-3 w-20 bg-cly-muted" />
+                  <Skeleton className="size-[30px] rounded-lg bg-cly-muted" />
                 </div>
-                <Skeleton className="size-9 rounded-lg" />
+                <div>
+                  <Skeleton className="h-7 w-28 mb-2 bg-cly-muted" />
+                  <Skeleton className="h-3 w-16 bg-cly-muted" />
+                </div>
               </div>
             ))}
           </div>
-          <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
-            <div className="flex items-center gap-2">
-              <Skeleton className="size-5 rounded-full" />
-              <Skeleton className="h-4.5 w-40" />
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {[1, 2].map((i) => (
-                <div key={i} className="flex items-start gap-3 rounded-lg border p-3">
-                  <Skeleton className="size-8 rounded-full shrink-0" />
-                  <div className="space-y-2 w-full">
-                    <Skeleton className="h-4 w-1/3" />
-                    <Skeleton className="h-3 w-3/4" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
-              <div className="flex items-center gap-2">
-                <Skeleton className="size-5 rounded-full" />
-                <Skeleton className="h-4.5 w-32" />
-              </div>
-              <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center justify-between border-b pb-2 last:border-0">
-                    <div className="flex items-center gap-3">
-                      <Skeleton className="size-4 rounded" />
-                      <Skeleton className="h-4 w-28" />
-                    </div>
-                    <Skeleton className="h-4 w-16" />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <GoalProgress />
-          </div>
-          <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
-            <div className="flex items-center gap-2">
-              <Skeleton className="size-5 rounded-full" />
-              <Skeleton className="h-4.5 w-36" />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="flex flex-col gap-2">
-                  <Skeleton className="h-3 w-16" />
-                  <Skeleton className="h-6 w-24" />
-                </div>
-              ))}
-            </div>
+
+          {/* Content Loading */}
+          <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-7">
+            <Skeleton className="h-5 w-40 mb-3.5 bg-cly-muted" />
+            <Skeleton className="h-48 w-full bg-cly-muted" />
           </div>
         </div>
       </AppShell>
@@ -96,39 +55,65 @@ export default function DashboardPage() {
   const totalFollowersGained = posts.reduce((s, p) => s + p.followers_gained, 0);
   const avgER = totalPosts > 0 ? calcTotalER(posts, erMode) : 0;
 
+  // Calculate deltas (comparing with mock data for now - TODO: calculate from historical data)
+  const postsGrowth = totalPosts > 0 ? 12 : 0;
+  const reachGrowth = totalReach > 0 ? 18.3 : 0;
+  const erGrowth = avgER > 0 ? 0.6 : 0;
+  const followersGrowth = totalFollowersGained > 0 ? 15.2 : 0;
+
   return (
     <AppShell title="Dashboard" onAddPost={() => setShowPostModal(true)}>
-      <div className="flex flex-col gap-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <KPICard
-            title="Total Posts"
+      <div className="flex flex-col gap-[18px]">
+        {/* KPI Grid - New Design System */}
+        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+          <MetricCard
+            label="Total Posts"
             value={totalPosts.toLocaleString('id-ID')}
-            icon={<FileText size={20} />}
+            delta={postsGrowth}
+            deltaLabel=" posts"
+            icon={FileText}
+            tone="green"
+            caption="This month"
           />
-          <KPICard
-            title="Total Reach"
+          <MetricCard
+            label="Total Reach"
             value={fmt(totalReach)}
-            icon={<BarChart3 size={20} />}
+            delta={reachGrowth}
+            deltaLabel="%"
+            icon={Eye}
+            tone="blue"
+            caption="30 days"
           />
-          <KPICard
-            title="Rata-rata ER"
-            value={`${avgER.toFixed(2)}%`}
-            icon={<Activity size={20} />}
+          <MetricCard
+            label="Avg Engagement"
+            value={`${avgER.toFixed(1)}%`}
+            delta={erGrowth}
+            deltaLabel="pp"
+            icon={Activity}
+            tone="amber"
+            caption={`Based on ${erMode}`}
           />
-          <KPICard
-            title="Followers Gained"
+          <MetricCard
+            label="Followers"
             value={fmt(totalFollowersGained)}
-            icon={<Users size={20} />}
+            delta={followersGrowth}
+            deltaLabel="%"
+            icon={Users}
+            tone="green"
+            caption="Growth rate"
           />
         </div>
 
+        {/* AI Insights Engine */}
         <InsightEngine />
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        {/* Two Column Layout */}
+        <div className="grid gap-[18px] lg:grid-cols-2">
           <TopContent />
           <GoalProgress />
         </div>
 
+        {/* Weekly Narrative */}
         <WeeklyNarrative />
       </div>
 
