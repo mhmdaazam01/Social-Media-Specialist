@@ -15,11 +15,12 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  useEffect(() => {
-    if (!userLoading && user) {
-      router.replace('/dashboard');
-    }
-  }, [user, userLoading, router]);
+  // TODO: AUTH TEMPORARILY DISABLED FOR DEVELOPMENT
+  // useEffect(() => {
+  //   if (!userLoading && user) {
+  //     router.replace('/dashboard');
+  //   }
+  // }, [user, userLoading, router]);
 
   async function handleGoogleLogin() {
     setLoading(true);
@@ -36,17 +37,18 @@ export default function LoginPage() {
     }
   }
 
-  if (userLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Memuat...</div>
-      </div>
-    );
-  }
+  // TODO: AUTH TEMPORARILY DISABLED FOR DEVELOPMENT
+  // if (userLoading) {
+  //   return (
+  //     <div className="flex min-h-screen items-center justify-center bg-background">
+  //       <div className="animate-pulse text-muted-foreground">Memuat...</div>
+  //     </div>
+  //   );
+  // }
 
-  if (user) {
-    return null;
-  }
+  // if (user) {
+  //   return null;
+  // }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">

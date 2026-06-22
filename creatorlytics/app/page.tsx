@@ -15,9 +15,10 @@ export default function LandingPage() {
   const [activeTab, setActiveTab] = useState('analytics');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!loading && user) router.replace('/dashboard');
-  }, [user, loading, router]);
+  // TODO: AUTH TEMPORARILY DISABLED FOR DEVELOPMENT
+  // useEffect(() => {
+  //   if (!loading && user) router.replace('/dashboard');
+  // }, [user, loading, router]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -53,13 +54,14 @@ export default function LandingPage() {
     });
   }
 
-  if (loading || user) {
-    return (
-      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: '#09090A' }}>
-        <svg className="lp-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A8DF3A" strokeWidth="2" strokeLinecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-      </div>
-    );
-  }
+  // TODO: AUTH TEMPORARILY DISABLED FOR DEVELOPMENT
+  // if (loading || user) {
+  //   return (
+  //     <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: '#09090A' }}>
+  //       <svg className="lp-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A8DF3A" strokeWidth="2" strokeLinecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="lp">

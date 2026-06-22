@@ -40,23 +40,26 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Redirect ke login jika belum login dan bukan di halaman public
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth')
-  ) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
-  }
+  // TODO: AUTH TEMPORARILY DISABLED FOR DEVELOPMENT
+  // Uncomment below to re-enable auth protection
+  
+  // // Redirect ke login jika belum login dan bukan di halaman public
+  // if (
+  //   !user &&
+  //   !request.nextUrl.pathname.startsWith('/login') &&
+  //   !request.nextUrl.pathname.startsWith('/auth')
+  // ) {
+  //   const url = request.nextUrl.clone();
+  //   url.pathname = '/login';
+  //   return NextResponse.redirect(url);
+  // }
 
-  // Redirect ke dashboard jika sudah login tapi akses halaman login
-  if (user && request.nextUrl.pathname === '/login') {
-    const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
-  }
+  // // Redirect ke dashboard jika sudah login tapi akses halaman login
+  // if (user && request.nextUrl.pathname === '/login') {
+  //   const url = request.nextUrl.clone();
+  //   url.pathname = '/dashboard';
+  //   return NextResponse.redirect(url);
+  // }
 
   return supabaseResponse;
 }
