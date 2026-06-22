@@ -72,6 +72,53 @@
   --animate-marquee-l: marqueeL 38s linear infinite;
   --animate-marquee-r: marqueeR 44s linear infinite;
 
+  /* Creatorlytics Design System */
+  --color-cly-bg: #F6F7F4;
+  --color-cly-rail: #FDFDFB;
+  --color-cly-surface: #FFFFFF;
+  --color-cly-muted: #F0F2ED;
+  --color-cly-muted-2: #E5E8E0;
+  --color-cly-border: #E0E3DA;
+  --color-cly-border-strong: #C9CFC1;
+  --color-cly-text: #1D211B;
+  --color-cly-text-2: #60675B;
+  --color-cly-text-3: #8A9283;
+  --color-cly-brand: #2F6F45;
+  --color-cly-brand-2: #175A7A;
+  --color-cly-brand-tint: #E6F2EA;
+  --color-cly-blue: #2563A7;
+  --color-cly-blue-tint: #E7EFF8;
+  --color-cly-amber: #A15C07;
+  --color-cly-amber-tint: #F7EDDC;
+  --color-cly-green: #197B3A;
+  --color-cly-green-tint: #E3F3E7;
+  --color-cly-red: #B93B32;
+  --color-cly-red-tint: #F8E7E5;
+  --color-cly-purple: #7C4D9D;
+  --color-cly-purple-tint: #F0E7F6;
+  
+  --color-platform-tiktok: #13747C;
+  --color-platform-tiktok-tint: #E1F1F2;
+  --color-platform-instagram: #A23B86;
+  --color-platform-instagram-tint: #F6E8F1;
+  --color-platform-youtube: #C6362E;
+  --color-platform-youtube-tint: #FBE8E6;
+  --color-platform-linkedin: #2563A7;
+  --color-platform-linkedin-tint: #E7EFF8;
+  
+  --font-size-cly-micro: 10px;
+  --font-size-cly-xs: 11px;
+  --font-size-cly-sm: 12px;
+  --font-size-cly-base: 13px;
+  --font-size-cly-md: 14px;
+  --font-size-cly-lg: 16px;
+  --font-size-cly-xl: 18px;
+  --font-size-cly-2xl: 22px;
+  --font-size-cly-display: 27px;
+  
+  --shadow-cly: 0 1px 2px rgba(29,33,27,0.05), 0 10px 24px rgba(29,33,27,0.04);
+  --shadow-cly-hover: 0 1px 2px rgba(29,33,27,0.06), 0 16px 34px rgba(29,33,27,0.08);
+
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }

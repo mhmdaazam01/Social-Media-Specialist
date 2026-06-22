@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, DM_Sans, DM_Mono } from "next/font/google";
+import { Bricolage_Grotesque, DM_Sans, DM_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers/Providers";
 
@@ -19,6 +19,11 @@ const dmMono = DM_Mono({
   subsets: ["latin"],
 });
 
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: "Creatorlytics",
   description: "Social media analytics dashboard untuk kreator Indonesia",
@@ -33,7 +38,7 @@ export default function RootLayout({
     <html
       lang="id"
       suppressHydrationWarning
-      className={`${bricolage.variable} ${dmSans.variable} ${dmMono.variable} h-full antialiased`}
+      className={`${bricolage.variable} ${dmSans.variable} ${dmMono.variable} ${inter.variable} h-full antialiased`}
     >
       <head>
         {/* Inline script: reads theme cookie BEFORE paint to eliminate flash */}
