@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUser } from '@/lib/hooks/useUser';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
@@ -13,29 +15,24 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, title = 'Dashboard', onAddPost }: AppShellProps) {
-  const { profile } = useUser();
-  // TODO: AUTH TEMPORARILY DISABLED FOR DEVELOPMENT
-  // const { user, profile, loading } = useUser();
-  // const router = useRouter();
+  const { user, profile, loading } = useUser();
+  const router = useRouter();
 
-  // TODO: AUTH TEMPORARILY DISABLED FOR DEVELOPMENT
-  // useEffect(() => {
-  //   if (!loading && !user) {
-  //     router.replace('/login');
-  //   }
-  // }, [user, loading, router]);
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/login');
+    }
+  }, [user, loading, router]);
 
-  // if (loading) {
-  //   return (
-  //     <div className="flex h-screen items-center justify-center bg-background">
-  //       <div className="animate-pulse text-muted-foreground">Memuat...</div>
-  //     </div>
-  //   );
-  // }
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-cly-bg">
+        <div className="animate-pulse text-cly-text-3 text-sm">Memuat...</div>
+      </div>
+    );
+  }
 
-  // if (!user) {
-  //   return null;
-  // }
+  if (!user) return null;
 
   const showOnboarding = profile !== null && profile.is_onboarded === false;
 

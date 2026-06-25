@@ -5,13 +5,17 @@ import { AppShell } from '@/components/layout/AppShell';
 import { SectionTitle, InsightCard, PlatformBadge } from '@/components/cly';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
+import { usePillars } from '@/lib/hooks/usePillars';
 import { useUser } from '@/lib/hooks/useUser';
 import {
-  aggregateByPlatform,
-  fmt,
-  fmtPercent,
+  aggregateByPlatform, aggregateByMonth, aggregateByPillar,
+  fmt, fmtPercent,
 } from '@/lib/utils/analytics';
 import { Filter, SlidersHorizontal, TrendingUp, BookOpen, AlertTriangle } from 'lucide-react';
+import {
+  ComposedChart, Bar, Line, XAxis, YAxis, Tooltip,
+  ResponsiveContainer, CartesianGrid, RadialBarChart, RadialBar, Legend,
+} from 'recharts';
 
 export default function AnalyticsPage() {
   const { posts, loading } = usePosts();
@@ -20,12 +24,29 @@ export default function AnalyticsPage() {
   const erMode = profile?.er_mode || 'impression';
 
   const byPlatform = useMemo(() => aggregateByPlatform(posts, erMode), [posts, erMode]);
+  const { pillars } = usePillars();
 
-  // Generate stable random growth data (only on initial render)
-  const platformGrowth = useMemo(() => {
-    // eslint-disable-next-line react-hooks/purity
-    return byPlatform.map(() => Math.floor(Math.random() * 30) - 5);
-  }, [byPlatform]);
+  const chartData = useMemo(() =>
+    aggregateByMonth(posts, erMode).slice(-8).map(m => ({
+      month: m.month.slice(5),
+      reach: m.totalReach,
+      er: parseFloat(m.avgER.toFixed(2)),
+    })),
+    [posts, erMode]
+  );
+
+  const pillarData = useMemo(() => {
+    const raw = aggregateByPillar(posts, erMode);
+    const COLORS = ['#2F6F45', '#2563A7', '#A15C07', '#B93B32', '#7C4D9D', '#13747C'];
+    return raw.slice(0, 6).map((p, i) => {
+      const pillar = pillars.find(pl => pl.pillar_id === p.pillar);
+      return {
+        name: pillar?.label ?? p.pillar,
+        value: parseFloat(p.avgER.toFixed(2)),
+        fill: pillar?.color ? undefined : COLORS[i % COLORS.length],
+      };
+    });
+  }, [posts, erMode, pillars]);
 
   const totalReach = useMemo(
     () => posts.reduce((s, p) => s + p.reach, 0),
@@ -74,35 +95,58 @@ export default function AnalyticsPage() {
           {/* Trend Chart Card */}
           <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
             <SectionTitle
-              title="Reach and engagement trend"
-              note="Bars use reach, line uses engagement rate."
+              title="Reach dan tren engagement"
+              note="Bar = total reach, garis = rata-rata ER per bulan."
             />
-            
-            {/* Chart Placeholder */}
-            <div className="h-[280px] bg-cly-muted rounded-lg flex items-center justify-center">
-              <div className="text-center text-cly-text-3">
-                <TrendingUp size={32} className="mx-auto mb-2 opacity-50" />
-                <p className="text-cly-sm">Trend chart coming soon</p>
-                <p className="text-cly-xs">Add Recharts for visualization</p>
+            {chartData.length === 0 ? (
+              <div className="h-[280px] bg-cly-muted rounded-lg flex items-center justify-center">
+                <p className="text-cly-sm text-cly-text-3">Belum ada data — tambahkan post untuk melihat tren.</p>
               </div>
-            </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <ComposedChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => fmt(v)} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => `${v}%`} />
+                  <Tooltip
+                    contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
+                    formatter={(v, name) => [name === 'reach' ? fmt(Number(v)) : `${v}%`, name === 'reach' ? 'Reach' : 'Avg ER']}
+                  />
+                  <Bar yAxisId="left" dataKey="reach" fill="var(--color-cly-brand)" radius={[4, 4, 0, 0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="er" stroke="var(--color-cly-amber)" strokeWidth={2} dot={false} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            )}
           </div>
 
           {/* Pillar Score Card */}
           <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
             <SectionTitle
               title="Pillar score"
-              note="Composite score: ER, saves, reach quality."
+              note="Rata-rata ER per pilar konten."
             />
-            
-            {/* Chart Placeholder */}
-            <div className="h-[280px] bg-cly-muted rounded-lg flex items-center justify-center">
-              <div className="text-center text-cly-text-3">
-                <BookOpen size={32} className="mx-auto mb-2 opacity-50" />
-                <p className="text-cly-sm">Pillar chart coming soon</p>
-                <p className="text-cly-xs">Content pillar analysis</p>
+            {pillarData.length === 0 ? (
+              <div className="h-[280px] bg-cly-muted rounded-lg flex items-center justify-center">
+                <p className="text-cly-sm text-cly-text-3">Belum ada data pilar.</p>
               </div>
-            </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <RadialBarChart
+                  cx="50%" cy="50%"
+                  innerRadius="20%" outerRadius="80%"
+                  data={pillarData}
+                  startAngle={180} endAngle={0}
+                >
+                  <RadialBar dataKey="value" label={{ position: 'insideStart', fill: '#fff', fontSize: 10 }} />
+                  <Legend iconSize={10} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                  <Tooltip
+                    contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
+                    formatter={(v) => [`${v}%`, 'Avg ER']}
+                  />
+                </RadialBarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -174,7 +218,32 @@ export default function AnalyticsPage() {
                   </tr>
                 ) : (
                   byPlatform.map((p, idx) => {
-                    const growth = platformGrowth[idx]; // Use stable growth data
+                    // Real MoM reach delta per platform
+                    const now = new Date();
+                    const thisM = now.getMonth() + 1;
+                    const thisY = now.getFullYear();
+                    const prevM = thisM === 1 ? 12 : thisM - 1;
+                    const prevY = thisM === 1 ? thisY - 1 : thisY;
+
+                    const thisReach = posts
+                      .filter(po => {
+                        if (po.platform !== p.platform || !po.date) return false;
+                        const [y, m] = po.date.split('-');
+                        return parseInt(y) === thisY && parseInt(m) === thisM;
+                      })
+                      .reduce((s, po) => s + po.reach, 0);
+
+                    const prevReach = posts
+                      .filter(po => {
+                        if (po.platform !== p.platform || !po.date) return false;
+                        const [y, m] = po.date.split('-');
+                        return parseInt(y) === prevY && parseInt(m) === prevM;
+                      })
+                      .reduce((s, po) => s + po.reach, 0);
+
+                    const growth = prevReach > 0
+                      ? Math.round(((thisReach - prevReach) / prevReach) * 100)
+                      : null;
                     return (
                       <tr
                         key={p.platform}
@@ -190,10 +259,11 @@ export default function AnalyticsPage() {
                         </td>
                         <td
                           className={`text-right font-black ${
+                            growth === null ? 'text-cly-text-3' :
                             growth >= 0 ? 'text-cly-green' : 'text-cly-red'
                           }`}
                         >
-                          {growth >= 0 ? '+' : ''}{growth}%
+                          {growth === null ? '—' : `${growth >= 0 ? '+' : ''}${growth}%`}
                         </td>
                       </tr>
                     );
