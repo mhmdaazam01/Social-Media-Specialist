@@ -7,7 +7,7 @@ import { DataProvider } from '@/lib/context/DataContext';
 
 function ThemeSync({ children }: { children: React.ReactNode }) {
   const { profile } = useUser();
-  const theme = profile?.theme || 'dark';
+  const theme = profile?.theme ?? 'light';
 
   useEffect(() => {
     // Sync class to DOM

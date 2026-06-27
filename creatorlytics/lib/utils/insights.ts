@@ -1,6 +1,6 @@
 import type { Post, Goal } from '@/types';
 import type { ErMode } from '@/types';
-import { calcER } from './analytics';
+import { calcER, calcTotalER } from './analytics';
 
 export interface Insight {
   type: 'tip' | 'achievement' | 'warning' | 'trend';
@@ -52,10 +52,10 @@ export function generateInsights(posts: Post[], goals: Goal[], erMode: ErMode): 
     return insights;
   }
 
-  const totalER = posts.reduce((s, p) => s + calcER(p, erMode), 0) / posts.length;
+  const totalER = posts.length > 0 ? calcTotalER(posts, erMode) : 0;
   const latestPosts = [...posts].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const recent = latestPosts.slice(0, Math.min(10, posts.length));
-  const recentER = recent.reduce((s, p) => s + calcER(p, erMode), 0) / recent.length;
+  const recentER = recent.length > 0 ? calcTotalER(recent, erMode) : 0;
 
   if (recentER > totalER) {
     insights.push({
@@ -80,13 +80,13 @@ export function generateInsights(posts: Post[], goals: Goal[], erMode: ErMode): 
     });
   }
 
-  const platformEngagement: Record<string, number[]> = {};
+  const platformEngagement: Record<string, Post[]> = {};
   for (const p of posts) {
     if (!platformEngagement[p.platform]) platformEngagement[p.platform] = [];
-    platformEngagement[p.platform].push(calcER(p, erMode));
+    platformEngagement[p.platform].push(p);
   }
   const bestPlatform = Object.entries(platformEngagement)
-    .map(([platform, ers]) => ({ platform, avgER: ers.reduce((s, e) => s + e, 0) / ers.length }))
+    .map(([platform, platformPosts]) => ({ platform, avgER: calcTotalER(platformPosts, erMode) }))
     .sort((a, b) => b.avgER - a.avgER)[0];
   if (bestPlatform) {
     insights.push({

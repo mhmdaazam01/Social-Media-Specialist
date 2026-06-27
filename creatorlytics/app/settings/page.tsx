@@ -1,22 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { AppShell } from '@/components/layout/AppShell';
 import { useUser } from '@/lib/hooks/useUser';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { useAccounts } from '@/lib/hooks/useAccounts';
 import { usePillars } from '@/lib/hooks/usePillars';
-import { Trash2Icon, PlusIcon, UserIcon, LayoutGridIcon, BellIcon } from 'lucide-react';
+import { useData } from '@/lib/context/DataContext';
+import { Trash2Icon, PlusIcon, UserIcon, LayoutGridIcon, BellIcon, SunIcon, MoonIcon, AlertTriangleIcon } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 type Tab = 'profile' | 'platforms' | 'notifications';
 
 export default function SettingsPage() {
-  const { profile, refreshProfile } = useUser();
+  const { profile, refreshProfile, setTheme } = useUser();
   const { platforms, addPlatform, removePlatform } = usePlatforms();
   const { accounts, addAccount, removeAccount } = useAccounts();
   const { pillars, addPillar, removePillar } = usePillars();
+  const { factoryReset } = useData();
   const supabase = createClient();
 
   const [activeTab, setActiveTab] = useState<Tab>('profile');
@@ -28,10 +30,23 @@ export default function SettingsPage() {
   const [pillarLabel, setPillarLabel] = useState('');
   const [pillarColor, setPillarColor] = useState('#3B82F6');
 
-  // Notification settings (not yet wired to DB, just UI for now)
+  // Notification settings (persisted in localStorage)
   const [notifGoal, setNotifGoal] = useState(true);
   const [notifReminder, setNotifReminder] = useState(true);
   const [notifReport, setNotifReport] = useState(false);
+
+  useEffect(() => {
+    const savedGoal = localStorage.getItem('cly_notif_goal');
+    if (savedGoal !== null) setNotifGoal(savedGoal === 'true');
+    const savedReminder = localStorage.getItem('cly_notif_reminder');
+    if (savedReminder !== null) setNotifReminder(savedReminder === 'true');
+    const savedReport = localStorage.getItem('cly_notif_report');
+    if (savedReport !== null) setNotifReport(savedReport === 'true');
+  }, []);
+
+  const handleNotifGoal = () => { const next = !notifGoal; setNotifGoal(next); localStorage.setItem('cly_notif_goal', String(next)); };
+  const handleNotifReminder = () => { const next = !notifReminder; setNotifReminder(next); localStorage.setItem('cly_notif_reminder', String(next)); };
+  const handleNotifReport = () => { const next = !notifReport; setNotifReport(next); localStorage.setItem('cly_notif_report', String(next)); };
 
   async function handleSaveProfile() {
     if (!profile) return;
@@ -61,8 +76,9 @@ export default function SettingsPage() {
     }
   }
 
-  // NOTE: Theme change is kept for future re-enablement (currently disabled in layout)
-  // async function handleThemeChange(theme: 'dark' | 'light') { ... }
+  async function handleThemeChange(theme: 'dark' | 'light') {
+    await setTheme(theme);
+  }
 
   function handleAddPlatform() {
     if (!platformName.trim()) {
@@ -101,6 +117,22 @@ export default function SettingsPage() {
     setPillarLabel('');
     setPillarColor('#3B82F6');
     toast.success('Pilar berhasil ditambahkan');
+  }
+
+  async function handleFactoryReset() {
+    if (confirm('APAKAH ANDA YAKIN? Semua data Anda akan dihapus permanen!')) {
+      await factoryReset();
+      toast.success('Semua data berhasil direset');
+      await refreshProfile();
+    }
+  }
+
+  async function handleDeleteAccount() {
+    if (confirm('APAKAH ANDA YAKIN? Tindakan ini akan menghapus semua data Anda dan mengeluarkan Anda dari aplikasi secara permanen.')) {
+      await factoryReset();
+      await supabase.auth.signOut();
+      window.location.href = '/login';
+    }
   }
 
   return (
@@ -185,7 +217,7 @@ export default function SettingsPage() {
               <h3 className="mb-2 text-cly-base font-semibold text-cly-text">Engagement Rate Mode</h3>
               <p className="mb-4 text-cly-xs text-cly-text-muted">Pilih basis perhitungan ER di seluruh dashboard</p>
               <div className="flex flex-col gap-2">
-                {(['impression', 'reach', 'followers'] as const).map((mode) => (
+                {(['impression', 'reach'] as const).map((mode) => (
                   <button
                     key={mode}
                     onClick={() => handleErModeChange(mode)}
@@ -213,11 +245,76 @@ export default function SettingsPage() {
                       <span className="text-cly-xs text-cly-text-muted">
                         {mode === 'impression' && 'ER = (Engagement / Impression) × 100'}
                         {mode === 'reach' && 'ER = (Engagement / Reach) × 100'}
-                        {mode === 'followers' && 'ER = (Engagement / Followers) × 100'}
                       </span>
                     </div>
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* Tampilan / Theme */}
+            <div className="rounded-[10px] bg-cly-surface p-[18px] shadow-cly">
+              <h3 className="mb-2 text-cly-base font-semibold text-cly-text">Tampilan</h3>
+              <p className="mb-4 text-cly-xs text-cly-text-muted">Pilih tema tampilan aplikasi</p>
+              <div className="flex flex-col gap-2">
+                {([
+                  { value: 'light', label: 'Light Mode', desc: 'Tampilan terang, cocok untuk siang hari', Icon: SunIcon },
+                  { value: 'dark', label: 'Dark Mode', desc: 'Tampilan gelap, nyaman di mata saat malam', Icon: MoonIcon },
+                ] as const).map(({ value, label, desc, Icon }) => (
+                  <button
+                    key={value}
+                    onClick={() => handleThemeChange(value)}
+                    className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-all ${
+                      profile?.theme === value
+                        ? 'border-cly-brand bg-cly-brand/5'
+                        : 'border-cly-border bg-cly-surface hover:border-cly-border-strong'
+                    }`}
+                  >
+                    <div
+                      className={`flex size-8 items-center justify-center rounded-lg ${
+                        profile?.theme === value ? 'bg-cly-brand text-white' : 'bg-cly-muted text-cly-text-muted'
+                      }`}
+                    >
+                      <Icon className="size-4" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-cly-sm font-medium text-cly-text">{label}</span>
+                      <span className="text-cly-xs text-cly-text-muted">{desc}</span>
+                    </div>
+                    <div
+                      className={`ml-auto size-4 rounded-full border-2 transition-all ${
+                        profile?.theme === value
+                          ? 'border-cly-brand bg-cly-brand'
+                          : 'border-cly-border'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Zona Berbahaya */}
+            <div className="rounded-[10px] border border-red-500/20 bg-red-500/5 p-[18px]">
+              <h3 className="mb-2 flex items-center gap-2 text-cly-base font-semibold text-red-600">
+                <AlertTriangleIcon className="size-4" />
+                Zona Berbahaya
+              </h3>
+              <p className="mb-4 text-cly-xs text-red-600/80">
+                Menghapus seluruh data (posts, platforms, pillars, dsb) milik Anda dari database. Tindakan ini permanen.
+              </p>
+              <div className="mt-4 flex gap-3">
+                <button
+                  onClick={handleFactoryReset}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-cly-sm font-medium text-white transition-all hover:bg-red-700 active:scale-95"
+                >
+                  Hapus Seluruh Data (Factory Reset)
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  className="rounded-lg bg-red-900 px-4 py-2 text-cly-sm font-medium text-white transition-all hover:bg-red-950 active:scale-95"
+                >
+                  Hapus Akun Saya
+                </button>
               </div>
             </div>
           </div>
@@ -370,7 +467,7 @@ export default function SettingsPage() {
                   <span className="text-cly-xs text-cly-text-muted">Notifikasi saat goal hampir tercapai atau butuh perhatian</span>
                 </div>
                 <button
-                  onClick={() => setNotifGoal(!notifGoal)}
+                  onClick={handleNotifGoal}
                   className={`relative h-6 w-11 rounded-full transition-colors ${
                     notifGoal ? 'bg-cly-brand' : 'bg-cly-muted-2'
                   }`}
@@ -390,7 +487,7 @@ export default function SettingsPage() {
                   <span className="text-cly-xs text-cly-text-muted">Ingatkan konten yang perlu diposting hari ini</span>
                 </div>
                 <button
-                  onClick={() => setNotifReminder(!notifReminder)}
+                  onClick={handleNotifReminder}
                   className={`relative h-6 w-11 rounded-full transition-colors ${
                     notifReminder ? 'bg-cly-brand' : 'bg-cly-muted-2'
                   }`}
@@ -410,7 +507,7 @@ export default function SettingsPage() {
                   <span className="text-cly-xs text-cly-text-muted">Kirim laporan bulanan otomatis ke email</span>
                 </div>
                 <button
-                  onClick={() => setNotifReport(!notifReport)}
+                  onClick={handleNotifReport}
                   className={`relative h-6 w-11 rounded-full transition-colors ${
                     notifReport ? 'bg-cly-brand' : 'bg-cly-muted-2'
                   }`}

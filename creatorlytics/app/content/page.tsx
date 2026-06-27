@@ -92,15 +92,7 @@ export default function ContentPage() {
     if (!open) setEditPost(null);
   }
 
-  if (loading) {
-    return (
-      <AppShell title="Konten">
-        <div className="flex flex-col gap-[18px]">
-          <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-2.5 h-96 animate-pulse" />
-        </div>
-      </AppShell>
-    );
-  }
+
 
   return (
     <AppShell title="Konten">
@@ -184,7 +176,13 @@ export default function ContentPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredPosts.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-cly-sm text-cly-text-3 animate-pulse">
+                    Memuat data...
+                  </td>
+                </tr>
+              ) : filteredPosts.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-cly-sm text-cly-text-3">
                     {searchQuery || platformFilter !== 'all' 

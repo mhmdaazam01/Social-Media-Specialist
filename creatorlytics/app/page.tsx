@@ -1,23 +1,72 @@
 'use client';
 
-import './landing.css';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser } from '@/lib/hooks/useUser';
 import { createClient } from '@/lib/supabase/client';
+import {
+  BarChart3, Target, Sparkles, CalendarDays, Activity, Users,
+  TrendingUp, Clock, Video, ChevronDown, ArrowRight,
+} from 'lucide-react';
+
+const FAQS = [
+  { q: 'Apakah Creatorlytics beneran gratis?', a: 'Ya, 100% gratis selamanya. Tidak ada hidden fees, tidak ada trial period, dan tidak ada fitur yang dikunci di balik paywall. Kami dibiayai oleh misi untuk membantu kreator Indonesia grow.' },
+  { q: 'Platform apa saja yang didukung?', a: 'Saat ini kami mendukung pencatatan untuk Instagram, TikTok, YouTube, Twitter/X, LinkedIn, Facebook, dan Threads. Kamu bebas menambahkan data dari platform manapun.' },
+  { q: 'Apakah data saya aman?', a: 'Keamanan data adalah prioritas utama kami. Kami tidak meminta password akun sosial media-mu. Data hanya berasal dari input manualmu untuk menampilkan analytics di dashboard-mu.' },
+  { q: 'Berapa lama setup-nya?', a: 'Kurang dari 2 menit. Cukup login dengan Google, tambahkan akun sosial mediamu, dan dashboard langsung siap dipakai.' },
+  { q: 'Bagaimana Insights bekerja?', a: 'Sistem logik kami menganalisis pola datamu — waktu posting, format, topik, dan engagement — untuk memberikan rekomendasi berbasis data yang spesifik untuk akunmu.' },
+  { q: 'Bisa dipakai di HP?', a: 'Ya! Creatorlytics sepenuhnya responsive dan bisa diakses dari browser HP, tablet, atau desktop.' },
+];
+
+const FEATURES = [
+  { icon: BarChart3, title: 'Multi-Platform Analytics', desc: 'Rekap data dari 8+ platform sosial media dan lihat semua metrik dalam satu dashboard yang unified.', tag: 'Core', tagColor: 'bg-cly-brand-tint text-cly-brand' },
+  { icon: Target, title: 'Goal Tracking & Forecasting', desc: 'Set target followers, reach, atau engagement — dan lihat prediksi kapan targetmu tercapai berdasarkan performa saat ini.', tag: 'Popular', tagColor: 'bg-cly-brand-tint text-cly-brand' },
+  { icon: Sparkles, title: 'Data-Driven Insights', desc: 'Dapatkan rekomendasi waktu posting, format konten, dan topik yang paling efektif untuk akunmu dari analisis data historis.', tag: 'Insights', tagColor: 'bg-cly-blue-tint text-cly-blue' },
+  { icon: CalendarDays, title: 'Content Planner & Kanban', desc: 'Organize ide kontenmu dari draft sampai published dengan board Kanban yang intuitif.', tag: 'Productivity', tagColor: 'bg-cly-amber-tint text-cly-amber' },
+  { icon: Activity, title: 'Content Health Score', desc: 'Skor 0–100 yang mengukur konsistensi, engagement, dan pertumbuhan kontenmu secara keseluruhan.', tag: 'Metrics', tagColor: 'bg-cly-green-tint text-cly-green' },
+  { icon: Users, title: 'Competitor Benchmarking', desc: 'Bandingkan performamu dengan kreator lain di niche yang sama — dan cari celah untuk grow lebih cepat.', tag: 'Coming Soon', tagColor: 'bg-cly-purple-tint text-cly-purple' },
+];
+
+const TESTIMONIALS = [
+  { name: 'Kreator Indonesia', role: 'TikTok Creator', quote: 'Setup-nya gampang, langsung kepakai hari pertama buat rekap.', color: 'bg-cly-brand' },
+  { name: 'Social Media Specialist', role: 'Agency', quote: 'Goal tracking-nya beneran berguna. Jadi tau kapan harus push konten lebih keras dan kapan bisa santai.', color: 'bg-cly-blue' },
+  { name: 'Digital Marketer', role: 'Freelancer', quote: 'Sebelumnya tracking manual di spreadsheet yang berantakan. Sekarang semua rapi dan jauh lebih enak dibacanya.', color: 'bg-cly-amber' },
+  { name: 'Content Creator', role: 'Instagram', quote: 'Insights-nya ngebantu banget. Rekomendasiin jam posting yang pas dari data performa aku.', color: 'bg-cly-purple' },
+  { name: 'Community Manager', role: 'Brand', quote: 'Gratis tapi fiturnya selengkap ini? Ini yang selama ini dicari-cari.', color: 'bg-cly-green' },
+  { name: 'Marketing Staff', role: 'Startup', quote: 'Data dari 5 platform langsung bisa direkap dalam satu layar. Gak perlu bingung bikin report lagi.', color: 'bg-cly-red' },
+];
+
+const PLATFORMS = ['Instagram', 'TikTok', 'YouTube', 'Twitter / X', 'LinkedIn', 'Facebook', 'Threads'];
+
+const STEPS = [
+  { num: '01', title: 'Login dengan Google', desc: 'Satu klik login — tidak perlu bikin akun baru atau isi form panjang-panjang.' },
+  { num: '02', title: 'Tambahkan Akun & Platform', desc: 'Pilih platform sosial mediamu dan buat profil akun pencatatan.' },
+  { num: '03', title: 'Lihat Dashboard', desc: 'Masukkan datamu dan semua metrik langsung muncul di dashboard.' },
+];
+
+/* Google icon SVG as component */
+function GoogleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} width="15" height="15" viewBox="0 0 24 24" fill="none">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+    </svg>
+  );
+}
 
 export default function LandingPage() {
   const { user, loading } = useUser();
   const router = useRouter();
   const [authLoading, setAuthLoading] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [activeTab, setActiveTab] = useState('analytics');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  // Redirect logged-in users to dashboard
   useEffect(() => {
-    if (!loading && user) router.replace('/dashboard');
+    // TEMPORARY: Commented out so you can preview the landing page even if you are logged in
+    // if (!loading && user) router.replace('/dashboard');
   }, [user, loading, router]);
 
   useEffect(() => {
@@ -25,24 +74,6 @@ export default function LandingPage() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  useEffect(() => {
-    if (loading || user) return;
-    const targets = document.querySelectorAll('.lp-reveal');
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(e => {
-          if (e.isIntersecting) {
-            e.target.classList.add('on');
-            obs.unobserve(e.target);
-          }
-        });
-      },
-      { threshold: 0.15 }
-    );
-    targets.forEach(el => obs.observe(el));
-    return () => obs.disconnect();
-  }, [loading, user]);
 
   async function handleLogin(e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) {
     e.preventDefault();
@@ -54,108 +85,144 @@ export default function LandingPage() {
     });
   }
 
-  // Show loading while auth resolves
-  if (loading || user) {
+  if (loading) {
     return (
-      <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', background: '#09090A' }}>
-        <svg className="lp-spin" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A8DF3A" strokeWidth="2" strokeLinecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+      <div className="flex min-h-screen items-center justify-center bg-cly-bg">
+        <div className="animate-spin rounded-full h-6 w-6 border-2 border-cly-brand border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="lp">
-      <div className="lp-grain"></div>
+    <div className="force-light min-h-screen bg-cly-bg text-cly-text font-sans antialiased overflow-x-hidden">
 
-      {/* NAV */}
-      <nav className={`lp-nav${scrolled ? ' scrolled' : ''}`}>
-        <Link href="/" className="lp-logo">
-          <div className="lp-logo-mark">C</div>
+      {/* ─── NAV ─── */}
+      <nav className={`sticky top-0 z-50 h-[60px] flex items-center justify-between px-5 md:px-8 lg:px-[max(20px,calc((100%-1100px)/2))] border-b transition-shadow duration-300 ${scrolled ? 'border-cly-border bg-cly-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,.06)]' : 'border-transparent bg-cly-bg/80 backdrop-blur-lg'}`}>
+        <Link href="/" className="flex items-center gap-2.5 text-cly-text font-bold text-[15px] tracking-tight no-underline">
+          <div className="w-[30px] h-[30px] bg-cly-brand rounded-lg grid place-items-center text-white font-extrabold text-[13px]">C</div>
           Creatorlytics
         </Link>
-        <div className="lp-navlinks">
-          <a href="#showcase" className="lp-nl">Dashboard</a>
-          <a href="#features" className="lp-nl">Fitur</a>
-          <a href="#how" className="lp-nl">Cara Kerja</a>
+        <div className="hidden md:flex items-center gap-1">
+          <a href="#showcase" className="px-3.5 py-2 text-[13px] font-medium text-cly-text-2 hover:text-cly-text hover:bg-cly-muted rounded-lg transition-colors">Dashboard</a>
+          <a href="#features" className="px-3.5 py-2 text-[13px] font-medium text-cly-text-2 hover:text-cly-text hover:bg-cly-muted rounded-lg transition-colors">Fitur</a>
+          <a href="#how" className="px-3.5 py-2 text-[13px] font-medium text-cly-text-2 hover:text-cly-text hover:bg-cly-muted rounded-lg transition-colors">Cara Kerja</a>
         </div>
-        <button onClick={handleLogin} disabled={authLoading} className="lp-nav-cta">
+        <button onClick={handleLogin} disabled={authLoading} className="h-[34px] px-4 bg-cly-brand text-white border-none rounded-lg font-bold text-[13px] cursor-pointer tracking-tight hover:bg-cly-brand-hover transition-colors inline-flex items-center gap-1.5">
           {authLoading ? 'Memuat...' : 'Mulai Gratis'}
         </button>
       </nav>
 
-      {/* HERO */}
-      <section className="lp-hero">
-        <div className="lp-hero-pill">
-          <div className="lp-hpd"></div>
-          100% Gratis untuk Kreator Indonesia
-        </div>
-        <h1 className="lp-h1">Kenali kontenmu.<br />Grow lebih cepat.</h1>
-        <p className="lp-hero-sub">Analytics dashboard untuk kreator Indonesia — 8+ platform, 10+ metrik, gratis selamanya.</p>
-        <div className="lp-hero-ctas">
-          <button onClick={handleLogin} disabled={authLoading} className="lp-btn-lime">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="rgba(9,9,10,.85)" />
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="rgba(9,9,10,.85)" />
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="rgba(9,9,10,.85)" />
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="rgba(9,9,10,.85)" />
-            </svg>
-            {authLoading ? 'Memuat...' : 'Mulai Gratis dengan Google'}
-          </button>
-          <a href="#showcase" className="lp-btn-outline">Lihat Dashboard ↓</a>
-        </div>
-        <p className="lp-hero-trust">Tidak perlu kartu kredit <span>·</span> Setup &lt;2 menit <span>·</span> Gratis selamanya</p>
+      {/* ─── HERO ─── */}
+      <section className="pt-20 pb-16 md:pt-28 md:pb-20 text-center relative px-5 md:px-8 lg:px-[max(20px,calc((100%-1100px)/2))]">
+        {/* Radial glow */}
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_70%_45%_at_50%_-5%,rgba(47,111,69,.06)_0%,transparent_70%)]" />
 
-        {/* Product Preview */}
-        <div className="lp-hero-preview">
-          <div className="lp-pvtopbar">
-            <div className="lp-pvdots">
-              <div className="lp-pvd lp-pvd1"></div>
-              <div className="lp-pvd lp-pvd2"></div>
-              <div className="lp-pvd lp-pvd3"></div>
-            </div>
-            <div className="lp-pvurl">creatorlytics.app/dashboard</div>
-            <div style={{ width: '60px' }}></div>
+        <div className="relative z-10">
+          {/* Pill */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-cly-surface border border-cly-border rounded-full mb-6 text-[12px] font-medium text-cly-text-2 shadow-cly">
+            <span className="w-2 h-2 rounded-full bg-cly-brand animate-pulse" />
+            100% Gratis untuk Kreator Indonesia
           </div>
-          <div className="lp-pvbody">
-            <div className="lp-pvkpis">
-              <div className="lp-pvkpi"><div className="lp-pvkl">Total Reach <div className="lp-pvdd" style={{ background: 'var(--lime)' }}></div></div><div className="lp-pvkv">2.4M</div><div className="lp-pvkc">↑ +18.3%</div></div>
-              <div className="lp-pvkpi"><div className="lp-pvkl">Total Post <div className="lp-pvdd" style={{ background: 'var(--green)' }}></div></div><div className="lp-pvkv">142</div><div className="lp-pvkc">↑ +12 bulan ini</div></div>
-              <div className="lp-pvkpi"><div className="lp-pvkl">Avg ER <div className="lp-pvdd" style={{ background: 'var(--amber)' }}></div></div><div className="lp-pvkv">4.8%</div><div className="lp-pvkc">↑ +0.6pp</div></div>
-              <div className="lp-pvkpi"><div className="lp-pvkl">Followers <div className="lp-pvdd" style={{ background: 'var(--indigo)' }}></div></div><div className="lp-pvkv">+1.2K</div><div className="lp-pvkc">↑ +320 mgg ini</div></div>
+
+          <h1 className="text-[clamp(36px,6.5vw,72px)] font-extrabold leading-[1.06] tracking-[-0.03em] max-w-[680px] mx-auto text-cly-text">
+            Kenali kontenmu.<br />Grow lebih cepat.
+          </h1>
+
+          <p className="max-w-[420px] mx-auto mt-5 mb-8 text-[16px] text-cly-text-2 leading-[1.7]">
+            Analytics dashboard untuk kreator Indonesia — 8+ platform, 10+ metrik, gratis selamanya.
+          </p>
+
+          <div className="flex gap-3 justify-center flex-wrap">
+            <button onClick={handleLogin} disabled={authLoading} className="inline-flex items-center gap-2 h-11 px-5 bg-cly-brand text-white border-none rounded-[10px] font-bold text-[14px] cursor-pointer tracking-tight hover:bg-cly-brand-hover transition-all hover:-translate-y-0.5 shadow-cly">
+              <GoogleIcon />
+              {authLoading ? 'Memuat...' : 'Mulai Gratis dengan Google'}
+            </button>
+            <a href="#showcase" className="inline-flex items-center gap-2 h-11 px-5 bg-transparent text-cly-text border border-cly-border rounded-[10px] font-semibold text-[14px] cursor-pointer hover:bg-cly-muted transition-colors no-underline">
+              Lihat Dashboard <ArrowRight size={14} />
+            </a>
+          </div>
+
+          <p className="mt-4 text-[12px] text-cly-text-3">
+            Tidak perlu kartu kredit <span className="mx-1.5">·</span> Setup &lt;2 menit <span className="mx-1.5">·</span> Gratis selamanya
+          </p>
+        </div>
+
+        {/* ─── Dashboard Preview ─── */}
+        <div className="max-w-[880px] mx-auto mt-14 bg-cly-surface rounded-2xl border border-cly-border overflow-hidden shadow-[0_12px_48px_rgba(0,0,0,.08),0_2px_8px_rgba(0,0,0,.04)]" style={{ maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)' }}>
+          {/* Browser bar */}
+          <div className="bg-cly-muted h-9 flex items-center justify-between px-3.5 border-b border-cly-border">
+            <div className="flex gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+              <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
             </div>
-            <div className="lp-pvcharts">
-              <div className="lp-pvbox">
-                <div className="lp-pvboxt">Reach — 12 Bulan Terakhir</div>
-                <div className="lp-pvchart">
-                  <div className="lp-pvb" style={{ height: '35%', background: 'rgba(168,223,58,.16)' }}></div>
-                  <div className="lp-pvb" style={{ height: '42%', background: 'rgba(168,223,58,.2)' }}></div>
-                  <div className="lp-pvb" style={{ height: '38%', background: 'rgba(168,223,58,.18)' }}></div>
-                  <div className="lp-pvb" style={{ height: '51%', background: 'rgba(168,223,58,.25)' }}></div>
-                  <div className="lp-pvb" style={{ height: '46%', background: 'rgba(168,223,58,.22)' }}></div>
-                  <div className="lp-pvb" style={{ height: '58%', background: 'rgba(168,223,58,.3)' }}></div>
-                  <div className="lp-pvb" style={{ height: '63%', background: 'rgba(168,223,58,.5)' }}></div>
-                  <div className="lp-pvb" style={{ height: '70%', background: 'rgba(168,223,58,.62)' }}></div>
-                  <div className="lp-pvb" style={{ height: '67%', background: 'rgba(168,223,58,.66)' }}></div>
-                  <div className="lp-pvb" style={{ height: '78%', background: 'rgba(168,223,58,.78)' }}></div>
-                  <div className="lp-pvb" style={{ height: '85%', background: 'rgba(168,223,58,.88)' }}></div>
-                  <div className="lp-pvb" style={{ height: '100%', background: '#A8DF3A' }}></div>
+            <div className="text-[10px] font-mono text-cly-text-3 bg-cly-bg px-3 py-0.5 rounded">creatorlytics.app/dashboard</div>
+            <div className="w-[60px]" />
+          </div>
+          {/* KPIs */}
+          <div className="p-3.5">
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { label: 'Total Reach', value: '2.4M', delta: '↑ +18.3%', color: 'bg-cly-green' },
+                { label: 'Total Post', value: '142', delta: '↑ +12 bulan ini', color: 'bg-cly-brand' },
+                { label: 'Avg ER', value: '4.8%', delta: '↑ +0.6pp', color: 'bg-cly-amber' },
+                { label: 'Followers', value: '+1.2K', delta: '↑ +320 mgg ini', color: 'bg-cly-blue' },
+              ].map((kpi) => (
+                <div key={kpi.label} className="bg-cly-bg border border-cly-border rounded-[9px] p-2.5 md:p-3">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-cly-text-3">{kpi.label}</span>
+                    <span className={`w-1.5 h-1.5 rounded-full ${kpi.color}`} />
+                  </div>
+                  <div className="font-mono text-[17px] md:text-[19px] font-medium text-cly-text">{kpi.value}</div>
+                  <div className="text-[10px] font-semibold text-cly-green">{kpi.delta}</div>
                 </div>
-                <div className="lp-pvblbls">
-                  <div className="lp-pvbl">Jan</div><div className="lp-pvbl">Feb</div><div className="lp-pvbl">Mar</div>
-                  <div className="lp-pvbl">Apr</div><div className="lp-pvbl">Mei</div><div className="lp-pvbl">Jun</div>
-                  <div className="lp-pvbl">Jul</div><div className="lp-pvbl">Agu</div><div className="lp-pvbl">Sep</div>
-                  <div className="lp-pvbl">Okt</div><div className="lp-pvbl">Nov</div><div className="lp-pvbl">Des</div>
+              ))}
+            </div>
+            {/* Chart + top content */}
+            <div className="grid grid-cols-[1fr_0.5fr] gap-2 mt-2">
+              <div className="bg-cly-bg border border-cly-border rounded-[9px] p-3">
+                <div className="text-[9px] font-semibold uppercase tracking-wider text-cly-text-3 mb-2.5">Reach — 12 Bulan Terakhir</div>
+                <div className="flex items-end gap-[3px] h-[60px]">
+                  {[35, 42, 38, 51, 46, 58, 63, 70, 67, 78, 85, 100].map((h, i) => (
+                    <div key={i} className="flex-1 rounded-t-sm bg-cly-brand/20 hover:bg-cly-brand/40 transition-colors" style={{ height: `${h}%`, opacity: 0.3 + (h / 100) * 0.7 }} />
+                  ))}
+                </div>
+                <div className="flex gap-[3px] mt-1">
+                  {['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'].map((m) => (
+                    <div key={m} className="flex-1 text-center font-mono text-[7px] text-cly-text-3">{m}</div>
+                  ))}
                 </div>
               </div>
-              <div className="lp-pvbox">
-                <div className="lp-pvboxt">Top Konten</div>
-                <div className="lp-tci"><div className="lp-tcr">1</div><div className="lp-tcd" style={{ background: 'var(--lime)' }}></div><div className="lp-tcn">Reels tutorial editing</div><div className="lp-tcv">45.2K</div></div>
-                <div className="lp-tci"><div className="lp-tcr">2</div><div className="lp-tcd" style={{ background: 'var(--green)' }}></div><div className="lp-tcn">Behind the scenes</div><div className="lp-tcv">32.1K</div></div>
-                <div className="lp-tci"><div className="lp-tcr">3</div><div className="lp-tcd" style={{ background: 'var(--indigo)' }}></div><div className="lp-tcn">Carousel tips</div><div className="lp-tcv">28.7K</div></div>
-                <div className="lp-gsep">
-                  <div className="lp-gph">Goal Progress</div>
-                  <div className="lp-gpi"><div className="lp-gphdr">Followers <span>78%</span></div><div className="lp-gpbar"><div className="lp-gpfill" style={{ width: '78%' }}></div></div></div>
-                  <div className="lp-gpi"><div className="lp-gphdr">Reach <span>52%</span></div><div className="lp-gpbar"><div className="lp-gpfill" style={{ width: '52%', opacity: .6 }}></div></div></div>
+              <div className="bg-cly-bg border border-cly-border rounded-[9px] p-3">
+                <div className="text-[9px] font-semibold uppercase tracking-wider text-cly-text-3 mb-2">Top Konten</div>
+                {[
+                  { rank: 1, name: 'Reels tutorial editing', reach: '45.2K', color: 'bg-cly-brand' },
+                  { rank: 2, name: 'Behind the scenes', reach: '32.1K', color: 'bg-cly-green' },
+                  { rank: 3, name: 'Carousel tips', reach: '28.7K', color: 'bg-cly-blue' },
+                ].map((item) => (
+                  <div key={item.rank} className="flex items-center gap-1.5 py-1.5 hover:bg-cly-muted rounded px-1 transition-colors">
+                    <span className="font-mono text-[9px] text-cly-text-3 w-2.5">{item.rank}</span>
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${item.color}`} />
+                    <span className="text-[11px] font-medium flex-1 truncate">{item.name}</span>
+                    <span className="font-mono text-[10px] text-cly-text-2">{item.reach}</span>
+                  </div>
+                ))}
+                <div className="border-t border-cly-border mt-2 pt-2">
+                  <div className="text-[8px] font-semibold uppercase tracking-widest text-cly-text-3 mb-1.5">Goal Progress</div>
+                  {[
+                    { label: 'Followers', pct: 78 },
+                    { label: 'Reach', pct: 52 },
+                  ].map((g) => (
+                    <div key={g.label} className="mb-1.5">
+                      <div className="flex justify-between text-[10px] mb-0.5">
+                        <span className="font-medium">{g.label}</span>
+                        <span className="font-mono text-cly-text-2">{g.pct}%</span>
+                      </div>
+                      <div className="h-1 bg-cly-muted-2 rounded-full overflow-hidden">
+                        <div className="h-full bg-cly-brand rounded-full transition-all" style={{ width: `${g.pct}%` }} />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -163,345 +230,222 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* PLATFORM MARQUEE */}
-      <div className="lp-mqwrap">
-        <div className="lp-mqinner">
-          <span className="lp-mqitem"><span className="dot">✦</span>Instagram</span>
-          <span className="lp-mqitem"><span className="dot">✦</span>TikTok</span>
-          <span className="lp-mqitem"><span className="dot">✦</span>YouTube</span>
-          <span className="lp-mqitem"><span className="dot">✦</span>Twitter / X</span>
-          <span className="lp-mqitem"><span className="dot">✦</span>LinkedIn</span>
-          <span className="lp-mqitem"><span className="dot">✦</span>Facebook</span>
-          <span className="lp-mqitem"><span className="dot">✦</span>Threads</span>
-          <span className="lp-mqitem"><span className="dot">✦</span>Instagram</span>
-          <span className="lp-mqitem"><span className="dot">✦</span>TikTok</span>
-          <span className="lp-mqitem"><span className="dot">✦</span>YouTube</span>
-          <span className="lp-mqitem"><span className="dot">✦</span>Twitter / X</span>
-          <span className="lp-mqitem"><span className="dot">✦</span>LinkedIn</span>
-          <span className="lp-mqitem"><span className="dot">✦</span>Facebook</span>
-          <span className="lp-mqitem"><span className="dot">✦</span>Threads</span>
+      {/* ─── PLATFORM MARQUEE ─── */}
+      <div className="border-y border-cly-border overflow-hidden">
+        <div className="flex w-max animate-[marquee_28s_linear_infinite] py-3 hover:[animation-play-state:paused]">
+          {[...PLATFORMS, ...PLATFORMS].map((p, i) => (
+            <span key={i} className="px-6 font-mono text-[11px] text-cly-text-3 tracking-wider whitespace-nowrap border-r border-cly-border">
+              <span className="text-cly-brand mr-1.5">✦</span>{p}
+            </span>
+          ))}
         </div>
       </div>
 
-      {/* SHOWCASE */}
-      <section className="lp-sec" id="showcase">
-        <p className="lp-eyebrow lp-reveal">Dashboard Preview</p>
-        <h2 className="lp-stitle lp-reveal lp-d1">Lihat produknya langsung.</h2>
-        <p className="lp-ssub lp-reveal lp-d2">Semua fitur dalam satu dashboard terintegrasi — coba tiap tab.</p>
-        
-        <div className="lp-stabs">
-          <button className={`lp-stab ${activeTab === 'analytics' ? 'on' : ''}`} onClick={() => setActiveTab('analytics')}>Analytics</button>
-          <button className={`lp-stab ${activeTab === 'goals' ? 'on' : ''}`} onClick={() => setActiveTab('goals')}>Goal Tracking</button>
-          <button className={`lp-stab ${activeTab === 'ai' ? 'on' : ''}`} onClick={() => setActiveTab('ai')}>AI Insights</button>
-          <button className={`lp-stab ${activeTab === 'planner' ? 'on' : ''}`} onClick={() => setActiveTab('planner')}>Content Planner</button>
-        </div>
+      {/* ─── SHOWCASE ─── */}
+      <section className="py-20 md:py-24 px-5 md:px-8 lg:px-[max(20px,calc((100%-1100px)/2))]" id="showcase">
+        <p className="font-mono text-[11px] uppercase tracking-[.12em] text-cly-brand mb-3.5">Dashboard Preview</p>
+        <h2 className="text-[clamp(26px,3.8vw,42px)] font-bold leading-[1.1] tracking-[-0.025em] mb-2.5">Lihat produknya langsung.</h2>
+        <p className="text-[15px] text-cly-text-2 leading-relaxed">Semua fitur dalam satu dashboard terintegrasi.</p>
 
-        {/* ANALYTICS TAB */}
-        <div className={`lp-spanel ${activeTab === 'analytics' ? 'on' : ''}`} id="panel-analytics">
-          <div className="lp-dpanel">
-            <div className="lp-dph"><div className="lp-dpht">Overview Dashboard</div><div className="lp-dphp">Des 2024 · 30 hari terakhir</div></div>
-            <div className="lp-dpb">
-              <div className="lp-kpis">
-                <div className="lp-kpi"><div className="lp-kpil">Total Post <div className="lp-kdd" style={{ background: 'var(--lime)' }}></div></div><div className="lp-kpiv">142</div><div className="lp-kpic">↑ +12 bulan ini</div></div>
-                <div className="lp-kpi"><div className="lp-kpil">Total Reach <div className="lp-kdd" style={{ background: 'var(--green)' }}></div></div><div className="lp-kpiv">2.4M</div><div className="lp-kpic">↑ +18.3%</div></div>
-                <div className="lp-kpi"><div className="lp-kpil">Avg ER <div className="lp-kdd" style={{ background: 'var(--amber)' }}></div></div><div className="lp-kpiv">4.8%</div><div className="lp-kpic">↑ +0.6pp</div></div>
-                <div className="lp-kpi"><div className="lp-kpil">Followers <div className="lp-kdd" style={{ background: 'var(--indigo)' }}></div></div><div className="lp-kpiv">+1.2K</div><div className="lp-kpic">↑ +320 minggu ini</div></div>
-              </div>
-              <div className="lp-crow">
-                <div className="lp-dbox">
-                  <div className="lp-dboxt">Reach — 12 Bulan Terakhir</div>
-                  <div className="lp-bchart">
-                    <div className="lp-bb" style={{ height: '35%', background: 'rgba(168,223,58,.16)' }}></div>
-                    <div className="lp-bb" style={{ height: '42%', background: 'rgba(168,223,58,.2)' }}></div>
-                    <div className="lp-bb" style={{ height: '38%', background: 'rgba(168,223,58,.18)' }}></div>
-                    <div className="lp-bb" style={{ height: '51%', background: 'rgba(168,223,58,.25)' }}></div>
-                    <div className="lp-bb" style={{ height: '46%', background: 'rgba(168,223,58,.22)' }}></div>
-                    <div className="lp-bb" style={{ height: '58%', background: 'rgba(168,223,58,.3)' }}></div>
-                    <div className="lp-bb" style={{ height: '63%', background: 'rgba(168,223,58,.5)' }}></div>
-                    <div className="lp-bb" style={{ height: '70%', background: 'rgba(168,223,58,.62)' }}></div>
-                    <div className="lp-bb" style={{ height: '67%', background: 'rgba(168,223,58,.66)' }}></div>
-                    <div className="lp-bb" style={{ height: '78%', background: 'rgba(168,223,58,.78)' }}></div>
-                    <div className="lp-bb" style={{ height: '85%', background: 'rgba(168,223,58,.88)' }}></div>
-                    <div className="lp-bb" style={{ height: '100%', background: '#A8DF3A' }}></div>
-                  </div>
-                  <div className="lp-blbls">
-                    <div className="lp-bbl">Jan</div><div className="lp-bbl">Feb</div><div className="lp-bbl">Mar</div>
-                    <div className="lp-bbl">Apr</div><div className="lp-bbl">Mei</div><div className="lp-bbl">Jun</div>
-                    <div className="lp-bbl">Jul</div><div className="lp-bbl">Agu</div><div className="lp-bbl">Sep</div>
-                    <div className="lp-bbl">Okt</div><div className="lp-bbl">Nov</div><div className="lp-bbl">Des</div>
-                  </div>
-                </div>
-                <div className="lp-dbox">
-                  <div className="lp-dboxt">Top Konten</div>
-                  <div className="lp-tci"><div className="lp-tcr">1</div><div className="lp-tcd" style={{ background: 'var(--lime)' }}></div><div className="lp-tcn">Reels tutorial editing</div><div className="lp-tcv">45.2K</div></div>
-                  <div className="lp-tci"><div className="lp-tcr">2</div><div className="lp-tcd" style={{ background: 'var(--green)' }}></div><div className="lp-tcn">Behind the scenes</div><div className="lp-tcv">32.1K</div></div>
-                  <div className="lp-tci"><div className="lp-tcr">3</div><div className="lp-tcd" style={{ background: 'var(--indigo)' }}></div><div className="lp-tcn">Carousel tips</div><div className="lp-tcv">28.7K</div></div>
-                  <div className="lp-gsep">
-                    <div className="lp-gph">Goal Progress</div>
-                    <div className="lp-gpi"><div className="lp-gphdr">Followers <span>78%</span></div><div className="lp-gpbar"><div className="lp-gpfill" style={{ width: '78%' }}></div></div></div>
-                    <div className="lp-gpi"><div className="lp-gphdr">Reach <span>52%</span></div><div className="lp-gpbar"><div className="lp-gpfill" style={{ width: '52%', opacity: .6 }}></div></div></div>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* AI Insights preview */}
+        <div className="mt-10 bg-cly-surface rounded-2xl border border-cly-border overflow-hidden shadow-cly">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-cly-border">
+            <span className="text-[13px] font-semibold">AI Insights</span>
+            <span className="font-mono text-[11px] text-cly-text-2 bg-cly-muted px-2.5 py-1 rounded-md">Updated 5 menit lalu</span>
           </div>
-        </div>
-
-        {/* GOALS TAB */}
-        <div className={`lp-spanel ${activeTab === 'goals' ? 'on' : ''}`} id="panel-goals">
-          <div className="lp-dpanel">
-            <div className="lp-dph"><div className="lp-dpht">Goal Tracking</div><div className="lp-dphp">Q4 2024 · Okt–Des</div></div>
-            <div className="lp-dpb">
-              <div className="lp-ggrid">
-                <div className="lp-gc"><div className="lp-gcn">Followers</div><div className="lp-gcv">9,360</div><div className="lp-gct">Target: 12,000 followers</div><div className="lp-gcbar"><div className="lp-gcfill" style={{ width: '78%', background: 'var(--lime)' }}></div></div><div className="lp-gcpct" style={{ color: 'var(--lime)' }}>78% tercapai</div></div>
-                <div className="lp-gc"><div className="lp-gcn">Monthly Reach</div><div className="lp-gcv">1.56M</div><div className="lp-gct">Target: 3M reach/bulan</div><div className="lp-gcbar"><div className="lp-gcfill" style={{ width: '52%', background: 'var(--indigo)' }}></div></div><div className="lp-gcpct" style={{ color: 'var(--indigo)' }}>52% tercapai</div></div>
-                <div className="lp-gc"><div className="lp-gcn">Avg Engagement Rate</div><div className="lp-gcv">4.8%</div><div className="lp-gct">Target: 5.0% ER</div><div className="lp-gcbar"><div className="lp-gcfill" style={{ width: '96%', background: 'var(--green)' }}></div></div><div className="lp-gcpct" style={{ color: 'var(--green)' }}>96% — hampir!</div></div>
-              </div>
-              <div className="lp-fcast"><div className="lp-fcastl">✦ AI Forecast</div><div className="lp-fcastt">Dengan pertumbuhan saat ini, target <strong>Followers</strong> akan tercapai sekitar <strong>28 Desember 2024</strong>. Tambah +2 post/minggu untuk mempercepat 18%.</div></div>
-            </div>
-          </div>
-        </div>
-
-        {/* AI TAB */}
-        <div className={`lp-spanel ${activeTab === 'ai' ? 'on' : ''}`} id="panel-ai">
-          <div className="lp-dpanel">
-            <div className="lp-dph"><div className="lp-dpht">AI Insights</div><div className="lp-dphp">Updated 5 menit lalu</div></div>
-            <div className="lp-dpb">
-              <div className="lp-aigrid">
-                <div className="lp-aic"><div className="lp-aiico"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div className="lp-ait">Waktu Terbaik Posting</div><div className="lp-aid">Selasa &amp; Kamis pukul 19:00–21:00 WIB menghasilkan ER 2.4× lebih tinggi dari rata-rata kontenmu.</div></div></div>
-                <div className="lp-aic"><div className="lp-aiico"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div><div><div className="lp-ait">Format Terpopuler di Akunmu</div><div className="lp-aid">Reels menghasilkan reach 68% lebih tinggi vs foto carousel bulan ini. Perbanyak Reels pendek.</div></div></div>
-                <div className="lp-aic"><div className="lp-aiico"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></div><div><div className="lp-ait">Topik yang Sedang Naik</div><div className="lp-aid">&quot;Tutorial editing&quot; dan &quot;Behind the scenes&quot; adalah 2 topik dengan engagement tertinggi — pertahankan.</div></div></div>
-              </div>
-              <div className="lp-aiscore"><div><div className="lp-ait">Content Health Score</div><div className="lp-aid" style={{ fontSize: '13px', marginTop: '3px' }}>Berdasarkan konsistensi, engagement, dan pertumbuhan bulan ini</div></div><div className="lp-aiscorev">87<span>/100</span></div></div>
-            </div>
-          </div>
-        </div>
-
-        {/* PLANNER TAB */}
-        <div className={`lp-spanel ${activeTab === 'planner' ? 'on' : ''}`} id="panel-planner">
-          <div className="lp-dpanel">
-            <div className="lp-dph"><div className="lp-dpht">Content Planner</div><div className="lp-dphp">20 konten aktif bulan ini</div></div>
-            <div className="lp-dpb">
-              <div className="lp-kanban">
-                <div><div className="lp-kbch">Ide <span className="lp-kbcount">4</span></div>
-                  <div className="lp-kbcard"><div className="lp-kbct">Day in the life: shooting day</div><div className="lp-kbtags"><span className="lp-kbt lp-tig">Instagram</span><span className="lp-kbt lp-tlm">Reels</span></div></div>
-                  <div className="lp-kbcard"><div className="lp-kbct">Review kamera baru</div><div className="lp-kbtags"><span className="lp-kbt lp-tyt">YouTube</span></div></div>
-                </div>
-                <div><div className="lp-kbch">Draft <span className="lp-kbcount">5</span></div>
-                  <div className="lp-kbcard"><div className="lp-kbct">Tutorial editing Reels 60 detik</div><div className="lp-kbtags"><span className="lp-kbt lp-tig">Instagram</span><span className="lp-kbt lp-tlm">Reels</span></div></div>
-                  <div className="lp-kbcard"><div className="lp-kbct">5 tips grow organik 2025</div><div className="lp-kbtags"><span className="lp-kbt lp-tyt">YouTube</span></div></div>
-                </div>
-                <div><div className="lp-kbch">Review <span className="lp-kbcount">3</span></div>
-                  <div className="lp-kbcard"><div className="lp-kbct">Carousel: tools yang gw pakai</div><div className="lp-kbtags"><span className="lp-kbt lp-tig">Instagram</span></div></div>
-                  <div className="lp-kbcard"><div className="lp-kbct">Q&amp;A: gimana gw mulai dari 0</div><div className="lp-kbtags"><span className="lp-kbt lp-ttt">TikTok</span></div></div>
-                </div>
-                <div><div className="lp-kbch">Published <span className="lp-kbcount">8</span></div>
-                  <div className="lp-kbcard"><div className="lp-kbct">Reels tutorial editing — 45.2K</div><div className="lp-kbtags"><span className="lp-kbt lp-tig">Instagram</span></div></div>
-                  <div className="lp-kbcard"><div className="lp-kbct">Behind the scenes — 32.1K</div><div className="lp-kbtags"><span className="lp-kbt lp-ttt">TikTok</span></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* TESTIMONIALS */}
-      <section className="lp-testy-s">
-        <div className="lp-testy-h lp-reveal">
-          <div>
-            <p className="lp-eyebrow">Kata Mereka</p>
-            <h2 className="lp-stitle" style={{ marginBottom: 0 }}>Kreator Indonesia<br />udah pakai duluan.</h2>
-          </div>
-          <p className="lp-testy-sub">Bergabung dengan ribuan kreator yang udah track dan grow bareng Creatorlytics.</p>
-        </div>
-        <div className="lp-trows">
-          {/* ROW 1 — kiri ke kanan */}
-          <div className="lp-trow">
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Akhirnya ada analytics tool yang ngerti kebutuhan kreator Indonesia. Setup-nya gampang, langsung kepakai hari pertama.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--lime)' }}>R</div><div><div className="lp-tname">Rizky Adi</div><div className="lp-trole">TikTok Creator · 120K followers</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Goal tracking-nya beneran berguna. Gue jadi tau kapan harus push konten lebih keras dan kapan bisa santai.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--indigo)' }}>S</div><div><div className="lp-tname">Sarah Melinda</div><div className="lp-trole">Lifestyle Creator · Instagram</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Sebelumnya gue tracking manual di spreadsheet. Sekarang semua otomatis dan jauh lebih enak dibacanya.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--amber)' }}>A</div><div><div className="lp-tname">Andi Putra</div><div className="lp-trole">YouTuber · 85K subscribers</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;AI Insights-nya akurat banget. Rekomendasiin jam posting yang sama persis sama yang gue rasain sendiri selama ini.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: '#F472B6' }}>D</div><div><div className="lp-tname">Dewi Laksmi</div><div className="lp-trole">Instagram Creator · 95K</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Gratis tapi fiturnya selengkap ini? Ini yang selama ini gue cari-cari dan gak ketemu-ketemu.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--green)' }}>B</div><div><div className="lp-tname">Bagas Kurnia</div><div className="lp-trole">Multi-platform Creator</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Data dari 5 platform langsung bisa dibanding-bandingin dalam satu layar. Gak perlu bolak-balik app lagi.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--red)' }}>N</div><div><div className="lp-tname">Nadia Sari</div><div className="lp-trole">Beauty Creator · TikTok</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Content planner-nya berguna banget buat organize ide. Akhirnya semua dalam satu tempat, beneran all-in-one.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--indigo)' }}>F</div><div><div className="lp-tname">Farhan Dafa</div><div className="lp-trole">Gaming Creator · YouTube</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Follower growth gue naik 40% setelah rajin liat analytics dan ikutin rekomendasinya. No cap.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--lime)' }}>C</div><div><div className="lp-tname">Citra Wulandari</div><div className="lp-trole">Lifestyle Creator · 210K</div></div></div></div>
-            {/* duplicate for infinite scroll */}
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Akhirnya ada analytics tool yang ngerti kebutuhan kreator Indonesia. Setup-nya gampang, langsung kepakai hari pertama.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--lime)' }}>R</div><div><div className="lp-tname">Rizky Adi</div><div className="lp-trole">TikTok Creator · 120K followers</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Goal tracking-nya beneran berguna. Gue jadi tau kapan harus push konten lebih keras dan kapan bisa santai.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--indigo)' }}>S</div><div><div className="lp-tname">Sarah Melinda</div><div className="lp-trole">Lifestyle Creator · Instagram</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Sebelumnya gue tracking manual di spreadsheet. Sekarang semua otomatis dan jauh lebih enak dibacanya.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--amber)' }}>A</div><div><div className="lp-tname">Andi Putra</div><div className="lp-trole">YouTuber · 85K subscribers</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;AI Insights-nya akurat banget. Rekomendasiin jam posting yang sama persis sama yang gue rasain sendiri selama ini.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: '#F472B6' }}>D</div><div><div className="lp-tname">Dewi Laksmi</div><div className="lp-trole">Instagram Creator · 95K</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Gratis tapi fiturnya selengkap ini? Ini yang selama ini gue cari-cari dan gak ketemu-ketemu.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--green)' }}>B</div><div><div className="lp-tname">Bagas Kurnia</div><div className="lp-trole">Multi-platform Creator</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Data dari 5 platform langsung bisa dibanding-bandingin dalam satu layar. Gak perlu bolak-balik app lagi.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--red)' }}>N</div><div><div className="lp-tname">Nadia Sari</div><div className="lp-trole">Beauty Creator · TikTok</div></div></div></div>
-          </div>
-          {/* ROW 2 — kanan ke kiri */}
-          <div className="lp-trow">
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Simple tapi powerful. Dashboard-nya clean dan semua data penting langsung kelihatan tanpa harus dikorek-korek.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--green)' }}>B</div><div><div className="lp-tname">Bima Reza</div><div className="lp-trole">TikTok Foodie · 180K</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Sebagai kreator parenting, gue perlu data buat jelasin ke brand. Laporan dari sini beneran profesional dan lengkap.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--amber)' }}>A</div><div><div className="lp-tname">Anisa Kartini</div><div className="lp-trole">Parenting Creator · 67K</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Competitor tracking-nya kasih insight yang gue gabayangin bisa dapet secara gratis. Seriously underrated tool.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--lime)' }}>D</div><div><div className="lp-tname">Dino Setiawan</div><div className="lp-trole">Tech Reviewer · YouTube</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Interface-nya intuitif banget. Baru pertama coba langsung ngerti cara pakainya tanpa perlu baca tutorial.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: '#F472B6' }}>L</div><div><div className="lp-tname">Lila Pratiwi</div><div className="lp-trole">Fashion Creator · 340K</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Multi-platform management yang beneran works. Instagram, TikTok, YouTube semua masuk dan bisa dibandingkan.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--indigo)' }}>H</div><div><div className="lp-tname">Hendra Fauzi</div><div className="lp-trole">Travel Creator · 52K</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;AI forecast-nya akurat. Tau kalau gue posting Kamis pagi, reach-nya bakal dua kali lipat dari hari lain.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--red)' }}>R</div><div><div className="lp-tname">Ririn Astuti</div><div className="lp-trole">Food Blogger · 78K</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Gue suka fitur health score-nya. Ada metrics konkret buat ngukur konsistensi, bukan cuma feeling doang.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--green)' }}>K</div><div><div className="lp-tname">Kevin Tanaka</div><div className="lp-trole">Fitness Creator · 230K</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Gratis? Literally. Udah 3 bulan pakai, gak ada yang disembunyiin di balik paywall. Ini beneran gratis.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--lime)' }}>M</div><div><div className="lp-tname">Maya Dewi</div><div className="lp-trole">Education Creator · 145K</div></div></div></div>
-            {/* duplicate */}
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Simple tapi powerful. Dashboard-nya clean dan semua data penting langsung kelihatan tanpa harus dikorek-korek.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--green)' }}>B</div><div><div className="lp-tname">Bima Reza</div><div className="lp-trole">TikTok Foodie · 180K</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Sebagai kreator parenting, gue perlu data buat jelasin ke brand. Laporan dari sini beneran profesional dan lengkap.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--amber)' }}>A</div><div><div className="lp-tname">Anisa Kartini</div><div className="lp-trole">Parenting Creator · 67K</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Competitor tracking-nya kasih insight yang gue gabayangin bisa dapet secara gratis. Seriously underrated tool.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--lime)' }}>D</div><div><div className="lp-tname">Dino Setiawan</div><div className="lp-trole">Tech Reviewer · YouTube</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Interface-nya intuitif banget. Baru pertama coba langsung ngerti cara pakainya tanpa perlu baca tutorial.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: '#F472B6' }}>L</div><div><div className="lp-tname">Lila Pratiwi</div><div className="lp-trole">Fashion Creator · 340K</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;Multi-platform management yang beneran works. Instagram, TikTok, YouTube semua masuk dan bisa dibandingkan.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--indigo)' }}>H</div><div><div className="lp-tname">Hendra Fauzi</div><div className="lp-trole">Travel Creator · 52K</div></div></div></div>
-            <div className="lp-tcard"><div className="lp-trating">★★★★★</div><p className="lp-tquote">&quot;AI forecast-nya akurat. Tau kalau gue posting Kamis pagi, reach-nya bakal dua kali lipat dari hari lain.&quot;</p><div className="lp-tauth"><div className="lp-tava" style={{ background: 'var(--red)' }}>R</div><div><div className="lp-tname">Ririn Astuti</div><div className="lp-trole">Food Blogger · 78K</div></div></div></div>
-          </div>
-        </div>
-      </section>
-
-      {/* FEATURES */}
-      <section className="lp-sec" id="features">
-        <p className="lp-eyebrow lp-reveal">Fitur Lengkap</p>
-        <h2 className="lp-stitle lp-reveal lp-d1">Semua yang kamu butuhkan,<br />dalam satu tempat.</h2>
-        <p className="lp-ssub lp-reveal lp-d2">Tidak perlu lagi bolak-balik antar app. Creatorlytics punya semuanya.</p>
-        <div className="lp-frows">
-          <div className="lp-frow lp-reveal">
-            <div className="lp-frn">01</div>
-            <div><div className="lp-frt">Multi-Platform Analytics</div><div className="lp-frd">Hubungkan 8+ platform sosial media dan lihat semua metrik dalam satu dashboard yang unified.</div></div>
-            <div className="lp-frtag lp-tag-lime">Core</div>
-          </div>
-          <div className="lp-frow lp-reveal">
-            <div className="lp-frn">02</div>
-            <div><div className="lp-frt">Goal Tracking &amp; Forecasting</div><div className="lp-frd">Set target followers, reach, atau engagement — dan lihat prediksi AI kapan targetmu tercapai.</div></div>
-            <div className="lp-frtag lp-tag-lime">Popular</div>
-          </div>
-          <div className="lp-frow lp-reveal">
-            <div className="lp-frn">03</div>
-            <div><div className="lp-frt">AI-Powered Insights</div><div className="lp-frd">Dapatkan rekomendasi waktu posting, format konten, dan topik yang paling efektif untuk akunmu.</div></div>
-            <div className="lp-frtag lp-tag-lime">AI</div>
-          </div>
-          <div className="lp-frow lp-reveal">
-            <div className="lp-frn">04</div>
-            <div><div className="lp-frt">Content Planner &amp; Kanban</div><div className="lp-frd">Organize ide kontenmu dari draft sampai published dengan board Kanban yang intuitif.</div></div>
-            <div className="lp-frtag lp-tag-muted">Productivity</div>
-          </div>
-          <div className="lp-frow lp-reveal">
-            <div className="lp-frn">05</div>
-            <div><div className="lp-frt">Content Health Score</div><div className="lp-frd">Skor 0–100 yang mengukur konsistensi, engagement, dan pertumbuhan kontenmu secara keseluruhan.</div></div>
-            <div className="lp-frtag lp-tag-muted">Metrics</div>
-          </div>
-          <div className="lp-frow lp-reveal">
-            <div className="lp-frn">06</div>
-            <div><div className="lp-frt">Competitor Benchmarking</div><div className="lp-frd">Bandingkan performamu dengan kreator lain di niche yang sama — dan cari celah untuk grow lebih cepat.</div></div>
-            <div className="lp-frtag lp-tag-lime">Coming Soon</div>
-          </div>
-        </div>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section className="lp-sec" id="how">
-        <p className="lp-eyebrow lp-reveal">Cara Kerja</p>
-        <h2 className="lp-stitle lp-reveal lp-d1">Setup kurang dari 2 menit.</h2>
-        <p className="lp-ssub lp-reveal lp-d2">Tiga langkah simpel, langsung bisa pakai.</p>
-        <div className="lp-steps lp-reveal">
-          <div className="lp-step">
-            <div className="lp-stepn">STEP 01</div>
-            <div className="lp-stept">Login dengan Google</div>
-            <div className="lp-stepd">Satu klik login — tidak perlu bikin akun baru atau isi form panjang-panjang.</div>
-          </div>
-          <div className="lp-step">
-            <div className="lp-stepn">STEP 02</div>
-            <div className="lp-stept">Hubungkan Platform</div>
-            <div className="lp-stepd">Pilih platform sosial mediamu — Instagram, TikTok, YouTube, dan lainnya. Koneksi aman via OAuth.</div>
-          </div>
-          <div className="lp-step">
-            <div className="lp-stepn">STEP 03</div>
-            <div className="lp-stept">Lihat Dashboard</div>
-            <div className="lp-stepd">Semua data langsung muncul di dashboard. Insights, goal tracking, dan content planner siap dipakai.</div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="lp-cta-s">
-        <div className="lp-cta-left lp-reveal">
-          <p className="lp-eyebrow">Mulai Sekarang</p>
-          <h2 className="lp-cta-title">Saatnya <em>grow</em> dengan<br />data, bukan feeling.</h2>
-          <p className="lp-cta-sub">Join ribuan kreator Indonesia yang udah pakai Creatorlytics. Gratis selamanya, tanpa kartu kredit, tanpa batas waktu.</p>
-        </div>
-        <div className="lp-cta-right lp-reveal lp-d1">
-          <button onClick={handleLogin} disabled={authLoading} className="lp-btn-lime-lg">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="rgba(9,9,10,.85)" />
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="rgba(9,9,10,.85)" />
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="rgba(9,9,10,.85)" />
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="rgba(9,9,10,.85)" />
-            </svg>
-            {authLoading ? 'Memuat...' : 'Mulai Gratis dengan Google'}
-          </button>
-          <div className="lp-cta-note">Tidak perlu kartu kredit<br />Setup kurang dari 2 menit</div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="lp-faq-s" id="faq">
-        <div className="lp-faq-g">
-          <div className="lp-faq-sticky">
-            <span className="lp-faq-label">FAQ</span>
-            <h2 className="lp-faq-t">Pertanyaan<br />yang sering muncul.</h2>
-            <p className="lp-faq-sub">Kalau belum terjawab, reach out ke tim kami kapan aja.</p>
-          </div>
-          <div>
+          <div className="p-4 md:p-5 space-y-3">
             {[
-              { q: 'Apakah Creatorlytics beneran gratis?', a: 'Ya, 100% gratis selamanya. Tidak ada hidden fees, tidak ada trial period, dan tidak ada fitur yang dikunci di balik paywall. Kami dibiayai oleh misi untuk membantu kreator Indonesia grow.' },
-              { q: 'Platform apa saja yang didukung?', a: 'Saat ini kami mendukung Instagram, TikTok, YouTube, Twitter/X, LinkedIn, Facebook, dan Threads. Kami terus menambah platform baru berdasarkan request dari kreator.' },
-              { q: 'Apakah data saya aman?', a: 'Keamanan data adalah prioritas utama kami. Kami menggunakan enkripsi end-to-end, OAuth untuk koneksi platform, dan tidak pernah menyimpan password akunmu. Data hanya digunakan untuk menampilkan analytics di dashboard-mu.' },
-              { q: 'Berapa lama setup-nya?', a: 'Kurang dari 2 menit. Cukup login dengan Google, hubungkan platform sosial mediamu, dan dashboard langsung siap dipakai. Tidak perlu konfigurasi rumit atau proses verifikasi panjang.' },
-              { q: 'Bagaimana AI Insights bekerja?', a: 'AI kami menganalisis pola kontenmu — waktu posting, format, topik, dan engagement — untuk memberikan rekomendasi yang spesifik untuk akunmu. Semakin lama kamu pakai, semakin akurat insightnya.' },
-              { q: 'Bisa dipakai di HP?', a: 'Ya! Creatorlytics sepenuhnya responsive dan bisa diakses dari browser HP, tablet, atau desktop. Kami juga sedang mengembangkan mobile app native untuk pengalaman yang lebih optimal.' }
-            ].map((faq, i) => (
-              <div key={i} className={`lp-fi ${openFaq === i ? 'open' : ''}`}>
-                <button className="lp-fq" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
-                  <span>{faq.q}</span>
-                  <div className="lp-ficon">+</div>
-                </button>
-                <div className="lp-fa"><div className="lp-fain">{faq.a}</div></div>
+              { icon: Clock, title: 'Waktu Terbaik Posting', desc: 'Selasa & Kamis pukul 19:00–21:00 WIB menghasilkan ER 2.4× lebih tinggi dari rata-rata kontenmu.', color: 'bg-cly-brand-tint text-cly-brand' },
+              { icon: Video, title: 'Format Terpopuler', desc: 'Reels menghasilkan reach 68% lebih tinggi vs foto carousel bulan ini. Perbanyak Reels pendek.', color: 'bg-cly-blue-tint text-cly-blue' },
+              { icon: TrendingUp, title: 'Topik yang Sedang Naik', desc: '"Tutorial editing" dan "Behind the scenes" adalah 2 topik dengan engagement tertinggi — pertahankan.', color: 'bg-cly-green-tint text-cly-green' },
+            ].map((insight) => (
+              <div key={insight.title} className="flex gap-3 items-start bg-cly-bg border border-cly-border rounded-[10px] p-3.5 hover:shadow-cly transition-shadow">
+                <div className={`w-[34px] h-[34px] rounded-lg grid place-items-center shrink-0 ${insight.color}`}>
+                  <insight.icon size={16} />
+                </div>
+                <div>
+                  <div className="text-[13px] font-semibold mb-1">{insight.title}</div>
+                  <div className="text-[12.5px] text-cly-text-2 leading-relaxed">{insight.desc}</div>
+                </div>
+              </div>
+            ))}
+            {/* Health score */}
+            <div className="flex items-center justify-between bg-cly-bg border border-cly-border rounded-[10px] p-3.5">
+              <div>
+                <div className="text-[13px] font-semibold">Content Health Score</div>
+                <div className="text-[12px] text-cly-text-2 mt-0.5">Berdasarkan konsistensi, engagement, dan pertumbuhan</div>
+              </div>
+              <div className="font-mono text-[28px] font-medium text-cly-brand">87<span className="text-[13px] text-cly-text-3">/100</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── TESTIMONIALS ─── */}
+      <section className="py-20 border-t border-cly-border overflow-hidden">
+        <div className="px-5 md:px-8 lg:px-[max(20px,calc((100%-1100px)/2))] mb-12 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[.12em] text-cly-brand mb-3.5">Kata Mereka</p>
+            <h2 className="text-[clamp(26px,3.8vw,42px)] font-bold leading-[1.1] tracking-[-0.025em]">Kreator Indonesia<br />udah pakai duluan.</h2>
+          </div>
+          <p className="text-[15px] text-cly-text-2 max-w-[340px] leading-relaxed md:text-right">Bergabung dengan ribuan kreator yang udah track dan grow bareng Creatorlytics.</p>
+        </div>
+        <div className="flex flex-col gap-3">
+          {/* Row 1 */}
+          <div className="flex w-max animate-[marqueeL_38s_linear_infinite] hover:[animation-play-state:paused]">
+            {[...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
+              <div key={i} className="min-w-[280px] max-w-[280px] bg-cly-surface border border-cly-border rounded-xl p-4 mr-3 shrink-0 hover:border-cly-border-strong transition-colors">
+                <div className="text-cly-brand text-[11px] mb-2.5 tracking-wide">★★★★★</div>
+                <p className="text-[13px] text-cly-text leading-relaxed mb-3.5">&quot;{t.quote}&quot;</p>
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-7 h-7 rounded-full ${t.color} text-white grid place-items-center font-bold text-[11px] shrink-0`}>{t.name[0]}</div>
+                  <div>
+                    <div className="text-[12px] font-semibold">{t.name}</div>
+                    <div className="text-[11px] text-cly-text-2">{t.role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Row 2 — reverse */}
+          <div className="flex w-max animate-[marqueeR_44s_linear_infinite] hover:[animation-play-state:paused]">
+            {[...TESTIMONIALS.slice(3), ...TESTIMONIALS.slice(0, 3), ...TESTIMONIALS.slice(3), ...TESTIMONIALS.slice(0, 3)].map((t, i) => (
+              <div key={i} className="min-w-[280px] max-w-[280px] bg-cly-surface border border-cly-border rounded-xl p-4 mr-3 shrink-0 hover:border-cly-border-strong transition-colors">
+                <div className="text-cly-brand text-[11px] mb-2.5 tracking-wide">★★★★★</div>
+                <p className="text-[13px] text-cly-text leading-relaxed mb-3.5">&quot;{t.quote}&quot;</p>
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-7 h-7 rounded-full ${t.color} text-white grid place-items-center font-bold text-[11px] shrink-0`}>{t.name[0]}</div>
+                  <div>
+                    <div className="text-[12px] font-semibold">{t.name}</div>
+                    <div className="text-[11px] text-cly-text-2">{t.role}</div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="lp-footer">
-        <div className="lp-ft-top">
-          <div>
-            <Link href="/" className="lp-ft-brand">
-              <div className="lp-ftmark">C</div>
-              Creatorlytics
-            </Link>
-            <p className="lp-ft-tagline">Analytics dashboard untuk kreator Indonesia. Gratis selamanya.</p>
-            <div className="lp-ft-stat">2,400+ kreator aktif</div>
+      {/* ─── FEATURES ─── */}
+      <section className="py-20 md:py-24 px-5 md:px-8 lg:px-[max(20px,calc((100%-1100px)/2))] border-t border-cly-border" id="features">
+        <p className="font-mono text-[11px] uppercase tracking-[.12em] text-cly-brand mb-3.5">Fitur Lengkap</p>
+        <h2 className="text-[clamp(26px,3.8vw,42px)] font-bold leading-[1.1] tracking-[-0.025em] mb-2.5">Semua yang kamu butuhkan,<br />dalam satu tempat.</h2>
+        <p className="text-[15px] text-cly-text-2 leading-relaxed">Tidak perlu lagi bolak-balik antar app. Creatorlytics punya semuanya.</p>
+
+        <div className="mt-11 flex flex-col">
+          {FEATURES.map((f, i) => (
+            <div key={i} className="grid grid-cols-[48px_1fr_auto] gap-5 items-start py-5 border-b border-cly-border first:border-t">
+              <div className="font-mono text-[11px] text-cly-text-3 pt-0.5">{String(i + 1).padStart(2, '0')}</div>
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <f.icon size={16} className="text-cly-brand" />
+                  <span className="font-semibold text-[16px] tracking-tight">{f.title}</span>
+                </div>
+                <div className="text-[14px] text-cly-text-2 leading-relaxed">{f.desc}</div>
+              </div>
+              <span className={`text-[10px] px-2.5 py-1 rounded-md font-semibold whitespace-nowrap self-center ${f.tagColor}`}>{f.tag}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── HOW IT WORKS ─── */}
+      <section className="py-20 md:py-24 px-5 md:px-8 lg:px-[max(20px,calc((100%-1100px)/2))] border-t border-cly-border" id="how">
+        <p className="font-mono text-[11px] uppercase tracking-[.12em] text-cly-brand mb-3.5">Cara Kerja</p>
+        <h2 className="text-[clamp(26px,3.8vw,42px)] font-bold leading-[1.1] tracking-[-0.025em] mb-2.5">Setup kurang dari 2 menit.</h2>
+        <p className="text-[15px] text-cly-text-2 leading-relaxed">Tiga langkah simpel, langsung bisa pakai.</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-11">
+          {STEPS.map((step, i) => (
+            <div key={i} className="relative">
+              <div className="font-mono text-[11px] text-cly-brand tracking-wider mb-3.5">STEP {step.num}</div>
+              <div className="font-bold text-[18px] mb-2 tracking-tight">{step.title}</div>
+              <div className="text-[14px] text-cly-text-2 leading-[1.7]">{step.desc}</div>
+              {i < STEPS.length - 1 && (
+                <div className="hidden md:block absolute right-0 top-1 text-[15px] text-cly-text-3">→</div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── CTA ─── */}
+      <section className="py-20 md:py-24 px-5 md:px-8 lg:px-[max(20px,calc((100%-1100px)/2))] border-t border-cly-border grid md:grid-cols-[1fr_auto] gap-14 items-center">
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[.12em] text-cly-brand mb-4">Mulai Sekarang</p>
+          <h2 className="text-[clamp(28px,3.8vw,44px)] font-bold tracking-[-0.025em] leading-[1.1] mb-3.5">
+            Saatnya <em className="not-italic text-cly-brand">grow</em> dengan<br />data, bukan feeling.
+          </h2>
+          <p className="text-[15px] text-cly-text-2 leading-[1.72] max-w-[480px]">Join ribuan kreator Indonesia yang udah pakai Creatorlytics. Gratis selamanya, tanpa kartu kredit, tanpa batas waktu.</p>
+        </div>
+        <div className="flex flex-col items-start md:items-end gap-3">
+          <button onClick={handleLogin} disabled={authLoading} className="inline-flex items-center gap-2 h-12 px-6 bg-cly-brand text-white border-none rounded-[10px] font-bold text-[15px] cursor-pointer tracking-tight hover:bg-cly-brand-hover transition-all hover:-translate-y-0.5 whitespace-nowrap shadow-cly">
+            <GoogleIcon />
+            {authLoading ? 'Memuat...' : 'Mulai Gratis dengan Google'}
+          </button>
+          <div className="font-mono text-[11px] text-cly-text-3 leading-[1.7] md:text-right">Tidak perlu kartu kredit<br />Setup kurang dari 2 menit</div>
+        </div>
+      </section>
+
+      {/* ─── FAQ ─── */}
+      <section className="py-20 md:py-24 px-5 md:px-8 lg:px-[max(20px,calc((100%-1100px)/2))] border-t border-cly-border" id="faq">
+        <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-16">
+          <div className="md:sticky md:top-20 md:self-start">
+            <span className="font-mono text-[11px] uppercase tracking-[.12em] text-cly-brand block mb-4">FAQ</span>
+            <h2 className="font-bold text-[24px] tracking-tight leading-[1.2] mb-3">Pertanyaan<br />yang sering muncul.</h2>
+            <p className="text-[13px] text-cly-text-2 leading-[1.7]">Kalau belum terjawab, reach out ke tim kami kapan aja.</p>
           </div>
           <div>
-            <div className="lp-ft-ch">Produk</div>
-            <a href="#showcase" className="lp-ft-a">Dashboard</a>
-            <a href="#features" className="lp-ft-a">Fitur</a>
-            <a href="#how" className="lp-ft-a">Cara Kerja</a>
-            <a href="#faq" className="lp-ft-a">FAQ</a>
-          </div>
-          <div>
-            <div className="lp-ft-ch">Kreator</div>
-            <a href="#" className="lp-ft-a">Blog</a>
-            <a href="#" className="lp-ft-a">Panduan</a>
-            <a href="#" className="lp-ft-a">Changelog</a>
-            <a href="#" className="lp-ft-a">Status</a>
-          </div>
-          <div>
-            <div className="lp-ft-ch">Legal</div>
-            <a href="#" className="lp-ft-a">Privacy Policy</a>
-            <a href="#" className="lp-ft-a">Terms of Service</a>
-            <a href="#" className="lp-ft-a">Hubungi Kami</a>
+            {FAQS.map((faq, i) => (
+              <div key={i} className="border-b border-cly-border">
+                <button className="flex items-start justify-between gap-5 py-5 w-full text-left bg-transparent border-none cursor-pointer text-[15px] font-semibold text-cly-text hover:text-cly-brand transition-colors" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+                  <span>{faq.q}</span>
+                  <div className={`w-[26px] h-[26px] border border-cly-border rounded-md grid place-items-center shrink-0 transition-all ${openFaq === i ? 'bg-cly-brand-tint border-cly-brand/30 text-cly-brand rotate-45' : 'text-cly-text-3'}`}>
+                    <ChevronDown size={14} className={`transition-transform ${openFaq === i ? 'rotate-[135deg]' : ''}`} />
+                  </div>
+                </button>
+                <div className={`overflow-hidden transition-all duration-300 ${openFaq === i ? 'max-h-[220px]' : 'max-h-0'}`}>
+                  <div className="text-[14px] text-cly-text-2 leading-[1.78] pb-5">{faq.a}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="lp-ft-btm">
-          <div className="lp-ft-copy">© 2024 Creatorlytics. All rights reserved.</div>
-          <div className="lp-ft-love">Dibuat dengan <em>♥</em> di Indonesia</div>
+      </section>
+
+      {/* ─── FOOTER ─── */}
+      <footer className="border-t border-cly-border pt-14 pb-8 px-5 md:px-8 lg:px-[max(20px,calc((100%-1100px)/2))]">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-14">
+          <div className="col-span-2 md:col-span-1">
+            <Link href="/" className="flex items-center gap-2 text-cly-text font-bold text-[15px] tracking-tight no-underline mb-3">
+              <div className="w-[26px] h-[26px] bg-cly-brand rounded-md grid place-items-center text-white font-extrabold text-[11px]">C</div>
+              Creatorlytics
+            </Link>
+            <p className="text-[13px] text-cly-text-2 leading-relaxed mb-3">Analytics dashboard untuk kreator Indonesia. Gratis selamanya.</p>
+            <div className="font-mono text-[11px] text-cly-brand font-medium">2,400+ kreator aktif</div>
+          </div>
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-cly-text-3 mb-4">Produk</div>
+            <a href="#showcase" className="block text-[13px] text-cly-text-2 mb-2.5 hover:text-cly-text transition-colors no-underline">Dashboard</a>
+            <a href="#features" className="block text-[13px] text-cly-text-2 mb-2.5 hover:text-cly-text transition-colors no-underline">Fitur</a>
+            <a href="#how" className="block text-[13px] text-cly-text-2 mb-2.5 hover:text-cly-text transition-colors no-underline">Cara Kerja</a>
+            <a href="#faq" className="block text-[13px] text-cly-text-2 mb-2.5 hover:text-cly-text transition-colors no-underline">FAQ</a>
+          </div>
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-cly-text-3 mb-4">Kreator</div>
+            <a href="#" className="block text-[13px] text-cly-text-2 mb-2.5 hover:text-cly-text transition-colors no-underline">Blog</a>
+            <a href="#" className="block text-[13px] text-cly-text-2 mb-2.5 hover:text-cly-text transition-colors no-underline">Panduan</a>
+            <a href="#" className="block text-[13px] text-cly-text-2 mb-2.5 hover:text-cly-text transition-colors no-underline">Changelog</a>
+          </div>
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-wider text-cly-text-3 mb-4">Legal</div>
+            <Link href="/legal/privacy" className="block text-[13px] text-cly-text-2 mb-2.5 hover:text-cly-text transition-colors no-underline">Privacy Policy</Link>
+            <Link href="/legal/terms" className="block text-[13px] text-cly-text-2 mb-2.5 hover:text-cly-text transition-colors no-underline">Terms of Service</Link>
+          </div>
+        </div>
+        <div className="flex flex-col md:flex-row justify-between items-center pt-6 border-t border-cly-border gap-3">
+          <div className="text-[12px] text-cly-text-3">© {new Date().getFullYear()} Creatorlytics. All rights reserved.</div>
+          <div className="text-[12px] text-cly-text-3">Dibuat dengan <em className="not-italic text-cly-brand">♥</em> di Indonesia</div>
         </div>
       </footer>
     </div>

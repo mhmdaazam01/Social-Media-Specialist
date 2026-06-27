@@ -117,23 +117,28 @@ export function CSVImport({ onImport }: CSVImportProps) {
           return;
         }
 
+        const safeNum = (val: string | undefined) => {
+          const num = Number(val);
+          return isNaN(num) || num < 0 ? 0 : num;
+        };
+
         const posts = rows.map(row => ({
           account: row.akun || '',
           platform: row.platform || '',
           date: row.tanggal || '',
           name: row.nama || '',
-          reach: Number(row.reach) || 0,
-          impression: Number(row.impression) || 0,
-          like: Number(row.like) || 0,
-          comment: Number(row.comment) || 0,
-          share: Number(row.share) || 0,
-          save: Number(row.save) || 0,
-          repost: Number(row.repost) || 0,
-          followers_gained: Number(row.followers_gained) || 0,
+          reach: safeNum(row.reach),
+          impression: safeNum(row.impression),
+          like: safeNum(row.like),
+          comment: safeNum(row.comment),
+          share: safeNum(row.share),
+          save: safeNum(row.save),
+          repost: safeNum(row.repost),
+          followers_gained: safeNum(row.followers_gained),
           profile_visit: 0,
           pillar: row.pillar || '',
           format: row.format || '',
-          caption_len: Number(row.caption_len) || 0,
+          caption_len: safeNum(row.caption_len),
           link: row.link || '',
         }));
 

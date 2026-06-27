@@ -6,6 +6,7 @@ import { SectionTitle, PlatformBadge } from '@/components/cly';
 import { ReportExport } from '@/components/report/ReportExport';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { useUser } from '@/lib/hooks/useUser';
+import { useAccounts } from '@/lib/hooks/useAccounts';
 import { calcTotalER, fmt, fmtPercent, aggregateByPlatform } from '@/lib/utils/analytics';
 import { formatMonth } from '@/lib/utils/formatting';
 import { FileText, Printer } from 'lucide-react';
@@ -13,20 +14,40 @@ import { FileText, Printer } from 'lucide-react';
 export default function ReportPage() {
   const { posts, loading } = usePosts();
   const { profile } = useUser();
+  const { accounts } = useAccounts();
   const erMode = profile?.er_mode || 'impression';
   const [activeTab, setActiveTab] = useState<'overview' | 'appendix'>('overview');
 
-  const totalPosts = posts.length;
-  const totalReach = posts.reduce((s, p) => s + p.reach, 0);
-  const totalFollowersGained = posts.reduce((s, p) => s + p.followers_gained, 0);
-  const avgER = totalPosts > 0 ? calcTotalER(posts, erMode) : 0;
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [selectedAccount, setSelectedAccount] = useState<string>('all');
 
-  const platformData = useMemo(() => aggregateByPlatform(posts, erMode), [posts, erMode]);
-  const topPosts = useMemo(() => [...posts].sort((a, b) => b.reach - a.reach).slice(0, 5), [posts]);
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    for (const p of posts) {
+      if (p.date) months.add(p.date.substring(0, 7));
+    }
+    return Array.from(months).sort((a, b) => b.localeCompare(a));
+  }, [posts]);
+
+  const filteredPosts = useMemo(() => {
+    return posts.filter(p => {
+      const matchMonth = selectedMonth === 'all' || (p.date && p.date.substring(0, 7) === selectedMonth);
+      const matchAccount = selectedAccount === 'all' || p.account === selectedAccount;
+      return matchMonth && matchAccount;
+    });
+  }, [posts, selectedMonth, selectedAccount]);
+
+  const totalPosts = filteredPosts.length;
+  const totalReach = filteredPosts.reduce((s, p) => s + p.reach, 0);
+  const totalFollowersGained = filteredPosts.reduce((s, p) => s + p.followers_gained, 0);
+  const avgER = totalPosts > 0 ? calcTotalER(filteredPosts, erMode) : 0;
+
+  const platformData = useMemo(() => aggregateByPlatform(filteredPosts, erMode), [filteredPosts, erMode]);
+  const topPosts = useMemo(() => [...filteredPosts].sort((a, b) => b.reach - a.reach).slice(0, 5), [filteredPosts]);
 
   const monthlyData = useMemo(() => {
     const grouped: Record<string, { posts: number; reach: number; followers: number }> = {};
-    for (const p of posts) {
+    for (const p of filteredPosts) {
       if (!p.date) continue;
       const month = p.date.substring(0, 7);
       if (!grouped[month]) grouped[month] = { posts: 0, reach: 0, followers: 0 };
@@ -35,7 +56,7 @@ export default function ReportPage() {
       grouped[month].followers += p.followers_gained;
     }
     return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
-  }, [posts]);
+  }, [filteredPosts]);
 
   if (loading) {
     return (
@@ -50,6 +71,30 @@ export default function ReportPage() {
   return (
     <AppShell title="Report">
       <div className="flex flex-col gap-[18px]">
+        {/* Filters */}
+        <div className="flex gap-2 flex-wrap print:hidden">
+          <select 
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="h-[34px] px-[13px] rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 text-cly-sm font-semibold outline-none cursor-pointer"
+          >
+            <option value="all">Semua Bulan</option>
+            {availableMonths.map(m => (
+              <option key={m} value={m}>{formatMonth(m)}</option>
+            ))}
+          </select>
+          <select 
+            value={selectedAccount}
+            onChange={(e) => setSelectedAccount(e.target.value)}
+            className="h-[34px] px-[13px] rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 text-cly-sm font-semibold outline-none cursor-pointer"
+          >
+            <option value="all">Semua Akun</option>
+            {accounts.map(a => (
+              <option key={a.id} value={a.name}>{a.name}</option>
+            ))}
+          </select>
+        </div>
+
         {/* Tabs + Actions */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           {/* Tabs */}
@@ -85,11 +130,11 @@ export default function ReportPage() {
               <Printer size={14} />
               Print PDF
             </button>
-            <ReportExport posts={posts} />
+            <ReportExport posts={filteredPosts} />
           </div>
         </div>
 
-        {posts.length === 0 ? (
+        {filteredPosts.length === 0 ? (
           <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-20 flex flex-col items-center justify-center text-center">
             <FileText className="size-12 text-cly-text-3 mb-4" />
             <p className="text-cly-md text-cly-text-2 mb-1">Belum ada data konten</p>

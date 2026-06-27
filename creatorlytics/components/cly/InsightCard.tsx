@@ -5,9 +5,10 @@ interface InsightCardProps {
   title: string;
   text: string;
   tone?: 'green' | 'blue' | 'amber' | 'red' | 'purple';
+  loading?: boolean;
 }
 
-export function InsightCard({ icon: Icon, title, text, tone = 'green' }: InsightCardProps) {
+export function InsightCard({ icon: Icon, title, text, tone = 'green', loading }: InsightCardProps) {
   const toneStyles = {
     green: { color: 'text-cly-green', bg: 'bg-cly-green-tint' },
     blue: { color: 'text-cly-blue', bg: 'bg-cly-blue-tint' },
@@ -17,6 +18,10 @@ export function InsightCard({ icon: Icon, title, text, tone = 'green' }: Insight
   };
 
   const style = toneStyles[tone];
+
+  if (loading) {
+    return <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-3.5 h-[90px] animate-pulse" />;
+  }
 
   return (
     <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-3.5 flex gap-3 items-start">

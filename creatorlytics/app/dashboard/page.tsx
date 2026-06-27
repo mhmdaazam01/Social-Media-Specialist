@@ -1,20 +1,18 @@
 'use client';
 
 import { useMemo } from 'react';
-import dynamic from 'next/dynamic';
 import { AppShell } from '@/components/layout/AppShell';
 import { MetricCard, InsightCard, SectionTitle, Badge } from '@/components/cly';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { useGoals } from '@/lib/hooks/useGoals';
 import { useUser } from '@/lib/hooks/useUser';
-import { calcTotalER, fmt, aggregateByMonth } from '@/lib/utils/analytics';
-import { currentMonth, currentYear } from '@/lib/utils/formatting';
+import { calcTotalER, fmt, aggregateByMonth, isPostInMonth } from '@/lib/utils/analytics';
 import {
   Eye, TrendingUp, BookOpen, Target,
-  ArrowUpRight, AlertTriangle, CheckCircle2, Clock, Download,
+  ArrowUpRight, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 
 export default function DashboardPage() {
@@ -24,39 +22,27 @@ export default function DashboardPage() {
   const erMode = profile?.er_mode || 'impression';
   const loading = postsLoading || goalsLoading;
 
-  const now = new Date();
-  const thisMonth = currentMonth();
-  const thisYear = currentYear();
+  const now = useMemo(() => new Date(), []);
+  const thisMonth = now.getMonth() + 1;
+  const thisYear = now.getFullYear();
 
   const metrics = useMemo(() => {
     const totalPosts = posts.length;
     const totalReach = posts.reduce((s, p) => s + p.reach, 0);
     const avgER = posts.length > 0 ? calcTotalER(posts, erMode) : 0;
 
-    // Posts this month — use p.date instead of created_at
-    const activePosts = posts.filter(p => {
-      if (!p.date) return false;
-      const [y, m] = p.date.split('-');
-      return parseInt(y) === thisYear && parseInt(m) === thisMonth;
-    }).length;
+    // Posts this month
+    const activePosts = posts.filter(p => isPostInMonth(p, thisYear, thisMonth)).length;
 
     // Previous month reach for delta
     const prevMonth = thisMonth === 1 ? 12 : thisMonth - 1;
     const prevYear = thisMonth === 1 ? thisYear - 1 : thisYear;
     const prevReach = posts
-      .filter(p => {
-        if (!p.date) return false;
-        const [y, m] = p.date.split('-');
-        return parseInt(y) === prevYear && parseInt(m) === prevMonth;
-      })
+      .filter(p => isPostInMonth(p, prevYear, prevMonth))
       .reduce((s, p) => s + p.reach, 0);
 
     const thisMonthReach = posts
-      .filter(p => {
-        if (!p.date) return false;
-        const [y, m] = p.date.split('-');
-        return parseInt(y) === thisYear && parseInt(m) === thisMonth;
-      })
+      .filter(p => isPostInMonth(p, thisYear, thisMonth))
       .reduce((s, p) => s + p.reach, 0);
 
     const reachDelta = prevReach > 0
@@ -66,12 +52,10 @@ export default function DashboardPage() {
     // Goal confidence — % of active goals on track
     const activeGoals = goals.filter(g => g.month === thisMonth && g.year === thisYear);
     const onTrackGoals = activeGoals.filter(g => {
-      const relevant = posts.filter(p => {
-        if (!p.date) return false;
-        const [py, pm] = p.date.split('-');
-        return parseInt(py) === g.year && parseInt(pm) === g.month
-          && (g.platform === 'all' || p.platform === g.platform);
-      });
+      const relevant = posts.filter(p => 
+        isPostInMonth(p, g.year, g.month) && 
+        (g.platform === 'all' || p.platform === g.platform)
+      );
       let actual = 0;
       if (g.metric === 'reach') actual = relevant.reduce((s, p) => s + p.reach, 0);
       else if (g.metric === 'followers') actual = relevant.reduce((s, p) => s + p.followers_gained, 0);
@@ -121,19 +105,6 @@ export default function DashboardPage() {
       .sort((a, b) => b.avgER - a.avgER)[0] ?? null;
   }, [posts]);
 
-  if (loading) {
-    return (
-      <AppShell title="Dashboard">
-        <div className="flex flex-col gap-[18px]">
-          <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-3.5 min-h-[120px] animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </AppShell>
-    );
-  }
 
   const { totalReach, avgER, activePosts, reachDelta, goalConfidence } = metrics;
 
@@ -163,6 +134,7 @@ export default function DashboardPage() {
             icon={Eye}
             tone="green"
             caption="Dari semua postingan"
+            loading={loading}
           />
           <MetricCard
             label="Rata-rata ER"
@@ -170,20 +142,22 @@ export default function DashboardPage() {
             icon={TrendingUp}
             tone="blue"
             caption={`Mode: ${erMode}`}
+            loading={loading}
           />
           <MetricCard
             label="Post bulan ini"
             value={activePosts.toString()}
             icon={BookOpen}
             tone="amber"
-            caption={now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+            loading={loading}
           />
           <MetricCard
-            label="Goal confidence"
-            value={goalConfidence !== null ? `${goalConfidence}%` : '—'}
+            label="Goal tercapai"
+            value={goalConfidence !== null ? `${goalConfidence}%` : 'N/A'}
             icon={Target}
-            tone={goalConfidence !== null && goalConfidence >= 70 ? 'green' : 'amber'}
-            caption={goalConfidence !== null ? 'Goal bulan ini on-track' : 'Belum ada goal aktif'}
+            tone="green"
+            caption={goalConfidence !== null ? "On track bulan ini" : "Belum ada goal"}
+            loading={loading}
           />
         </div>
 
@@ -202,45 +176,73 @@ export default function DashboardPage() {
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} />
-                  <YAxis tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => fmt(v)} />
+                <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorReach" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--color-cly-brand)" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="var(--color-cly-brand)" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => fmt(v)} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
                     formatter={(v) => [fmt(Number(v)), 'Reach']}
                   />
-                  <Bar dataKey="reach" fill="var(--color-cly-brand)" radius={[4, 4, 0, 0]} />
-                </BarChart>
+                  <Area type="monotone" dataKey="reach" stroke="var(--color-cly-brand)" fillOpacity={1} fill="url(#colorReach)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-brand)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                </AreaChart>
               </ResponsiveContainer>
             )}
 
             {/* Insight cards */}
             <div className="grid gap-2.5 sm:grid-cols-3 mt-3">
-              <InsightCard
-                icon={ArrowUpRight}
-                title="Post terbaik"
-                text={bestPost
-                  ? `"${bestPost.name || 'Untitled'}" — ${fmt(bestPost.reach)} reach. Repurpose ke platform lain.`
-                  : 'Tambahkan post untuk melihat insight.'}
-                tone="green"
-              />
-              <InsightCard
-                icon={AlertTriangle}
-                title="Perhatian"
-                text={avgER < 2
-                  ? 'ER di bawah 2% — coba variasikan format konten untuk meningkatkan interaksi.'
-                  : 'ER dalam kondisi baik. Pertahankan konsistensi posting.'}
-                tone="amber"
-              />
-              <InsightCard
-                icon={CheckCircle2}
-                title="Next step"
-                text={topPlatformData
-                  ? `${topPlatformData.platform} punya ER tertinggi (${topPlatformData.avgER.toFixed(1)}%). Perbanyak konten di platform ini.`
-                  : 'Tambahkan lebih banyak post untuk melihat rekomendasi platform.'}
-                tone="blue"
-              />
+              {loading ? (
+                <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-3.5 h-[90px] animate-pulse" />
+              ) : topPlatformData ? (
+                <InsightCard
+                  icon={TrendingUp}
+                  title={`Platform Terbaik: ${topPlatformData.platform}`}
+                  text={`Rata-rata ER tertinggi sebesar ${topPlatformData.avgER.toFixed(1)}%.`}
+                  tone="green"
+                />
+              ) : (
+                <InsightCard
+                  icon={AlertTriangle}
+                  title="Data tidak cukup"
+                  text="Tambahkan post untuk melihat insight platform."
+                  tone="amber"
+                />
+              )}
+
+              {loading ? (
+                <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-3.5 h-[90px] animate-pulse" />
+              ) : bestPost ? (
+                <InsightCard
+                  icon={CheckCircle2}
+                  title="Postingan Jawara"
+                  text={`"${bestPost.name}" mencapai ${fmt(bestPost.reach)} orang.`}
+                  tone="blue"
+                />
+              ) : (
+                <InsightCard
+                  icon={BookOpen}
+                  title="Belum ada jawara"
+                  text="Mulai posting konten pertama Anda!"
+                  tone="amber"
+                />
+              )}
+
+              {loading ? (
+                <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-3.5 h-[90px] animate-pulse" />
+              ) : (
+                <InsightCard
+                  icon={ArrowUpRight}
+                  title="Next step"
+                  text="Perbanyak konten yang mirip dengan postingan terbaik Anda."
+                  tone="blue"
+                />
+              )}
             </div>
           </div>
 
@@ -251,7 +253,19 @@ export default function DashboardPage() {
             <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
               <SectionTitle title="Top konten" note="5 post dengan reach tertinggi." />
               <div className="space-y-0">
-                {posts.length === 0 ? (
+                {loading ? (
+                  <div className="space-y-3 py-2">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="flex gap-2.5 items-center">
+                        <div className="w-4 h-4 rounded bg-cly-border/50 animate-pulse" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-3 w-3/4 bg-cly-border/50 rounded animate-pulse" />
+                          <div className="h-2 w-1/2 bg-cly-border/50 rounded animate-pulse" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : posts.length === 0 ? (
                   <p className="text-cly-sm text-cly-text-3 py-4 text-center">Belum ada post.</p>
                 ) : (
                   [...posts]
@@ -274,7 +288,19 @@ export default function DashboardPage() {
             {/* Active goals */}
             <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
               <SectionTitle title="Goals aktif" note={`Bulan ${now.toLocaleDateString('id-ID', { month: 'long' })}`} />
-              {goals.filter(g => g.month === thisMonth && g.year === thisYear).length === 0 ? (
+              {loading ? (
+                <div className="space-y-4 py-2">
+                  {[1, 2].map(i => (
+                    <div key={i} className="space-y-2">
+                      <div className="flex justify-between">
+                        <div className="h-3 w-1/3 bg-cly-border/50 rounded animate-pulse" />
+                        <div className="h-3 w-8 bg-cly-border/50 rounded animate-pulse" />
+                      </div>
+                      <div className="h-2 w-full bg-cly-border/50 rounded-full animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              ) : goals.filter(g => g.month === thisMonth && g.year === thisYear).length === 0 ? (
                 <p className="text-cly-sm text-cly-text-3 py-4 text-center">Belum ada goal bulan ini.</p>
               ) : (
                 <div className="space-y-3">
@@ -282,12 +308,10 @@ export default function DashboardPage() {
                     .filter(g => g.month === thisMonth && g.year === thisYear)
                     .slice(0, 3)
                     .map(goal => {
-                      const relevant = posts.filter(p => {
-                        if (!p.date) return false;
-                        const [py, pm] = p.date.split('-');
-                        return parseInt(py) === goal.year && parseInt(pm) === goal.month
-                          && (goal.platform === 'all' || p.platform === goal.platform);
-                      });
+                      const relevant = posts.filter(p => 
+                        isPostInMonth(p, goal.year, goal.month) && 
+                        (goal.platform === 'all' || p.platform === goal.platform)
+                      );
                       let actual = 0;
                       if (goal.metric === 'reach') actual = relevant.reduce((s, p) => s + p.reach, 0);
                       else if (goal.metric === 'followers') actual = relevant.reduce((s, p) => s + p.followers_gained, 0);

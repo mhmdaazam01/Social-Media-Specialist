@@ -58,13 +58,16 @@ export default function CalendarPage() {
     return conflictDates;
   }, [calendarDays]);
 
-  // Agenda list (upcoming events sorted by date)
+  // Agenda list: upcoming first, then past events
   const agenda = useMemo(() => {
     const todayStr = today();
-    return events
+    const upcoming = events
       .filter(e => e.scheduled_date >= todayStr)
-      .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date))
-      .slice(0, 10);
+      .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
+    const past = events
+      .filter(e => e.scheduled_date < todayStr)
+      .sort((a, b) => b.scheduled_date.localeCompare(a.scheduled_date));
+    return [...upcoming, ...past].slice(0, 20);
   }, [events]);
 
   function handleDateClick(dateStr: string) {
@@ -222,41 +225,95 @@ export default function CalendarPage() {
 
           {/* Agenda Sidebar */}
           <div className="rounded-[10px] bg-cly-surface p-[18px] shadow-cly">
-            <h3 className="mb-4 text-cly-base font-semibold text-cly-text">Agenda Mendatang</h3>
+            <h3 className="mb-4 text-cly-base font-semibold text-cly-text">Semua Event</h3>
             {agenda.length === 0 ? (
               <p className="text-cly-sm text-cly-text-muted">Tidak ada event yang dijadwalkan</p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {agenda.map(evt => {
-                  const dateObj = new Date(evt.scheduled_date + 'T00:00:00');
-                  const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-                  return (
-                    <button
-                      key={evt.id}
-                      onClick={() => handleEventClick(evt)}
-                      className="flex flex-col gap-1.5 rounded-lg border border-cly-border bg-cly-muted p-3 text-left transition-all hover:border-cly-brand hover:shadow-cly"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-cly-sm font-medium text-cly-text">{evt.title}</span>
-                        <PlatformBadge platform={evt.platform} />
-                      </div>
+            ) : (() => {
+              const todayStr = today();
+              const upcomingItems = agenda.filter(e => e.scheduled_date >= todayStr);
+              const pastItems = agenda.filter(e => e.scheduled_date < todayStr);
+              return (
+                <div className="flex flex-col gap-3">
+                  {/* Upcoming section */}
+                  {upcomingItems.length > 0 && (
+                    <div className="flex flex-col gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-cly-xs text-cly-text-muted">{dateStr}</span>
-                        {evt.scheduled_time && (
-                          <>
-                            <span className="text-cly-text-muted">·</span>
-                            <span className="text-cly-xs text-cly-text-muted">{evt.scheduled_time}</span>
-                          </>
-                        )}
+                        <span className="h-px flex-1 bg-cly-border" />
+                        <span className="text-cly-xs font-semibold uppercase tracking-wider text-cly-brand">Mendatang</span>
+                        <span className="h-px flex-1 bg-cly-border" />
                       </div>
-                      <Badge tone={evt.status === 'published' ? 'green' : evt.status === 'scheduled' ? 'blue' : 'neutral'}>
-                        {evt.status}
-                      </Badge>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+                      {upcomingItems.map(evt => {
+                        const dateObj = new Date(evt.scheduled_date + 'T00:00:00');
+                        const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                        return (
+                          <button
+                            key={evt.id}
+                            onClick={() => handleEventClick(evt)}
+                            className="flex flex-col gap-1.5 rounded-lg border border-cly-brand/30 bg-cly-brand-tint p-3 text-left transition-all hover:border-cly-brand hover:shadow-cly"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-cly-sm font-semibold text-cly-text">{evt.title}</span>
+                              <PlatformBadge platform={evt.platform} />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-cly-xs text-cly-brand">{dateStr}</span>
+                              {evt.scheduled_time && (
+                                <>
+                                  <span className="text-cly-brand/50">·</span>
+                                  <span className="text-cly-xs text-cly-brand">{evt.scheduled_time}</span>
+                                </>
+                              )}
+                            </div>
+                            <Badge tone={evt.status === 'published' ? 'green' : evt.status === 'scheduled' ? 'blue' : 'neutral'}>
+                              {evt.status}
+                            </Badge>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Past section */}
+                  {pastItems.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="h-px flex-1 bg-cly-border" />
+                        <span className="text-cly-xs font-semibold uppercase tracking-wider text-cly-text-muted">Lampau</span>
+                        <span className="h-px flex-1 bg-cly-border" />
+                      </div>
+                      {pastItems.map(evt => {
+                        const dateObj = new Date(evt.scheduled_date + 'T00:00:00');
+                        const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                        return (
+                          <button
+                            key={evt.id}
+                            onClick={() => handleEventClick(evt)}
+                            className="flex flex-col gap-1.5 rounded-lg border border-cly-border-strong bg-cly-muted-2 p-3 text-left transition-all hover:border-cly-brand hover:shadow-cly"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-cly-sm font-medium text-cly-text-2 line-through decoration-cly-text-muted">{evt.title}</span>
+                              <PlatformBadge platform={evt.platform} />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-cly-xs text-cly-text-muted">{dateStr}</span>
+                              {evt.scheduled_time && (
+                                <>
+                                  <span className="text-cly-text-muted">·</span>
+                                  <span className="text-cly-xs text-cly-text-muted">{evt.scheduled_time}</span>
+                                </>
+                              )}
+                            </div>
+                            <Badge tone={evt.status === 'published' ? 'green' : evt.status === 'scheduled' ? 'blue' : 'neutral'}>
+                              {evt.status}
+                            </Badge>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
 

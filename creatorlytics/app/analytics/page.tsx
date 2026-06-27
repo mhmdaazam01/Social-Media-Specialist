@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { SectionTitle, InsightCard, PlatformBadge } from '@/components/cly';
 import { usePosts } from '@/lib/hooks/usePosts';
@@ -8,12 +8,12 @@ import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { usePillars } from '@/lib/hooks/usePillars';
 import { useUser } from '@/lib/hooks/useUser';
 import {
-  aggregateByPlatform, aggregateByMonth, aggregateByPillar,
+  aggregateByMonth, aggregateByPlatform, aggregateByPillar, isPostInMonth,
   fmt, fmtPercent,
 } from '@/lib/utils/analytics';
 import { Filter, SlidersHorizontal, TrendingUp, BookOpen, AlertTriangle } from 'lucide-react';
 import {
-  ComposedChart, Bar, Line, XAxis, YAxis, Tooltip,
+  ComposedChart, Line, Area, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, RadialBarChart, RadialBar, Legend,
 } from 'recharts';
 
@@ -23,71 +23,89 @@ export default function AnalyticsPage() {
   const { profile } = useUser();
   const erMode = profile?.er_mode || 'impression';
 
+  const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
+  
+  const filteredPosts = useMemo(() => {
+    if (selectedPlatform === 'all') return posts;
+    return posts.filter(p => p.platform === selectedPlatform);
+  }, [posts, selectedPlatform]);
+
   const byPlatform = useMemo(() => aggregateByPlatform(posts, erMode), [posts, erMode]);
   const { pillars } = usePillars();
 
   const chartData = useMemo(() =>
-    aggregateByMonth(posts, erMode).slice(-8).map(m => ({
+    aggregateByMonth(filteredPosts, erMode).slice(-8).map(m => ({
       month: m.month.slice(5),
       reach: m.totalReach,
       er: parseFloat(m.avgER.toFixed(2)),
     })),
-    [posts, erMode]
+    [filteredPosts, erMode]
   );
 
   const pillarData = useMemo(() => {
-    const raw = aggregateByPillar(posts, erMode);
+    const raw = aggregateByPillar(filteredPosts, erMode);
     const COLORS = ['#2F6F45', '#2563A7', '#A15C07', '#B93B32', '#7C4D9D', '#13747C'];
     return raw.slice(0, 6).map((p, i) => {
       const pillar = pillars.find(pl => pl.pillar_id === p.pillar);
       return {
         name: pillar?.label ?? p.pillar,
         value: parseFloat(p.avgER.toFixed(2)),
-        fill: pillar?.color ? undefined : COLORS[i % COLORS.length],
+        fill: pillar?.color || COLORS[i % COLORS.length],
       };
     });
-  }, [posts, erMode, pillars]);
+  }, [filteredPosts, erMode, pillars]);
 
-  const totalReach = useMemo(
-    () => posts.reduce((s, p) => s + p.reach, 0),
-    [posts]
-  );
+
 
   const platformName = (id: string) => {
     const p = platforms.find((pl) => pl.platform_id === id);
     return p ? p.name : id;
   };
 
-  if (loading) {
-    return (
-      <AppShell title="Analytics">
-        <div className="flex flex-col gap-[18px]">
-          <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px] h-96 animate-pulse" />
-        </div>
-      </AppShell>
-    );
-  }
+
 
   // Calculate insights
   const topPlatform = byPlatform.length > 0
     ? byPlatform.reduce((best, curr) => (curr.avgER > best.avgER ? curr : best))
     : null;
+
+  const warningInsight = useMemo(() => {
+    if (loading) return "Mencari peringatan...";
+    if (byPlatform.length === 0) return "Belum ada cukup data.";
+    
+    const now = new Date();
+    const thisM = now.getMonth() + 1;
+    const thisY = now.getFullYear();
+    const prevM = thisM === 1 ? 12 : thisM - 1;
+    const prevY = thisM === 1 ? thisY - 1 : thisY;
+
+    for (const p of byPlatform) {
+      const thisReach = posts.filter(po => po.platform === p.platform && isPostInMonth(po, thisY, thisM)).reduce((s, po) => s + po.reach, 0);
+      const prevReach = posts.filter(po => po.platform === p.platform && isPostInMonth(po, prevY, prevM)).reduce((s, po) => s + po.reach, 0);
+      if (prevReach > 0 && thisReach < prevReach) {
+        return `Performa reach di ${platformName(p.platform)} menurun bulan ini. Evaluasi ulang jam tayang atau format.`;
+      }
+    }
+    return "Pertumbuhan reach positif di semua platform bulan ini. Pertahankan konsistensi!";
+  }, [byPlatform, posts, loading]);
   
-  const reachGrowth = totalReach > 0 ? 32 : 0;
+
 
   return (
     <AppShell title="Analytics">
       <div className="flex flex-col gap-[18px]">
         {/* Filter Buttons */}
         <div className="flex justify-end gap-2 flex-wrap">
-          <button className="inline-flex items-center justify-center gap-2 h-[34px] px-[13px] rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 text-cly-sm font-semibold hover:bg-cly-muted transition-colors">
-            <Filter size={14} />
-            All platforms
-          </button>
-          <button className="inline-flex items-center justify-center gap-2 h-[34px] px-[13px] rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 text-cly-sm font-semibold hover:bg-cly-muted transition-colors">
-            <SlidersHorizontal size={14} />
-            Compare last month
-          </button>
+          <select 
+            value={selectedPlatform}
+            onChange={(e) => setSelectedPlatform(e.target.value)}
+            className="h-[34px] px-[13px] rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 text-cly-sm font-semibold hover:bg-cly-muted transition-colors outline-none cursor-pointer"
+          >
+            <option value="all">All platforms</option>
+            {platforms.map(p => (
+              <option key={p.id} value={p.platform_id}>{p.name}</option>
+            ))}
+          </select>
         </div>
 
         {/* Two Column: Trend Chart + Pillar Score */}
@@ -98,23 +116,31 @@ export default function AnalyticsPage() {
               title="Reach dan tren engagement"
               note="Bar = total reach, garis = rata-rata ER per bulan."
             />
-            {chartData.length === 0 ? (
+            {loading ? (
+              <div className="w-full h-80 bg-cly-border/20 rounded animate-pulse" />
+            ) : chartData.length === 0 ? (
               <div className="h-[280px] bg-cly-muted rounded-lg flex items-center justify-center">
                 <p className="text-cly-sm text-cly-text-3">Belum ada data — tambahkan post untuk melihat tren.</p>
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
-                <ComposedChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} />
-                  <YAxis yAxisId="left" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => fmt(v)} />
-                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => `${v}%`} />
+                <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorReachComposed" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--color-cly-brand)" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="var(--color-cly-brand)" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => fmt(v)} axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => `${v}%`} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
                     formatter={(v, name) => [name === 'reach' ? fmt(Number(v)) : `${v}%`, name === 'reach' ? 'Reach' : 'Avg ER']}
                   />
-                  <Bar yAxisId="left" dataKey="reach" fill="var(--color-cly-brand)" radius={[4, 4, 0, 0]} />
-                  <Line yAxisId="right" type="monotone" dataKey="er" stroke="var(--color-cly-amber)" strokeWidth={2} dot={false} />
+                  <Area yAxisId="left" type="monotone" dataKey="reach" stroke="var(--color-cly-brand)" fillOpacity={1} fill="url(#colorReachComposed)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-brand)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                  <Line yAxisId="right" type="monotone" dataKey="er" stroke="var(--color-cly-amber)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-amber)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
                 </ComposedChart>
               </ResponsiveContainer>
             )}
@@ -123,10 +149,12 @@ export default function AnalyticsPage() {
           {/* Pillar Score Card */}
           <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
             <SectionTitle
-              title="Pillar score"
-              note="Rata-rata ER per pilar konten."
+              title="Performa Pilar"
+              note={`Berdasarkan ER (${erMode})`}
             />
-            {pillarData.length === 0 ? (
+            {loading ? (
+              <div className="w-full h-56 bg-cly-border/20 rounded animate-pulse" />
+            ) : pillarData.length === 0 ? (
               <div className="h-[280px] bg-cly-muted rounded-lg flex items-center justify-center">
                 <p className="text-cly-sm text-cly-text-3">Belum ada data pilar.</p>
               </div>
@@ -160,21 +188,36 @@ export default function AnalyticsPage() {
           <div className="grid gap-3.5 sm:grid-cols-3">
             <InsightCard
               icon={TrendingUp}
-              title="Reach momentum"
-              text={`Reach grew ${reachGrowth}% month over month, mostly from recent high-performing content.`}
+              title="Saran AI"
+              text={
+                loading
+                  ? "Memproses insight..."
+                  : topPlatform 
+                    ? `Tingkatkan post di ${topPlatform.platform}, ER-nya tertinggi (${fmtPercent(topPlatform.avgER)}).`
+                    : "Tambahkan data untuk insight performa platform."
+              }
               tone="green"
+              loading={loading}
             />
             <InsightCard
               icon={BookOpen}
-              title="Content pattern"
-              text="Consistent posting schedule correlates with higher engagement and reach across platforms."
+              title="Pilar Populer"
+              text={
+                loading
+                  ? "Menganalisis pilar..."
+                  : pillarData.length > 0
+                    ? `Konten "${pillarData[0].name}" paling interaktif. Kembangkan sub-topiknya.`
+                    : "Tambahkan pilar konten di post."
+              }
               tone="blue"
+              loading={loading}
             />
             <InsightCard
               icon={AlertTriangle}
-              title="Opportunity"
-              text={topPlatform ? `${platformName(topPlatform.platform)} shows strong ER but could benefit from increased frequency.` : 'Add more content to identify patterns.'}
+              title="Perlu Perhatian"
+              text={warningInsight}
               tone="amber"
+              loading={loading}
             />
           </div>
         </div>
@@ -183,37 +226,33 @@ export default function AnalyticsPage() {
         <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[10px_18px]">
           <div className="pt-2.5">
             <SectionTitle
-              title="Platform breakdown"
-              note="Posts, reach, engagement, and growth side by side."
+              title="Rincian per platform"
+              note="Data komprehensif performa platform"
             />
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+          <div className="overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 md:mx-0 md:px-0">
+            <table className="w-full text-left border-collapse min-w-[500px]">
               <thead>
                 <tr className="border-b border-cly-border">
-                  <th className="text-left text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">
-                    Platform
-                  </th>
-                  <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">
-                    Posts
-                  </th>
-                  <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">
-                    Reach
-                  </th>
-                  <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">
-                    Avg ER
-                  </th>
-                  <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">
-                    Growth
-                  </th>
+                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50">Platform</th>
+                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-right">Reach</th>
+                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-right">Impression</th>
+                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-right">Engagement</th>
+                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-right">ER</th>
                 </tr>
               </thead>
-              <tbody>
-                {byPlatform.length === 0 ? (
+              <tbody className="text-cly-sm">
+                {loading ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-cly-sm text-cly-text-3">
-                      Belum ada data platform. Tambahkan post untuk melihat analytics.
+                    <td colSpan={5} className="py-8 text-center text-cly-text-muted animate-pulse">
+                      Memuat data platform...
+                    </td>
+                  </tr>
+                ) : byPlatform.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-cly-text-muted">
+                      Belum ada data analitik.
                     </td>
                   </tr>
                 ) : (
@@ -226,19 +265,11 @@ export default function AnalyticsPage() {
                     const prevY = thisM === 1 ? thisY - 1 : thisY;
 
                     const thisReach = posts
-                      .filter(po => {
-                        if (po.platform !== p.platform || !po.date) return false;
-                        const [y, m] = po.date.split('-');
-                        return parseInt(y) === thisY && parseInt(m) === thisM;
-                      })
+                      .filter(po => po.platform === p.platform && isPostInMonth(po, thisY, thisM))
                       .reduce((s, po) => s + po.reach, 0);
 
                     const prevReach = posts
-                      .filter(po => {
-                        if (po.platform !== p.platform || !po.date) return false;
-                        const [y, m] = po.date.split('-');
-                        return parseInt(y) === prevY && parseInt(m) === prevM;
-                      })
+                      .filter(po => po.platform === p.platform && isPostInMonth(po, prevY, prevM))
                       .reduce((s, po) => s + po.reach, 0);
 
                     const growth = prevReach > 0

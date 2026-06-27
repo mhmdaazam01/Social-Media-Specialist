@@ -1,12 +1,19 @@
 import type { Post } from '@/types';
 import type { ErMode } from '@/types';
 
+export function isPostInMonth(post: Post, year: number, month: number): boolean {
+  if (!post.date) return false;
+  // Format is typically "YYYY-MM-DD"
+  const py = parseInt(post.date.substring(0, 4), 10);
+  const pm = parseInt(post.date.substring(5, 7), 10);
+  return py === year && pm === month;
+}
+
 export function calcER(post: Post, mode: ErMode): number {
   const interactions = post.like + post.comment + post.save + post.share;
   if (mode === 'impression') return post.impression > 0 ? (interactions / post.impression) * 100 : 0;
   if (mode === 'reach') return post.reach > 0 ? (interactions / post.reach) * 100 : 0;
-  // followers mode: divide by followers_gained if available, else 0
-  if (mode === 'followers') return post.followers_gained > 0 ? (interactions / post.followers_gained) * 100 : 0;
+  if (mode === 'followers') return post.impression > 0 ? (interactions / post.impression) * 100 : 0;
   return 0;
 }
 
@@ -18,7 +25,7 @@ export function calcTotalER(posts: Post[], mode: ErMode): number {
   } else if (mode === 'reach') {
     totalBase = posts.reduce((s, p) => s + p.reach, 0);
   } else {
-    totalBase = posts.reduce((s, p) => s + p.followers_gained, 0);
+    totalBase = posts.reduce((s, p) => s + p.impression, 0);
   }
   return totalBase > 0 ? (totalInteractions / totalBase) * 100 : 0;
 }
@@ -45,7 +52,7 @@ export function aggregateByPlatform(posts: Post[], erMode: ErMode = 'impression'
     totalReach: items.reduce((s, p) => s + p.reach, 0),
     totalImpression: items.reduce((s, p) => s + p.impression, 0),
     totalInteractions: items.reduce((s, p) => s + p.like + p.comment + p.save + p.share, 0),
-    avgER: items.length > 0 ? items.reduce((s, p) => s + calcER(p, erMode), 0) / items.length : 0,
+    avgER: items.length > 0 ? calcTotalER(items, erMode) : 0,
   }));
 }
 
@@ -59,7 +66,7 @@ export function aggregateByPillar(posts: Post[], erMode: ErMode = 'impression') 
     pillar,
     count: items.length,
     totalReach: items.reduce((s, p) => s + p.reach, 0),
-    avgER: items.length > 0 ? items.reduce((s, p) => s + calcER(p, erMode), 0) / items.length : 0,
+    avgER: items.length > 0 ? calcTotalER(items, erMode) : 0,
   }));
 }
 
@@ -76,7 +83,7 @@ export function aggregateByMonth(posts: Post[], erMode: ErMode = 'impression') {
     totalReach: items.reduce((s, p) => s + p.reach, 0),
     totalImpression: items.reduce((s, p) => s + p.impression, 0),
     totalInteractions: items.reduce((s, p) => s + p.like + p.comment + p.save + p.share, 0),
-    avgER: items.length > 0 ? items.reduce((s, p) => s + calcER(p, erMode), 0) / items.length : 0,
+    avgER: items.length > 0 ? calcTotalER(items, erMode) : 0,
     followersGained: items.reduce((s, p) => s + p.followers_gained, 0),
   }));
 }

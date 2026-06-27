@@ -47,64 +47,43 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  /* Landing Page Colors */
-  --color-lp-bg: #09090A;
-  --color-lp-s1: #111113;
-  --color-lp-s2: #17181B;
-  --color-lp-s3: #1E2024;
-  --color-lp-text: #EBEBEC;
-  --color-lp-t2: rgba(235,235,236,.48);
-  --color-lp-t3: rgba(235,235,236,.24);
-  --color-lp-b1: rgba(235,235,236,.06);
-  --color-lp-b2: rgba(235,235,236,.11);
-  --color-lp-lime: #A8DF3A;
-  --color-lp-lime-hover: #BEF264;
-  --color-lp-lime-d: rgba(168,223,58,.09);
 
-  /* Landing Page Fonts */
-  --font-lp-d: var(--font-bricolage), 'Bricolage Grotesque', sans-serif;
-  --font-lp-b: var(--font-dm-sans), 'DM Sans', sans-serif;
-  --font-lp-m: var(--font-dm-mono), 'DM Mono', monospace;
 
-  /* Landing Page Animations */
-  --animate-fade-up: fadeUp 0.5s ease both;
-  --animate-marquee: marquee 28s linear infinite;
-  --animate-marquee-l: marqueeL 38s linear infinite;
-  --animate-marquee-r: marqueeR 44s linear infinite;
-
-  /* Creatorlytics Design System */
-  --color-cly-bg: #F6F7F4;
-  --color-cly-rail: #FDFDFB;
-  --color-cly-surface: #FFFFFF;
-  --color-cly-muted: #F0F2ED;
-  --color-cly-muted-2: #E5E8E0;
-  --color-cly-border: #E0E3DA;
-  --color-cly-border-strong: #C9CFC1;
-  --color-cly-text: #1D211B;
-  --color-cly-text-2: #60675B;
-  --color-cly-text-3: #8A9283;
-  --color-cly-brand: #2F6F45;
-  --color-cly-brand-2: #175A7A;
-  --color-cly-brand-tint: #E6F2EA;
-  --color-cly-blue: #2563A7;
-  --color-cly-blue-tint: #E7EFF8;
-  --color-cly-amber: #A15C07;
-  --color-cly-amber-tint: #F7EDDC;
-  --color-cly-green: #197B3A;
-  --color-cly-green-tint: #E3F3E7;
-  --color-cly-red: #B93B32;
-  --color-cly-red-tint: #F8E7E5;
-  --color-cly-purple: #7C4D9D;
-  --color-cly-purple-tint: #F0E7F6;
+  /* Creatorlytics Design System Maps */
+  --color-cly-bg: var(--cly-bg);
+  --color-cly-rail: var(--cly-rail);
+  --color-cly-surface: var(--cly-surface);
+  --color-cly-muted: var(--cly-muted);
+  --color-cly-muted-2: var(--cly-muted-2);
+  --color-cly-border: var(--cly-border);
+  --color-cly-border-strong: var(--cly-border-strong);
+  --color-cly-text: var(--cly-text);
+  --color-cly-text-2: var(--cly-text-2);
+  --color-cly-text-3: var(--cly-text-3);
+  --color-cly-text-muted: var(--cly-text-muted);
+  --color-cly-brand: var(--cly-brand);
+  --color-cly-brand-2: var(--cly-brand-2);
+  --color-cly-brand-tint: var(--cly-brand-tint);
+  --color-cly-brand-hover: var(--cly-brand-hover);
+  --color-cly-blue: var(--cly-blue);
+  --color-cly-blue-tint: var(--cly-blue-tint);
+  --color-cly-amber: var(--cly-amber);
+  --color-cly-amber-tint: var(--cly-amber-tint);
+  --color-cly-green: var(--cly-green);
+  --color-cly-green-tint: var(--cly-green-tint);
+  --color-cly-red: var(--cly-red);
+  --color-cly-red-tint: var(--cly-red-tint);
+  --color-cly-purple: var(--cly-purple);
+  --color-cly-purple-tint: var(--cly-purple-tint);
   
-  --color-platform-tiktok: #13747C;
-  --color-platform-tiktok-tint: #E1F1F2;
-  --color-platform-instagram: #A23B86;
-  --color-platform-instagram-tint: #F6E8F1;
-  --color-platform-youtube: #C6362E;
-  --color-platform-youtube-tint: #FBE8E6;
-  --color-platform-linkedin: #2563A7;
-  --color-platform-linkedin-tint: #E7EFF8;
+  --color-platform-tiktok: var(--platform-tiktok);
+  --color-platform-tiktok-tint: var(--platform-tiktok-tint);
+  --color-platform-instagram: var(--platform-instagram);
+  --color-platform-instagram-tint: var(--platform-instagram-tint);
+  --color-platform-youtube: var(--platform-youtube);
+  --color-platform-youtube-tint: var(--platform-youtube-tint);
+  --color-platform-linkedin: var(--platform-linkedin);
+  --color-platform-linkedin-tint: var(--platform-linkedin-tint);
   
   --font-size-cly-micro: 10px;
   --font-size-cly-xs: 11px;
@@ -137,16 +116,6 @@
   }
 }
 
-.lp-grain {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  opacity: .032;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 256px;
-  mix-blend-mode: screen;
-}
 
 :root {
   --background: oklch(1 0 0);
@@ -181,7 +150,82 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Creatorlytics Base Values */
+  --cly-bg: #F6F7F4;
+  --cly-rail: #FDFDFB;
+  --cly-surface: #FFFFFF;
+  --cly-muted: #F0F2ED;
+  --cly-muted-2: #E5E8E0;
+  --cly-border: #E0E3DA;
+  --cly-border-strong: #C9CFC1;
+  --cly-text: #1D211B;
+  --cly-text-2: #60675B;
+  --cly-text-3: #8A9283;
+  --cly-text-muted: #8A9283;
+  --cly-brand: #2F6F45;
+  --cly-brand-2: #175A7A;
+  --cly-brand-tint: #E6F2EA;
+  --cly-brand-hover: #5DBF80;
+  --cly-blue: #2563A7;
+  --cly-blue-tint: #E7EFF8;
+  --cly-amber: #A15C07;
+  --cly-amber-tint: #F7EDDC;
+  --cly-green: #197B3A;
+  --cly-green-tint: #E3F3E7;
+  --cly-red: #B93B32;
+  --cly-red-tint: #F8E7E5;
+  --cly-purple: #7C4D9D;
+  --cly-purple-tint: #F0E7F6;
+  
+  --platform-tiktok: #13747C;
+  --platform-tiktok-tint: #E1F1F2;
+  --platform-instagram: #A23B86;
+  --platform-instagram-tint: #F6E8F1;
+  --platform-youtube: #C6362E;
+  --platform-youtube-tint: #FBE8E6;
+  --platform-linkedin: #2563A7;
+  --platform-linkedin-tint: #E7EFF8;
 }
+
+/* ─── Creatorlytics Dark Mode ─────────────────────────────────────── */
+.dark {
+  --cly-bg: #0C1210;
+  --cly-rail: #101510;
+  --cly-surface: #161D17;
+  --cly-muted: #1C2420;
+  --cly-muted-2: #212B23;
+  --cly-border: #2A3A2C;
+  --cly-border-strong: #374D3A;
+  --cly-text: #E3EDE4;
+  --cly-text-2: #96A899;
+  --cly-text-3: #637066;
+  --cly-text-muted: #637066;
+  --cly-brand: #4DB870;
+  --cly-brand-2: #2A9BBD;
+  --cly-brand-tint: #112B1B;
+  --cly-brand-hover: #5ECF82;
+  --cly-blue: #4A90D9;
+  --cly-blue-tint: #0C1E33;
+  --cly-amber: #D4900A;
+  --cly-amber-tint: #1E1506;
+  --cly-green: #3DB35A;
+  --cly-green-tint: #0C2016;
+  --cly-red: #E0564C;
+  --cly-red-tint: #250E0C;
+  --cly-purple: #A070C8;
+  --cly-purple-tint: #1C1028;
+
+  --platform-tiktok: #2DA8B0;
+  --platform-tiktok-tint: #0A1E20;
+  --platform-instagram: #C860A8;
+  --platform-instagram-tint: #220D1C;
+  --platform-youtube: #E04840;
+  --platform-youtube-tint: #250A09;
+  --platform-linkedin: #4A90D9;
+  --platform-linkedin-tint: #0C1E33;
+}
+
 
 .dark {
   --background: oklch(0.145 0 0);
@@ -246,4 +290,33 @@
     break-inside: avoid;
     page-break-inside: avoid;
   }
+}
+
+/* ─── Force Light Mode for Landing Page ─────────────────────────────────────── */
+.force-light, .dark .force-light, .force-light * {
+  --cly-bg: #F6F7F4 !important;
+  --cly-rail: #FDFDFB !important;
+  --cly-surface: #FFFFFF !important;
+  --cly-muted: #F0F2ED !important;
+  --cly-muted-2: #E5E8E0 !important;
+  --cly-border: #E0E3DA !important;
+  --cly-border-strong: #C9CFC1 !important;
+  --cly-text: #1D211B !important;
+  --cly-text-2: #60675B !important;
+  --cly-text-3: #8A9283 !important;
+  --cly-text-muted: #8A9283 !important;
+  --cly-brand: #2F6F45 !important;
+  --cly-brand-2: #175A7A !important;
+  --cly-brand-tint: #E6F2EA !important;
+  --cly-brand-hover: #5DBF80 !important;
+  --cly-blue: #2563A7 !important;
+  --cly-blue-tint: #E7EFF8 !important;
+  --cly-amber: #A15C07 !important;
+  --cly-amber-tint: #F7EDDC !important;
+  --cly-green: #197B3A !important;
+  --cly-green-tint: #E3F3E7 !important;
+  --cly-red: #B93B32 !important;
+  --cly-red-tint: #F8E7E5 !important;
+  --cly-purple: #7C4D9D !important;
+  --cly-purple-tint: #F0E7F6 !important;
 }

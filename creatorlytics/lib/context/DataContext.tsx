@@ -62,6 +62,9 @@ interface DataContextType {
   accountsLoading: boolean;
   addAccount: (name: string) => Promise<Account | null>;
   removeAccount: (id: string) => Promise<void>;
+
+  // Factory Reset
+  factoryReset: () => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | null>(null);
@@ -91,15 +94,21 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [hasFetched, setHasFetched] = useState(false);
 
   const fetchAll = useCallback(async () => {
+    if (!user) return;
+
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    const oneYearAgoStr = oneYearAgo.toISOString().split('T')[0];
+
     const [postsRes, goalsRes, platformsRes, pillarsRes, ideasRes, competitorsRes, eventsRes, accountsRes] = await Promise.all([
-      supabase.from('posts').select('*').order('date', { ascending: false }),
-      supabase.from('goals').select('*').order('created_at', { ascending: false }),
-      supabase.from('platforms').select('*').order('created_at', { ascending: true }),
-      supabase.from('pillars').select('*').order('created_at', { ascending: true }),
-      supabase.from('content_ideas').select('*').order('created_at', { ascending: false }),
-      supabase.from('competitors').select('*').order('created_at', { ascending: false }),
-      supabase.from('calendar_events').select('*').order('scheduled_date', { ascending: true }),
-      supabase.from('accounts').select('*').order('created_at', { ascending: true }),
+      supabase.from('posts').select('*').eq('user_id', user.id).gte('date', oneYearAgoStr).order('date', { ascending: false }),
+      supabase.from('goals').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('platforms').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
+      supabase.from('pillars').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
+      supabase.from('content_ideas').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('competitors').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('calendar_events').select('*').eq('user_id', user.id).order('scheduled_date', { ascending: true }),
+      supabase.from('accounts').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
     ]);
 
     if (!postsRes.error && postsRes.data) setPosts(postsRes.data);
@@ -151,14 +160,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [user, supabase]);
 
   const updatePost = useCallback(async (id: string, updates: Partial<Post>) => {
-    const { error } = await supabase.from('posts').update(updates).eq('id', id);
+    if (!user) return;
+    const { error } = await supabase.from('posts').update(updates).eq('id', id).eq('user_id', user.id);
     if (!error) setPosts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
-  }, [supabase]);
+  }, [supabase, user]);
 
   const deletePost = useCallback(async (id: string) => {
-    const { error } = await supabase.from('posts').delete().eq('id', id);
+    if (!user) return;
+    const { error } = await supabase.from('posts').delete().eq('id', id).eq('user_id', user.id);
     if (!error) setPosts(prev => prev.filter(p => p.id !== id));
-  }, [supabase]);
+  }, [supabase, user]);
 
   const importPosts = useCallback(async (newPosts: Omit<Post, 'id' | 'created_at'>[]) => {
     if (!user) return 0;
@@ -171,7 +182,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const getPost = useCallback((id: string) => posts.find(p => p.id === id), [posts]);
 
   const refreshPosts = useCallback(async () => {
-    const { data, error } = await supabase.from('posts').select('*').order('date', { ascending: false });
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    const oneYearAgoStr = oneYearAgo.toISOString().split('T')[0];
+    const { data, error } = await supabase.from('posts').select('*').gte('date', oneYearAgoStr).order('date', { ascending: false });
     if (!error && data) setPosts(data);
   }, [supabase]);
 
@@ -184,14 +198,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [user, supabase]);
 
   const updateGoal = useCallback(async (id: string, updates: Partial<Goal>) => {
-    const { error } = await supabase.from('goals').update(updates).eq('id', id);
+    if (!user) return;
+    const { error } = await supabase.from('goals').update(updates).eq('id', id).eq('user_id', user.id);
     if (!error) setGoals(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g));
-  }, [supabase]);
+  }, [supabase, user]);
 
   const deleteGoal = useCallback(async (id: string) => {
-    const { error } = await supabase.from('goals').delete().eq('id', id);
+    if (!user) return;
+    const { error } = await supabase.from('goals').delete().eq('id', id).eq('user_id', user.id);
     if (!error) setGoals(prev => prev.filter(g => g.id !== id));
-  }, [supabase]);
+  }, [supabase, user]);
 
   // Platforms CRUD
   const addPlatform = useCallback(async (platform: Omit<Platform, 'id'>) => {
@@ -202,9 +218,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [user, supabase]);
 
   const removePlatform = useCallback(async (id: string) => {
-    const { error } = await supabase.from('platforms').delete().eq('id', id);
+    if (!user) return;
+    const { error } = await supabase.from('platforms').delete().eq('id', id).eq('user_id', user.id);
     if (!error) setPlatforms(prev => prev.filter(p => p.id !== id));
-  }, [supabase]);
+  }, [supabase, user]);
 
   // Pillars CRUD
   const addPillar = useCallback(async (pillar: Omit<Pillar, 'id'>) => {
@@ -216,10 +233,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [user, supabase]);
 
   const removePillar = useCallback(async (id: string) => {
-    const { error } = await supabase.from('pillars').delete().eq('id', id);
+    if (!user) return;
+    const { error } = await supabase.from('pillars').delete().eq('id', id).eq('user_id', user.id);
     if (!error) setPillars(prev => prev.filter(p => p.id !== id));
     else toast.error('Gagal menghapus pilar');
-  }, [supabase]);
+  }, [supabase, user]);
 
   // Ideas CRUD
   const createIdea = useCallback(async (idea: Omit<ContentIdea, 'id' | 'created_at'>) => {
@@ -231,16 +249,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [user, supabase]);
 
   const updateIdea = useCallback(async (id: string, updates: Partial<ContentIdea>) => {
-    const { error } = await supabase.from('content_ideas').update(updates).eq('id', id);
+    if (!user) return;
+    const { error } = await supabase.from('content_ideas').update(updates).eq('id', id).eq('user_id', user.id);
     if (!error) setIdeas(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i));
     else toast.error('Gagal memperbarui ide');
-  }, [supabase]);
+  }, [supabase, user]);
 
   const deleteIdea = useCallback(async (id: string) => {
-    const { error } = await supabase.from('content_ideas').delete().eq('id', id);
+    if (!user) return;
+    const { error } = await supabase.from('content_ideas').delete().eq('id', id).eq('user_id', user.id);
     if (!error) setIdeas(prev => prev.filter(i => i.id !== id));
     else toast.error('Gagal menghapus ide');
-  }, [supabase]);
+  }, [supabase, user]);
 
   // Competitors CRUD
   const createCompetitor = useCallback(async (competitor: Omit<Competitor, 'id' | 'created_at' | 'updated_at'>) => {
@@ -252,16 +272,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [user, supabase]);
 
   const updateCompetitor = useCallback(async (id: string, updates: Partial<Competitor>) => {
-    const { error } = await supabase.from('competitors').update(updates).eq('id', id);
+    if (!user) return;
+    const { error } = await supabase.from('competitors').update(updates).eq('id', id).eq('user_id', user.id);
     if (!error) setCompetitors(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
     else toast.error('Gagal memperbarui kompetitor');
-  }, [supabase]);
+  }, [supabase, user]);
 
   const deleteCompetitor = useCallback(async (id: string) => {
-    const { error } = await supabase.from('competitors').delete().eq('id', id);
+    if (!user) return;
+    const { error } = await supabase.from('competitors').delete().eq('id', id).eq('user_id', user.id);
     if (!error) setCompetitors(prev => prev.filter(c => c.id !== id));
     else toast.error('Gagal menghapus kompetitor');
-  }, [supabase]);
+  }, [supabase, user]);
 
   // Events CRUD
   const createEvent = useCallback(async (event: Omit<CalendarEvent, 'id' | 'created_at'>) => {
@@ -273,16 +295,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [user, supabase]);
 
   const updateEvent = useCallback(async (id: string, updates: Partial<CalendarEvent>) => {
-    const { error } = await supabase.from('calendar_events').update(updates).eq('id', id);
+    if (!user) return;
+    const { error } = await supabase.from('calendar_events').update(updates).eq('id', id).eq('user_id', user.id);
     if (!error) setEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
     else toast.error('Gagal memperbarui event');
-  }, [supabase]);
+  }, [supabase, user]);
 
   const deleteEvent = useCallback(async (id: string) => {
-    const { error } = await supabase.from('calendar_events').delete().eq('id', id);
+    if (!user) return;
+    const { error } = await supabase.from('calendar_events').delete().eq('id', id).eq('user_id', user.id);
     if (!error) setEvents(prev => prev.filter(e => e.id !== id));
     else toast.error('Gagal menghapus event');
-  }, [supabase]);
+  }, [supabase, user]);
 
   // Accounts CRUD
   const addAccount = useCallback(async (name: string) => {
@@ -294,10 +318,35 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [user, supabase]);
 
   const removeAccount = useCallback(async (id: string) => {
-    const { error } = await supabase.from('accounts').delete().eq('id', id);
+    if (!user) return;
+    const { error } = await supabase.from('accounts').delete().eq('id', id).eq('user_id', user.id);
     if (!error) setAccounts(prev => prev.filter(a => a.id !== id));
     else toast.error('Gagal menghapus akun');
-  }, [supabase]);
+  }, [supabase, user]);
+
+  const factoryReset = useCallback(async () => {
+    if (!user) return;
+    await Promise.all([
+      supabase.from('posts').delete().eq('user_id', user.id),
+      supabase.from('goals').delete().eq('user_id', user.id),
+      supabase.from('platforms').delete().eq('user_id', user.id),
+      supabase.from('pillars').delete().eq('user_id', user.id),
+      supabase.from('content_ideas').delete().eq('user_id', user.id),
+      supabase.from('competitors').delete().eq('user_id', user.id),
+      supabase.from('calendar_events').delete().eq('user_id', user.id),
+      supabase.from('accounts').delete().eq('user_id', user.id),
+    ]);
+    // Refresh all states
+    setPosts([]);
+    setGoals([]);
+    setPlatforms([]);
+    setPillars([]);
+    setIdeas([]);
+    setCompetitors([]);
+    setEvents([]);
+    setAccounts([]);
+    toast.success('Seluruh data berhasil dihapus');
+  }, [supabase, user]);
 
   return (
     <DataContext.Provider
@@ -310,6 +359,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         competitors, competitorsLoading, createCompetitor, updateCompetitor, deleteCompetitor,
         events, eventsLoading, createEvent, updateEvent, deleteEvent,
         accounts, accountsLoading, addAccount, removeAccount,
+        factoryReset,
       }}
     >
       {children}

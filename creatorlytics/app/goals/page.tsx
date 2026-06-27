@@ -41,46 +41,62 @@ export default function GoalsPage() {
     deleteGoal(id);
   }
 
-  if (loading) {
-    return (
-      <AppShell title="Goals">
-        <div className="flex flex-col gap-[18px]">
-          <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-3.5 h-48 animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </AppShell>
-    );
-  }
 
   // Find best performing goal for forecast
   const topGoal = items.length > 0 
     ? items.reduce((best, curr) => curr.progress > best.progress ? curr : best)
     : null;
 
+  const estimatedDate = useMemo(() => {
+    if (!topGoal || topGoal.actual <= 0) return null;
+    const now = new Date();
+    const g = topGoal.goal;
+    const isCurrentMonth = g.year === now.getFullYear() && g.month === (now.getMonth() + 1);
+    
+    // Future goals don't have active velocity
+    if (g.year > now.getFullYear() || (g.year === now.getFullYear() && g.month > (now.getMonth() + 1))) {
+      return null;
+    }
+
+    const daysPassed = isCurrentMonth ? now.getDate() : new Date(g.year, g.month, 0).getDate();
+    const velocity = topGoal.actual / daysPassed;
+    if (velocity <= 0) return null;
+    
+    const daysNeeded = g.target / velocity;
+    const est = new Date(g.year, g.month - 1, 1);
+    est.setDate(Math.ceil(daysNeeded));
+    return est;
+  }, [topGoal]);
+
   return (
     <AppShell title="Goals">
-      <div className="flex flex-col gap-[18px]">
-        {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center bg-cly-surface border border-cly-border rounded-[10px] shadow-cly">
-            <Target className="size-12 text-cly-text-3 mb-4" />
-            <p className="text-cly-md text-cly-text-2 mb-1">Belum ada goals</p>
-            <p className="text-cly-sm text-cly-text-3 mb-4">Buat target pertamamu untuk tracking progress!</p>
-            <button
-              onClick={handleAdd}
-              className="inline-flex items-center justify-center gap-2 h-[34px] px-3.5 rounded-lg bg-cly-brand border border-cly-brand text-white text-cly-sm font-bold hover:bg-cly-brand-2 transition-colors"
-            >
-              <Plus size={16} />
-              Buat Goal
-            </button>
-          </div>
-        ) : (
-          <>
-            {/* Goal Cards Grid */}
-            <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-              {items.map(({ goal, progress, actual }) => (
+          <div className="flex-1 p-[18px] lg:p-6 overflow-y-auto">
+            {loading ? (
+              <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-3.5 h-48 animate-pulse" />
+                ))}
+              </div>
+            ) : items.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-cly-surface border border-cly-border rounded-[10px] shadow-cly">
+                <div className="w-16 h-16 rounded-full bg-cly-brand-tint text-cly-brand flex items-center justify-center mb-4">
+                  <Target size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-cly-text mb-2">Belum ada Goal 🎯</h3>
+                <p className="text-cly-text-2 mb-6 max-w-sm">
+                  Tetapkan target reach, engagement, atau follower growth untuk bulan ini agar performa konten lebih terarah.
+                </p>
+                <button
+                  onClick={handleAdd}
+                  className="h-10 px-6 rounded-lg bg-cly-brand text-white font-semibold flex items-center gap-2 hover:bg-cly-brand-hover transition-colors shadow-cly"
+                >
+                  <Plus size={18} />
+                  Buat Goal Pertama
+                </button>
+              </div>
+            ) : (
+              <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {items.map(({ goal, progress, actual }) => (
                 <GoalCard
                   key={goal.id}
                   goal={goal}
@@ -91,9 +107,10 @@ export default function GoalsPage() {
                 />
               ))}
             </div>
+          )}
 
             {/* AI Forecast Card */}
-            {topGoal && topGoal.progress > 0 && (
+            {topGoal && topGoal.progress > 0 && estimatedDate && (
               <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
                 <div className="flex items-start gap-3">
                   <div className="w-[34px] h-[34px] rounded-lg bg-cly-brand-tint text-cly-brand grid place-items-center shrink-0">
@@ -108,7 +125,7 @@ export default function GoalsPage() {
                       <strong className="text-cly-text">{topGoal.goal.label}</strong>{' '}
                       kemungkinan tercapai pada{' '}
                       <strong className="text-cly-text">
-                        {new Date(topGoal.goal.year, topGoal.goal.month - 1).toLocaleDateString('id-ID', { 
+                        {estimatedDate.toLocaleDateString('id-ID', { 
                           day: 'numeric', 
                           month: 'long',
                           year: 'numeric'
@@ -129,8 +146,6 @@ export default function GoalsPage() {
               <Plus size={20} />
               Goal Baru
             </button>
-          </>
-        )}
 
         <GoalModal
           open={modalOpen}

@@ -5,11 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { usePosts } from '@/lib/hooks/usePosts';
 import { useGoals } from '@/lib/hooks/useGoals';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
-import { calcER } from '@/lib/utils/analytics';
+import { calcER, isPostInMonth } from '@/lib/utils/analytics';
 import { currentMonth, currentYear } from '@/lib/utils/formatting';
-import { 
-  Calendar, Target, Flame, Lightbulb, BarChart2, MessageSquare, TrendingUp 
-} from 'lucide-react';
+import { Calendar, Target, Flame, Lightbulb, BarChart2, MessageSquare, TrendingUp } from 'lucide-react';
 
 const DAYS_OF_WEEK = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
@@ -86,9 +84,7 @@ export function AIInsightsTab() {
     return currentMonthGoals.map(goal => {
       // Calculate current progress
       const filteredPosts = posts.filter(p => {
-        if (!p.date) return false;
-        const [py, pm] = p.date.split('-');
-        if (parseInt(py) !== goal.year || parseInt(pm) !== goal.month) return false;
+        if (!isPostInMonth(p, goal.year, goal.month)) return false;
         if (goal.platform !== 'all' && p.platform !== goal.platform) return false;
         return true;
       });

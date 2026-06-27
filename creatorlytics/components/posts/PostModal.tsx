@@ -100,7 +100,9 @@ export function PostModal({ open, onOpenChange, editPost }: PostModalProps) {
   }
 
   function handleNumber(key: keyof FormFields, raw: string) {
-    const val = raw === '' ? 0 : Number(raw);
+    let val = raw === '' ? 0 : Number(raw);
+    if (isNaN(val) || val < 0) val = 0;
+    if (val > Number.MAX_SAFE_INTEGER) val = Number.MAX_SAFE_INTEGER;
     update(key, val as never);
   }
 
@@ -195,7 +197,7 @@ export function PostModal({ open, onOpenChange, editPost }: PostModalProps) {
           {/* 4. Nama Postingan */}
           <div className="grid gap-2">
             <Label htmlFor="name">Nama Postingan</Label>
-            <Input id="name" value={form.name} onChange={e => update('name', e.target.value)} placeholder="Contoh: Review Produk X" />
+            <Input id="name" value={form.name} onChange={e => update('name', e.target.value)} placeholder="Contoh: Review Produk X" maxLength={255} />
           </div>
 
           {/* 5. Isi Metrics */}
@@ -274,7 +276,7 @@ export function PostModal({ open, onOpenChange, editPost }: PostModalProps) {
           {/* 9. Isi Link */}
           <div className="grid gap-2">
             <Label htmlFor="link">Link</Label>
-            <Input id="link" value={form.link} onChange={e => update('link', e.target.value)} placeholder="https://..." />
+            <Input id="link" value={form.link} onChange={e => update('link', e.target.value)} placeholder="https://..." maxLength={1000} />
           </div>
         </div>
 

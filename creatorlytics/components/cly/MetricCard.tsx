@@ -10,6 +10,7 @@ interface MetricCardProps {
   icon: LucideIcon;
   tone?: 'green' | 'blue' | 'amber';
   caption?: string;
+  loading?: boolean;
 }
 
 export function MetricCard({ 
@@ -19,8 +20,13 @@ export function MetricCard({
   deltaLabel = '', 
   icon: Icon, 
   tone = 'green', 
-  caption 
+  caption,
+  loading
 }: MetricCardProps) {
+  if (loading) {
+    return <div className="bg-cly-surface border border-cly-border rounded-[10px] p-3.5 shadow-cly min-h-[120px] animate-pulse" />;
+  }
+
   const negative = typeof delta === 'number' && delta < 0;
   
   const colorMap = {
@@ -34,7 +40,7 @@ export function MetricCard({
     : colorMap[tone];
 
   return (
-    <div className="bg-cly-surface border border-cly-border rounded-lg p-3.5 shadow-[0_1px_2px_rgba(29,33,27,0.05),0_10px_24px_rgba(29,33,27,0.04)] min-h-[120px]">
+    <div className="bg-cly-surface border border-cly-border rounded-[10px] p-3.5 shadow-cly min-h-[120px]">
       <div className="flex justify-between items-start mb-5">
         <div className="text-[11px] font-bold text-cly-text-3 uppercase tracking-wider">
           {label}
