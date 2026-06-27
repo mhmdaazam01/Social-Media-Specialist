@@ -130,7 +130,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setAccountsLoading(false);
 
     setHasFetched(true);
-  }, [supabase]);
+  }, [supabase, user]);
 
   useEffect(() => {
     if (user && !hasFetched) {

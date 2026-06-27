@@ -14,8 +14,6 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
-  // TODO: AUTH TEMPORARILY DISABLED - supabase auth not used during development
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const supabase = createServerClient(
     supabaseUrl,
     supabaseAnonKey,

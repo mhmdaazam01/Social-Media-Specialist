@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUser } from '@/lib/hooks/useUser';
-import { createClient } from '@/lib/supabase/client';
 import {
   BarChart3, Target, Sparkles, CalendarDays, Activity, Users,
   TrendingUp, Clock, Video, ChevronDown, ArrowRight,
@@ -60,13 +59,11 @@ function GoogleIcon({ className }: { className?: string }) {
 export default function LandingPage() {
   const { user, loading } = useUser();
   const router = useRouter();
-  const [authLoading, setAuthLoading] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
-    // TEMPORARY: Commented out so you can preview the landing page even if you are logged in
-    // if (!loading && user) router.replace('/dashboard');
+    if (!loading && user) router.replace('/dashboard');
   }, [user, loading, router]);
 
   useEffect(() => {
@@ -74,16 +71,6 @@ export default function LandingPage() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  async function handleLogin(e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) {
-    e.preventDefault();
-    setAuthLoading(true);
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-  }
 
   if (loading) {
     return (
@@ -107,9 +94,9 @@ export default function LandingPage() {
           <a href="#features" className="px-3.5 py-2 text-[13px] font-medium text-cly-text-2 hover:text-cly-text hover:bg-cly-muted rounded-lg transition-colors">Fitur</a>
           <a href="#how" className="px-3.5 py-2 text-[13px] font-medium text-cly-text-2 hover:text-cly-text hover:bg-cly-muted rounded-lg transition-colors">Cara Kerja</a>
         </div>
-        <button onClick={handleLogin} disabled={authLoading} className="h-[34px] px-4 bg-cly-brand text-white border-none rounded-lg font-bold text-[13px] cursor-pointer tracking-tight hover:bg-cly-brand-hover transition-colors inline-flex items-center gap-1.5">
-          {authLoading ? 'Memuat...' : 'Mulai Gratis'}
-        </button>
+        <Link href="/login" className="h-[34px] px-4 bg-cly-brand text-white border-none rounded-lg font-bold text-[13px] cursor-pointer tracking-tight hover:bg-cly-brand-hover transition-colors inline-flex items-center gap-1.5 no-underline">
+          Mulai Gratis
+        </Link>
       </nav>
 
       {/* ─── HERO ─── */}
@@ -133,10 +120,10 @@ export default function LandingPage() {
           </p>
 
           <div className="flex gap-3 justify-center flex-wrap">
-            <button onClick={handleLogin} disabled={authLoading} className="inline-flex items-center gap-2 h-11 px-5 bg-cly-brand text-white border-none rounded-[10px] font-bold text-[14px] cursor-pointer tracking-tight hover:bg-cly-brand-hover transition-all hover:-translate-y-0.5 shadow-cly">
+            <Link href="/login" className="inline-flex items-center gap-2 h-11 px-5 bg-cly-brand text-white border-none rounded-[10px] font-bold text-[14px] cursor-pointer tracking-tight hover:bg-cly-brand-hover transition-all hover:-translate-y-0.5 shadow-cly no-underline">
               <GoogleIcon />
-              {authLoading ? 'Memuat...' : 'Mulai Gratis dengan Google'}
-            </button>
+              Mulai Gratis dengan Google
+            </Link>
             <a href="#showcase" className="inline-flex items-center gap-2 h-11 px-5 bg-transparent text-cly-text border border-cly-border rounded-[10px] font-semibold text-[14px] cursor-pointer hover:bg-cly-muted transition-colors no-underline">
               Lihat Dashboard <ArrowRight size={14} />
             </a>
@@ -379,10 +366,10 @@ export default function LandingPage() {
           <p className="text-[15px] text-cly-text-2 leading-[1.72] max-w-[480px]">Join ribuan kreator Indonesia yang udah pakai Creatorlytics. Gratis selamanya, tanpa kartu kredit, tanpa batas waktu.</p>
         </div>
         <div className="flex flex-col items-start md:items-end gap-3">
-          <button onClick={handleLogin} disabled={authLoading} className="inline-flex items-center gap-2 h-12 px-6 bg-cly-brand text-white border-none rounded-[10px] font-bold text-[15px] cursor-pointer tracking-tight hover:bg-cly-brand-hover transition-all hover:-translate-y-0.5 whitespace-nowrap shadow-cly">
+          <Link href="/login" className="inline-flex items-center gap-2 h-12 px-6 bg-cly-brand text-white border-none rounded-[10px] font-bold text-[15px] cursor-pointer tracking-tight hover:bg-cly-brand-hover transition-all hover:-translate-y-0.5 whitespace-nowrap shadow-cly no-underline">
             <GoogleIcon />
-            {authLoading ? 'Memuat...' : 'Mulai Gratis dengan Google'}
-          </button>
+            Mulai Gratis dengan Google
+          </Link>
           <div className="font-mono text-[11px] text-cly-text-3 leading-[1.7] md:text-right">Tidak perlu kartu kredit<br />Setup kurang dari 2 menit</div>
         </div>
       </section>

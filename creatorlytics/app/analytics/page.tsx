@@ -11,7 +11,7 @@ import {
   aggregateByMonth, aggregateByPlatform, aggregateByPillar, isPostInMonth,
   fmt, fmtPercent,
 } from '@/lib/utils/analytics';
-import { Filter, SlidersHorizontal, TrendingUp, BookOpen, AlertTriangle } from 'lucide-react';
+import { TrendingUp, BookOpen, AlertTriangle } from 'lucide-react';
 import {
   ComposedChart, Line, Area, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, RadialBarChart, RadialBar, Legend,
@@ -83,11 +83,13 @@ export default function AnalyticsPage() {
       const thisReach = posts.filter(po => po.platform === p.platform && isPostInMonth(po, thisY, thisM)).reduce((s, po) => s + po.reach, 0);
       const prevReach = posts.filter(po => po.platform === p.platform && isPostInMonth(po, prevY, prevM)).reduce((s, po) => s + po.reach, 0);
       if (prevReach > 0 && thisReach < prevReach) {
-        return `Performa reach di ${platformName(p.platform)} menurun bulan ini. Evaluasi ulang jam tayang atau format.`;
+        const pObj = platforms.find((pl) => pl.platform_id === p.platform);
+        const name = pObj ? pObj.name : p.platform;
+        return `Performa reach di ${name} menurun bulan ini. Evaluasi ulang jam tayang atau format.`;
       }
     }
     return "Pertumbuhan reach positif di semua platform bulan ini. Pertahankan konsistensi!";
-  }, [byPlatform, posts, loading]);
+  }, [byPlatform, posts, loading, platforms]);
   
 
 

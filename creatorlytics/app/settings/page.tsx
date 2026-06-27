@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { AppShell } from '@/components/layout/AppShell';
 import { useUser } from '@/lib/hooks/useUser';
@@ -14,6 +15,7 @@ import { createClient } from '@/lib/supabase/client';
 type Tab = 'profile' | 'platforms' | 'notifications';
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { profile, refreshProfile, setTheme } = useUser();
   const { platforms, addPlatform, removePlatform } = usePlatforms();
   const { accounts, addAccount, removeAccount } = useAccounts();
@@ -36,12 +38,15 @@ export default function SettingsPage() {
   const [notifReport, setNotifReport] = useState(false);
 
   useEffect(() => {
-    const savedGoal = localStorage.getItem('cly_notif_goal');
-    if (savedGoal !== null) setNotifGoal(savedGoal === 'true');
-    const savedReminder = localStorage.getItem('cly_notif_reminder');
-    if (savedReminder !== null) setNotifReminder(savedReminder === 'true');
-    const savedReport = localStorage.getItem('cly_notif_report');
-    if (savedReport !== null) setNotifReport(savedReport === 'true');
+    const t = setTimeout(() => {
+      const savedGoal = localStorage.getItem('cly_notif_goal');
+      if (savedGoal !== null) setNotifGoal(savedGoal === 'true');
+      const savedReminder = localStorage.getItem('cly_notif_reminder');
+      if (savedReminder !== null) setNotifReminder(savedReminder === 'true');
+      const savedReport = localStorage.getItem('cly_notif_report');
+      if (savedReport !== null) setNotifReport(savedReport === 'true');
+    }, 0);
+    return () => clearTimeout(t);
   }, []);
 
   const handleNotifGoal = () => { const next = !notifGoal; setNotifGoal(next); localStorage.setItem('cly_notif_goal', String(next)); };
@@ -131,7 +136,7 @@ export default function SettingsPage() {
     if (confirm('APAKAH ANDA YAKIN? Tindakan ini akan menghapus semua data Anda dan mengeluarkan Anda dari aplikasi secara permanen.')) {
       await factoryReset();
       await supabase.auth.signOut();
-      window.location.href = '/login';
+      router.push('/login');
     }
   }
 
