@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/hooks/useUser';
-import type { Post, Goal, Platform, Pillar, ContentIdea, Competitor, CalendarEvent, Account } from '@/types';
+import type { Post, Goal, Platform, Pillar, ContentIdea, CalendarEvent, Account } from '@/types';
 import { toast } from 'sonner';
 
 interface DataContextType {
@@ -43,13 +43,6 @@ interface DataContextType {
   updateIdea: (id: string, updates: Partial<ContentIdea>) => Promise<void>;
   deleteIdea: (id: string) => Promise<void>;
 
-  // Competitors
-  competitors: Competitor[];
-  competitorsLoading: boolean;
-  createCompetitor: (competitor: Omit<Competitor, 'id' | 'created_at' | 'updated_at'>) => Promise<Competitor | null>;
-  updateCompetitor: (id: string, updates: Partial<Competitor>) => Promise<void>;
-  deleteCompetitor: (id: string) => Promise<void>;
-
   // Events
   events: CalendarEvent[];
   eventsLoading: boolean;
@@ -84,8 +77,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [pillarsLoading, setPillarsLoading] = useState(true);
   const [ideas, setIdeas] = useState<ContentIdea[]>([]);
   const [ideasLoading, setIdeasLoading] = useState(true);
-  const [competitors, setCompetitors] = useState<Competitor[]>([]);
-  const [competitorsLoading, setCompetitorsLoading] = useState(true);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -100,13 +91,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     const oneYearAgoStr = oneYearAgo.toISOString().split('T')[0];
 
-    const [postsRes, goalsRes, platformsRes, pillarsRes, ideasRes, competitorsRes, eventsRes, accountsRes] = await Promise.all([
+    const [postsRes, goalsRes, platformsRes, pillarsRes, ideasRes, eventsRes, accountsRes] = await Promise.all([
       supabase.from('posts').select('*').eq('user_id', user.id).gte('date', oneYearAgoStr).order('date', { ascending: false }),
       supabase.from('goals').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
       supabase.from('platforms').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
       supabase.from('pillars').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
       supabase.from('content_ideas').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('competitors').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
       supabase.from('calendar_events').select('*').eq('user_id', user.id).order('scheduled_date', { ascending: true }),
       supabase.from('accounts').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
     ]);
@@ -116,7 +106,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     if (!platformsRes.error && platformsRes.data) setPlatforms(platformsRes.data);
     if (!pillarsRes.error && pillarsRes.data) setPillars(pillarsRes.data);
     if (!ideasRes.error && ideasRes.data) setIdeas(ideasRes.data);
-    if (!competitorsRes.error && competitorsRes.data) setCompetitors(competitorsRes.data);
     if (!eventsRes.error && eventsRes.data) setEvents(eventsRes.data);
     if (!accountsRes.error && accountsRes.data) setAccounts(accountsRes.data);
 
@@ -125,7 +114,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setPlatformsLoading(false);
     setPillarsLoading(false);
     setIdeasLoading(false);
-    setCompetitorsLoading(false);
     setEventsLoading(false);
     setAccountsLoading(false);
 
@@ -144,7 +132,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         setPlatforms([]); setPlatformsLoading(false);
         setPillars([]); setPillarsLoading(false);
         setIdeas([]); setIdeasLoading(false);
-        setCompetitors([]); setCompetitorsLoading(false);
         setEvents([]); setEventsLoading(false);
         setAccounts([]); setAccountsLoading(false);
       });
@@ -262,29 +249,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     else toast.error('Gagal menghapus ide');
   }, [supabase, user]);
 
-  // Competitors CRUD
-  const createCompetitor = useCallback(async (competitor: Omit<Competitor, 'id' | 'created_at' | 'updated_at'>) => {
-    if (!user) return null;
-    const { data, error } = await supabase.from('competitors').insert([{ ...competitor, user_id: user.id }]).select().single();
-    if (!error && data) { setCompetitors(prev => [data, ...prev]); return data; }
-    toast.error('Gagal menambahkan kompetitor');
-    return null;
-  }, [user, supabase]);
-
-  const updateCompetitor = useCallback(async (id: string, updates: Partial<Competitor>) => {
-    if (!user) return;
-    const { error } = await supabase.from('competitors').update(updates).eq('id', id).eq('user_id', user.id);
-    if (!error) setCompetitors(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
-    else toast.error('Gagal memperbarui kompetitor');
-  }, [supabase, user]);
-
-  const deleteCompetitor = useCallback(async (id: string) => {
-    if (!user) return;
-    const { error } = await supabase.from('competitors').delete().eq('id', id).eq('user_id', user.id);
-    if (!error) setCompetitors(prev => prev.filter(c => c.id !== id));
-    else toast.error('Gagal menghapus kompetitor');
-  }, [supabase, user]);
-
   // Events CRUD
   const createEvent = useCallback(async (event: Omit<CalendarEvent, 'id' | 'created_at'>) => {
     if (!user) return null;
@@ -332,7 +296,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       supabase.from('platforms').delete().eq('user_id', user.id),
       supabase.from('pillars').delete().eq('user_id', user.id),
       supabase.from('content_ideas').delete().eq('user_id', user.id),
-      supabase.from('competitors').delete().eq('user_id', user.id),
       supabase.from('calendar_events').delete().eq('user_id', user.id),
       supabase.from('accounts').delete().eq('user_id', user.id),
     ]);
@@ -342,7 +305,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setPlatforms([]);
     setPillars([]);
     setIdeas([]);
-    setCompetitors([]);
     setEvents([]);
     setAccounts([]);
     toast.success('Seluruh data berhasil dihapus');
@@ -356,7 +318,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         platforms, platformsLoading, addPlatform, removePlatform,
         pillars, pillarsLoading, addPillar, removePillar,
         ideas, ideasLoading, createIdea, updateIdea, deleteIdea,
-        competitors, competitorsLoading, createCompetitor, updateCompetitor, deleteCompetitor,
         events, eventsLoading, createEvent, updateEvent, deleteEvent,
         accounts, accountsLoading, addAccount, removeAccount,
         factoryReset,

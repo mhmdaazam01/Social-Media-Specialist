@@ -142,6 +142,7 @@ export function CalEventModal({ open, onOpenChange, editEvent, defaultDate, onDe
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">-</SelectItem>
+                  <SelectItem value="Semua Platform">Semua Platform</SelectItem>
                   {platforms.map(p => (
                     <SelectItem key={p.platform_id} value={p.platform_id}>
                       {p.name}
@@ -158,6 +159,7 @@ export function CalEventModal({ open, onOpenChange, editEvent, defaultDate, onDe
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">-</SelectItem>
+                  <SelectItem value="Semua Akun">Semua Akun</SelectItem>
                   {accounts.map(a => (
                     <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>
                   ))}

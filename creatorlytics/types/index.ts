@@ -1,6 +1,6 @@
 export type Theme = 'dark' | 'light';
 export type ErMode = 'impression' | 'reach' | 'followers';
-export type PostStatus = 'idea' | 'brief' | 'draft' | 'ready';
+export type PostStatus = 'idea' | 'brief';
 export type Priority = 'low' | 'med' | 'high';
 export type EventStatus = 'idea' | 'scheduled' | 'published' | 'cancelled';
 
@@ -60,7 +60,6 @@ export interface ContentBrief {
   tone: string;
   format_video: string;
   durasi: string;
-  repurpose: string;
   ref_visual: string;
   timeline_script: string;
   timeline_shoot: string;
@@ -95,19 +94,6 @@ export interface CalendarEvent {
   status: EventStatus;
   idea_id: string | null;
   notes: string;
-  created_at: string;
-}
-
-export interface Competitor {
-  id: string;
-  name: string;
-  platform: string;
-  followers: number;
-  avg_reach: number;
-  avg_er: number;
-  post_freq: number;
-  notes: string;
-  updated_at: string;
   created_at: string;
 }
 

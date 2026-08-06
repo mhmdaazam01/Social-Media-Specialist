@@ -165,7 +165,22 @@ export default function ContentPage() {
                   Date
                 </th>
                 <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">
+                  Impression
+                </th>
+                <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">
                   Reach
+                </th>
+                <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">
+                  Like
+                </th>
+                <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">
+                  Comment
+                </th>
+                <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">
+                  Save
+                </th>
+                <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">
+                  Share
                 </th>
                 <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">
                   ER
@@ -178,13 +193,13 @@ export default function ContentPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-cly-sm text-cly-text-3 animate-pulse">
+                  <td colSpan={12} className="py-12 text-center text-cly-sm text-cly-text-3 animate-pulse">
                     Memuat data...
                   </td>
                 </tr>
               ) : filteredPosts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-cly-sm text-cly-text-3">
+                  <td colSpan={12} className="py-12 text-center text-cly-sm text-cly-text-3">
                     {searchQuery || platformFilter !== 'all' 
                       ? 'Tidak ada konten yang cocok dengan filter.'
                       : 'Belum ada konten. Klik tombol "+" untuk menambah.'}
@@ -219,7 +234,22 @@ export default function ContentPage() {
                         }) : '-'}
                       </td>
                       <td className="py-3 text-right text-cly-sm text-cly-text-2">
+                        {fmt(post.impression || 0)}
+                      </td>
+                      <td className="py-3 text-right text-cly-sm text-cly-text-2">
                         {fmt(post.reach || 0)}
+                      </td>
+                      <td className="py-3 text-right text-cly-sm text-cly-text-2">
+                        {fmt(post.like || 0)}
+                      </td>
+                      <td className="py-3 text-right text-cly-sm text-cly-text-2">
+                        {fmt(post.comment || 0)}
+                      </td>
+                      <td className="py-3 text-right text-cly-sm text-cly-text-2">
+                        {fmt(post.save || 0)}
+                      </td>
+                      <td className="py-3 text-right text-cly-sm text-cly-text-2">
+                        {fmt(post.share || 0)}
                       </td>
                       <td className="py-3 text-right text-cly-sm text-cly-text font-black">
                         {fmtPercent(er)}

@@ -30,16 +30,12 @@ export default function PlannerPage() {
     return {
       idea: ideas.filter(i => i.status === 'idea'),
       brief: ideas.filter(i => i.status === 'brief'),
-      draft: ideas.filter(i => i.status === 'draft'),
-      ready: ideas.filter(i => i.status === 'ready'),
     };
   }, [ideas]);
 
   const columnConfig: Array<{ key: PostStatus; label: string; color: string }> = [
-    { key: 'idea', label: 'Idea', color: '#94A3B8' },
+    { key: 'idea', label: 'Idea Bank', color: '#94A3B8' },
     { key: 'brief', label: 'Brief', color: '#60A5FA' },
-    { key: 'draft', label: 'Draft', color: '#FBBF24' },
-    { key: 'ready', label: 'Ready', color: '#34D399' },
   ];
 
   function handleAdd() {
@@ -107,7 +103,7 @@ export default function PlannerPage() {
           </div>
         ) : (
           /* Kanban Board */
-          <div className="grid grid-cols-1 gap-[18px] md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-[18px] md:grid-cols-2">
             {columnConfig.map(col => {
               const colIdeas = columns[col.key];
               return (

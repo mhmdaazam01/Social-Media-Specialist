@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useIdeas } from '@/lib/hooks/useIdeas';
 import { toast } from 'sonner';
 import {
@@ -32,7 +33,6 @@ const EMPTY_BRIEF: ContentBrief = {
   tone: '',
   format_video: '',
   durasi: '',
-  repurpose: '',
   ref_visual: '',
   timeline_script: '',
   timeline_shoot: '',
@@ -205,13 +205,12 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
 
             {/* FORMAT */}
             <ViewSection icon={<Smartphone className="size-3.5" />} title="Format Produksi">
-              {(form.format_video || form.durasi || form.repurpose || idea.format) ? (
+              {(form.format_video || form.durasi || idea.format) ? (
                 <>
                   {(form.format_video || idea.format) && (
                     <ViewRow label="Format" value={form.format_video || idea.format} />
                   )}
                   {form.durasi && <ViewRow label="Durasi" value={form.durasi} />}
-                  {form.repurpose && <ViewRow label="Repurpose" value={form.repurpose} />}
                 </>
               ) : (
                 <p className="text-xs text-muted-foreground/60 italic">Belum diisi.</p>
@@ -326,16 +325,22 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
             <EditSection icon={<Video className="size-4" />} title="Format Produksi">
               <div className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Format video</Label>
-                  <Input value={form.format_video} onChange={e => upd('format_video', e.target.value)} placeholder="Video vertikal 9:16" />
+                  <Label className="text-xs">Format</Label>
+                  <Select value={form.format_video} onValueChange={v => upd('format_video', v ?? '')}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">-</SelectItem>
+                      <SelectItem value="Video">Video</SelectItem>
+                      <SelectItem value="Carousel">Carousel</SelectItem>
+                      <SelectItem value="Single Post">Single Post</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Durasi</Label>
                   <Input value={form.durasi} onChange={e => upd('durasi', e.target.value)} placeholder="30–45 detik" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Repurpose ke platform lain</Label>
-                  <Input value={form.repurpose} onChange={e => upd('repurpose', e.target.value)} placeholder="YouTube Shorts, TikTok" />
                 </div>
               </div>
             </EditSection>

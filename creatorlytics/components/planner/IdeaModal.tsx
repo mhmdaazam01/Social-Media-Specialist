@@ -13,7 +13,7 @@ import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { usePillars } from '@/lib/hooks/usePillars';
 import { FORMAT_OPTIONS } from '@/lib/constants';
 import { Plus, X } from 'lucide-react';
-import type { ContentIdea } from '@/types';
+import type { ContentIdea, PostStatus } from '@/types';
 
 interface IdeaModalProps {
   open: boolean;
@@ -27,7 +27,7 @@ interface FormFields {
   platform: string;
   pillar: string;
   format: string;
-  status: 'idea' | 'brief' | 'draft' | 'ready';
+  status: PostStatus;
   priority: 'low' | 'med' | 'high';
   tags: string;
   ref_links: string[];
@@ -204,15 +204,13 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <Label htmlFor="status">Status</Label>
-              <Select value={form.status} onValueChange={v => v && update('status', v as FormFields['status'])}>
+              <Select value={form.status} onValueChange={v => v && update('status', v as PostStatus)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="idea">Idea</SelectItem>
+                  <SelectItem value="idea">Idea Bank</SelectItem>
                   <SelectItem value="brief">Brief</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="ready">Ready</SelectItem>
                 </SelectContent>
               </Select>
             </div>

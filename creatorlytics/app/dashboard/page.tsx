@@ -116,7 +116,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2 text-cly-sm text-cly-text-2">
             <span className="w-[7px] h-[7px] rounded-full bg-cly-green" />
-            Live data · {now.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}
+            Data Terkini
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <Badge tone="neutral">{now.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}</Badge>
@@ -220,14 +220,14 @@ export default function DashboardPage() {
               ) : bestPost ? (
                 <InsightCard
                   icon={CheckCircle2}
-                  title="Postingan Jawara"
+                  title="Top Konten"
                   text={`"${bestPost.name}" mencapai ${fmt(bestPost.reach)} orang.`}
                   tone="blue"
                 />
               ) : (
                 <InsightCard
                   icon={BookOpen}
-                  title="Belum ada jawara"
+                  title="Belum ada top konten"
                   text="Mulai posting konten pertama Anda!"
                   tone="amber"
                 />

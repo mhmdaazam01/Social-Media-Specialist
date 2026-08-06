@@ -10,6 +10,5 @@ export const NAV_ITEMS = [
   { label: 'Report', href: '/report', icon: 'FileSpreadsheet' },
   { label: 'Planner', href: '/planner', icon: 'ClipboardList' },
   { label: 'Kalender', href: '/calendar', icon: 'Calendar' },
-  { label: 'Kompetitor', href: '/competitor', icon: 'Users' },
   { label: 'Pengaturan', href: '/settings', icon: 'Settings' },
 ];
