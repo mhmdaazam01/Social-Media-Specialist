@@ -154,7 +154,9 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
               <Label htmlFor="platform">Platform</Label>
               <Select value={form.platform} onValueChange={v => update('platform', v ?? '')}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih platform" />
+                  <SelectValue placeholder="Pilih platform">
+                    {form.platform ? platforms.find(p => p.platform_id === form.platform)?.name || form.platform : 'Pilih platform'}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">-</SelectItem>
@@ -170,7 +172,9 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
               <Label htmlFor="pillar">Pilar</Label>
               <Select value={form.pillar} onValueChange={v => update('pillar', v ?? '')}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih pilar" />
+                  <SelectValue placeholder="Pilih pilar">
+                    {form.pillar ? pillars.find(p => p.pillar_id === form.pillar)?.label || form.pillar : 'Pilih pilar'}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">-</SelectItem>

@@ -138,7 +138,11 @@ export function CalEventModal({ open, onOpenChange, editEvent, defaultDate, onDe
               <Label htmlFor="platform">Platform</Label>
               <Select value={form.platform} onValueChange={v => update('platform', v ?? '')}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih platform" />
+                  <SelectValue placeholder="Pilih platform">
+                    {form.platform === 'Semua Platform' ? 'Semua Platform' : 
+                     form.platform ? platforms.find(p => p.platform_id === form.platform)?.name || form.platform : 
+                     'Pilih platform'}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">-</SelectItem>
@@ -155,7 +159,9 @@ export function CalEventModal({ open, onOpenChange, editEvent, defaultDate, onDe
               <Label htmlFor="account">Akun</Label>
               <Select value={form.account} onValueChange={v => update('account', v ?? '')}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih akun" />
+                  <SelectValue placeholder="Pilih akun">
+                    {form.account || 'Pilih akun'}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">-</SelectItem>
@@ -173,7 +179,9 @@ export function CalEventModal({ open, onOpenChange, editEvent, defaultDate, onDe
               <Label htmlFor="pillar">Pilar</Label>
               <Select value={form.pillar} onValueChange={v => update('pillar', v ?? '')}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih pilar" />
+                  <SelectValue placeholder="Pilih pilar">
+                    {form.pillar ? pillars.find(p => p.pillar_id === form.pillar)?.label || form.pillar : 'Pilih pilar'}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">-</SelectItem>
@@ -189,7 +197,9 @@ export function CalEventModal({ open, onOpenChange, editEvent, defaultDate, onDe
               <Label htmlFor="format">Format</Label>
               <Select value={form.format} onValueChange={v => update('format', v ?? '')}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih format" />
+                  <SelectValue placeholder="Pilih format">
+                    {form.format || 'Pilih format'}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">-</SelectItem>
