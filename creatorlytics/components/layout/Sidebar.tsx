@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, BarChart3, FileText, Target, FileSpreadsheet,
-  ClipboardList, Calendar, Users, Settings, LogOut, Sun, Moon,
+  ClipboardList, Calendar, Users, Settings, LogOut,
 } from 'lucide-react';
 import { NAV_ITEMS, APP_NAME } from '@/lib/constants';
 import { useUser } from '@/lib/hooks/useUser';
@@ -28,9 +28,9 @@ const iconMap: Record<string, React.ReactNode> = {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { profile, signOut, setTheme } = useUser();
-  const displayName = profile?.display_name || 'Kreator';
-  const isDark = profile?.theme === 'dark';
+  const { profile, signOut } = useUser();
+  const displayName = profile?.display_name || profile?.email?.split('@')[0] || 'User';
+  const initial = displayName.charAt(0).toUpperCase();
 
   return (
     <aside className="hidden lg:flex lg:flex-col w-64 h-screen border-r border-cly-border bg-cly-rail fixed left-0 top-0 z-30">
@@ -64,31 +64,13 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Theme Toggle */}
-      <div className="px-3 pb-2">
-        <button
-          onClick={() => setTheme(isDark ? 'light' : 'dark')}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-cly-text-2 transition-all duration-200 hover:bg-cly-muted hover:text-cly-text active:scale-[0.98]"
-        >
-          {isDark ? <Sun size={18} /> : <Moon size={18} />}
-          <span className="text-sm font-medium">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-          <span className={`ml-auto h-5 w-9 rounded-full transition-colors ${
-            isDark ? 'bg-cly-brand' : 'bg-cly-border-strong'
-          }`}>
-            <span className={`block h-5 w-5 rounded-full bg-white shadow-sm transition-transform scale-[0.75] ${
-              isDark ? 'translate-x-4' : 'translate-x-0'
-            }`} />
-          </span>
-        </button>
-      </div>
-
       <div className="p-3 border-t border-cly-border">
         <DropdownMenu>
           <DropdownMenuTrigger className="flex w-full items-center gap-3 px-3 py-3 rounded-lg bg-cly-muted hover:bg-cly-muted-2 transition-all duration-200 active:scale-[0.98] cursor-pointer outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring">
             <Avatar className="h-8 w-8">
               <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
               <AvatarFallback className="bg-cly-brand-tint text-cly-brand text-xs font-bold">
-                {displayName.charAt(0).toUpperCase()}
+                {initial}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0 text-left">
