@@ -228,7 +228,12 @@ export function CalEventModal({ open, onOpenChange, editEvent, defaultDate, onDe
             <Label htmlFor="status">Status</Label>
             <Select value={form.status} onValueChange={v => v && update('status', v as FormFields['status'])}>
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue>
+                  {form.status === 'idea' ? 'Idea' : 
+                   form.status === 'scheduled' ? 'Terjadwal' : 
+                   form.status === 'published' ? 'Terbit' : 
+                   form.status === 'cancelled' ? 'Dibatalkan' : form.status}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="idea">Idea</SelectItem>

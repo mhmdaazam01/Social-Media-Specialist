@@ -7,6 +7,7 @@ export function usePlatforms() {
     platforms,
     platformsLoading: loading,
     addPlatform,
+    updatePlatform,
     removePlatform,
   } = useData();
 
@@ -14,6 +15,7 @@ export function usePlatforms() {
     platforms,
     loading,
     addPlatform,
+    updatePlatform,
     removePlatform,
   };
 }

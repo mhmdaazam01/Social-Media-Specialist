@@ -210,7 +210,9 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
               <Label htmlFor="status">Status</Label>
               <Select value={form.status} onValueChange={v => v && update('status', v as PostStatus)}>
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {form.status === 'idea' ? 'Idea Bank' : form.status === 'brief' ? 'Brief' : form.status}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="idea">Idea Bank</SelectItem>
@@ -222,7 +224,9 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
               <Label htmlFor="priority">Prioritas</Label>
               <Select value={form.priority} onValueChange={v => v && update('priority', v as FormFields['priority'])}>
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {form.priority === 'low' ? 'Rendah' : form.priority === 'med' ? 'Sedang' : form.priority === 'high' ? 'Tinggi' : form.priority}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="low">Rendah</SelectItem>

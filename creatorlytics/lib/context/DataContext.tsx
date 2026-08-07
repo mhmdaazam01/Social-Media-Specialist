@@ -28,12 +28,14 @@ interface DataContextType {
   platforms: Platform[];
   platformsLoading: boolean;
   addPlatform: (platform: Omit<Platform, 'id'>) => Promise<Platform | null>;
+  updatePlatform: (id: string, updates: Partial<Platform>) => Promise<void>;
   removePlatform: (id: string) => Promise<void>;
 
   // Pillars
   pillars: Pillar[];
   pillarsLoading: boolean;
   addPillar: (pillar: Omit<Pillar, 'id'>) => Promise<Pillar | null>;
+  updatePillar: (id: string, updates: Partial<Pillar>) => Promise<void>;
   removePillar: (id: string) => Promise<void>;
 
   // Ideas
@@ -54,6 +56,7 @@ interface DataContextType {
   accounts: Account[];
   accountsLoading: boolean;
   addAccount: (name: string) => Promise<Account | null>;
+  updateAccount: (id: string, updates: Partial<Account>) => Promise<void>;
   removeAccount: (id: string) => Promise<void>;
 
   // Factory Reset
@@ -204,6 +207,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     return null;
   }, [user, supabase]);
 
+  const updatePlatform = useCallback(async (id: string, updates: Partial<Platform>) => {
+    if (!user) return;
+    const { error } = await supabase.from('platforms').update(updates).eq('id', id).eq('user_id', user.id);
+    if (!error) setPlatforms(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+  }, [supabase, user]);
+
   const removePlatform = useCallback(async (id: string) => {
     if (!user) return;
     const { error } = await supabase.from('platforms').delete().eq('id', id).eq('user_id', user.id);
@@ -218,6 +227,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     toast.error('Gagal menambahkan pilar');
     return null;
   }, [user, supabase]);
+
+  const updatePillar = useCallback(async (id: string, updates: Partial<Pillar>) => {
+    if (!user) return;
+    const { error } = await supabase.from('pillars').update(updates).eq('id', id).eq('user_id', user.id);
+    if (!error) setPillars(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+  }, [supabase, user]);
 
   const removePillar = useCallback(async (id: string) => {
     if (!user) return;
@@ -281,6 +296,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     return null;
   }, [user, supabase]);
 
+  const updateAccount = useCallback(async (id: string, updates: Partial<Account>) => {
+    if (!user) return;
+    const { error } = await supabase.from('accounts').update(updates).eq('id', id).eq('user_id', user.id);
+    if (!error) setAccounts(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+  }, [supabase, user]);
+
   const removeAccount = useCallback(async (id: string) => {
     if (!user) return;
     const { error } = await supabase.from('accounts').delete().eq('id', id).eq('user_id', user.id);
@@ -315,11 +336,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       value={{
         posts, postsLoading, createPost, updatePost, deletePost, importPosts, getPost, refreshPosts,
         goals, goalsLoading, createGoal, updateGoal, deleteGoal,
-        platforms, platformsLoading, addPlatform, removePlatform,
-        pillars, pillarsLoading, addPillar, removePillar,
+        platforms, platformsLoading, addPlatform, updatePlatform, removePlatform,
+        pillars, pillarsLoading, addPillar, updatePillar, removePillar,
         ideas, ideasLoading, createIdea, updateIdea, deleteIdea,
         events, eventsLoading, createEvent, updateEvent, deleteEvent,
-        accounts, accountsLoading, addAccount, removeAccount,
+        accounts, accountsLoading, addAccount, updateAccount, removeAccount,
         factoryReset,
       }}
     >

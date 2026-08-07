@@ -9,28 +9,31 @@ import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { useAccounts } from '@/lib/hooks/useAccounts';
 import { usePillars } from '@/lib/hooks/usePillars';
 import { useData } from '@/lib/context/DataContext';
-import { Trash2Icon, PlusIcon, UserIcon, LayoutGridIcon, BellIcon, SunIcon, MoonIcon, AlertTriangleIcon } from 'lucide-react';
+import { Trash2Icon, PlusIcon, UserIcon, LayoutGridIcon, BellIcon, AlertTriangleIcon, PencilIcon } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 type Tab = 'profile' | 'platforms' | 'notifications';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { profile, refreshProfile, setTheme } = useUser();
-  const { platforms, addPlatform, removePlatform } = usePlatforms();
-  const { accounts, addAccount, removeAccount } = useAccounts();
-  const { pillars, addPillar, removePillar } = usePillars();
+  const { profile, refreshProfile } = useUser();
+  const { platforms, addPlatform, removePlatform, updatePlatform } = usePlatforms();
+  const { accounts, addAccount, removeAccount, updateAccount } = useAccounts();
+  const { pillars, addPillar, removePillar, updatePillar } = usePillars();
   const { factoryReset } = useData();
   const supabase = createClient();
 
   const [activeTab, setActiveTab] = useState<Tab>('profile');
-  const [displayName, setDisplayName] = useState(profile?.display_name || '');
-  const [niche, setNiche] = useState(profile?.niche || '');
 
   const [platformName, setPlatformName] = useState('');
   const [accountName, setAccountName] = useState('');
   const [pillarLabel, setPillarLabel] = useState('');
   const [pillarColor, setPillarColor] = useState('#3B82F6');
+
+  // Edit states
+  const [editingPlatformId, setEditingPlatformId] = useState<string | null>(null);
+  const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
+  const [editingPillarId, setEditingPillarId] = useState<string | null>(null);
 
   // Notification settings (persisted in localStorage)
   const [notifGoal, setNotifGoal] = useState(true);
@@ -53,20 +56,6 @@ export default function SettingsPage() {
   const handleNotifReminder = () => { const next = !notifReminder; setNotifReminder(next); localStorage.setItem('cly_notif_reminder', String(next)); };
   const handleNotifReport = () => { const next = !notifReport; setNotifReport(next); localStorage.setItem('cly_notif_report', String(next)); };
 
-  async function handleSaveProfile() {
-    if (!profile) return;
-    const { error } = await supabase
-      .from('profiles')
-      .update({ display_name: displayName, niche })
-      .eq('id', profile.id);
-    if (error) {
-      toast.error('Gagal memperbarui profil');
-    } else {
-      await refreshProfile();
-      toast.success('Profil berhasil diperbarui');
-    }
-  }
-
   async function handleErModeChange(mode: 'impression' | 'reach' | 'followers') {
     if (!profile) return;
     const { error } = await supabase
@@ -81,8 +70,29 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleThemeChange(theme: 'dark' | 'light') {
-    await setTheme(theme);
+  function handleEditPlatform(id: string) {
+    const platform = platforms.find(p => p.id === id);
+    if (platform) {
+      setPlatformName(platform.name);
+      setEditingPlatformId(id);
+    }
+  }
+
+  function handleEditAccount(id: string) {
+    const account = accounts.find(a => a.id === id);
+    if (account) {
+      setAccountName(account.name);
+      setEditingAccountId(id);
+    }
+  }
+
+  function handleEditPillar(id: string) {
+    const pillar = pillars.find(p => p.id === id);
+    if (pillar) {
+      setPillarLabel(pillar.label);
+      setPillarColor(pillar.color);
+      setEditingPillarId(id);
+    }
   }
 
   function handleAddPlatform() {
@@ -90,10 +100,18 @@ export default function SettingsPage() {
       toast.error('Nama platform wajib diisi');
       return;
     }
-    const platformId = platformName.toLowerCase().replace(/\s+/g, '-');
-    addPlatform({ platform_id: platformId, name: platformName, emoji: '' });
+    if (editingPlatformId) {
+      // Update existing platform
+      updatePlatform(editingPlatformId, { name: platformName });
+      setEditingPlatformId(null);
+      toast.success('Platform berhasil diperbarui');
+    } else {
+      // Add new platform
+      const platformId = platformName.toLowerCase().replace(/\s+/g, '-');
+      addPlatform({ platform_id: platformId, name: platformName, emoji: '' });
+      toast.success('Platform berhasil ditambahkan');
+    }
     setPlatformName('');
-    toast.success('Platform berhasil ditambahkan');
   }
 
   function handleAddAccount() {
@@ -101,9 +119,17 @@ export default function SettingsPage() {
       toast.error('Nama akun wajib diisi');
       return;
     }
-    addAccount(accountName);
+    if (editingAccountId) {
+      // Update existing account
+      updateAccount(editingAccountId, { name: accountName });
+      setEditingAccountId(null);
+      toast.success('Akun berhasil diperbarui');
+    } else {
+      // Add new account
+      addAccount(accountName);
+      toast.success('Akun berhasil ditambahkan');
+    }
     setAccountName('');
-    toast.success('Akun berhasil ditambahkan');
   }
 
   function handleAddPillar() {
@@ -111,17 +137,29 @@ export default function SettingsPage() {
       toast.error('Label pilar wajib diisi');
       return;
     }
-    const pillarId = pillarLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    addPillar({
-      pillar_id: pillarId,
-      label: pillarLabel,
-      emoji: '',
-      color: pillarColor,
-      bg: pillarColor + '20',
-    });
+    if (editingPillarId) {
+      // Update existing pillar
+      updatePillar(editingPillarId, {
+        label: pillarLabel,
+        color: pillarColor,
+        bg: pillarColor + '20',
+      });
+      setEditingPillarId(null);
+      toast.success('Pilar berhasil diperbarui');
+    } else {
+      // Add new pillar
+      const pillarId = pillarLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      addPillar({
+        pillar_id: pillarId,
+        label: pillarLabel,
+        emoji: '',
+        color: pillarColor,
+        bg: pillarColor + '20',
+      });
+      toast.success('Pilar berhasil ditambahkan');
+    }
     setPillarLabel('');
     setPillarColor('#3B82F6');
-    toast.success('Pilar berhasil ditambahkan');
   }
 
   async function handleFactoryReset() {
@@ -184,39 +222,6 @@ export default function SettingsPage() {
         {/* PROFILE TAB */}
         {activeTab === 'profile' && (
           <div className="flex flex-col gap-[18px]">
-            {/* Basic Info */}
-            <div className="rounded-[10px] bg-cly-surface p-[18px] shadow-cly">
-              <h3 className="mb-4 text-cly-base font-semibold text-cly-text">Informasi Dasar</h3>
-              <div className="flex flex-col gap-3.5">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-cly-xs font-medium text-cly-text">Display Name</label>
-                  <input
-                    type="text"
-                    value={displayName}
-                    onChange={e => setDisplayName(e.target.value)}
-                    className="h-[34px] rounded-lg border border-cly-border bg-cly-surface px-2.5 text-cly-sm text-cly-text outline-none transition-colors focus:border-cly-brand"
-                    placeholder="Nama kamu"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-cly-xs font-medium text-cly-text">Niche</label>
-                  <input
-                    type="text"
-                    value={niche}
-                    onChange={e => setNiche(e.target.value)}
-                    className="h-[34px] rounded-lg border border-cly-border bg-cly-surface px-2.5 text-cly-sm text-cly-text outline-none transition-colors focus:border-cly-brand"
-                    placeholder="Contoh: Teknologi, Gaming, Kuliner"
-                  />
-                </div>
-                <button
-                  onClick={handleSaveProfile}
-                  className="mt-1 self-start rounded-lg bg-cly-brand px-4 py-2 text-cly-sm font-medium text-white transition-all hover:bg-cly-brand-hover active:scale-95"
-                >
-                  Simpan Perubahan
-                </button>
-              </div>
-            </div>
-
             {/* ER Mode Selector */}
             <div className="rounded-[10px] bg-cly-surface p-[18px] shadow-cly">
               <h3 className="mb-2 text-cly-base font-semibold text-cly-text">Engagement Rate Mode</h3>
@@ -252,47 +257,6 @@ export default function SettingsPage() {
                         {mode === 'reach' && 'ER = (Engagement / Reach) × 100'}
                       </span>
                     </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Tampilan / Theme */}
-            <div className="rounded-[10px] bg-cly-surface p-[18px] shadow-cly">
-              <h3 className="mb-2 text-cly-base font-semibold text-cly-text">Tampilan</h3>
-              <p className="mb-4 text-cly-xs text-cly-text-muted">Pilih tema tampilan aplikasi</p>
-              <div className="flex flex-col gap-2">
-                {([
-                  { value: 'light', label: 'Light Mode', desc: 'Tampilan terang, cocok untuk siang hari', Icon: SunIcon },
-                  { value: 'dark', label: 'Dark Mode', desc: 'Tampilan gelap, nyaman di mata saat malam', Icon: MoonIcon },
-                ] as const).map(({ value, label, desc, Icon }) => (
-                  <button
-                    key={value}
-                    onClick={() => handleThemeChange(value)}
-                    className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-all ${
-                      profile?.theme === value
-                        ? 'border-cly-brand bg-cly-brand/5'
-                        : 'border-cly-border bg-cly-surface hover:border-cly-border-strong'
-                    }`}
-                  >
-                    <div
-                      className={`flex size-8 items-center justify-center rounded-lg ${
-                        profile?.theme === value ? 'bg-cly-brand text-white' : 'bg-cly-muted text-cly-text-muted'
-                      }`}
-                    >
-                      <Icon className="size-4" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-cly-sm font-medium text-cly-text">{label}</span>
-                      <span className="text-cly-xs text-cly-text-muted">{desc}</span>
-                    </div>
-                    <div
-                      className={`ml-auto size-4 rounded-full border-2 transition-all ${
-                        profile?.theme === value
-                          ? 'border-cly-brand bg-cly-brand'
-                          : 'border-cly-border'
-                      }`}
-                    />
                   </button>
                 ))}
               </div>
@@ -338,13 +302,22 @@ export default function SettingsPage() {
                   {platforms.map(p => (
                     <div key={p.id} className="flex items-center justify-between rounded-lg border border-cly-border bg-cly-muted px-3 py-2.5">
                       <span className="text-cly-sm text-cly-text">{p.name}</span>
-                      <button
-                        onClick={() => removePlatform(p.id)}
-                        className="rounded-md p-1.5 text-cly-text-muted transition-colors hover:bg-cly-muted-2 hover:text-red-600"
-                        aria-label={`Hapus ${p.name}`}
-                      >
-                        <Trash2Icon className="size-4" />
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleEditPlatform(p.id)}
+                          className="rounded-md p-1.5 text-cly-text-muted transition-colors hover:bg-cly-muted-2 hover:text-cly-brand"
+                          aria-label={`Edit ${p.name}`}
+                        >
+                          <PencilIcon className="size-4" />
+                        </button>
+                        <button
+                          onClick={() => removePlatform(p.id)}
+                          className="rounded-md p-1.5 text-cly-text-muted transition-colors hover:bg-cly-muted-2 hover:text-red-600"
+                          aria-label={`Hapus ${p.name}`}
+                        >
+                          <Trash2Icon className="size-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -362,8 +335,8 @@ export default function SettingsPage() {
                   onClick={handleAddPlatform}
                   className="flex items-center gap-1.5 rounded-lg border border-cly-border bg-cly-surface px-3 py-2 text-cly-sm font-medium text-cly-text transition-all hover:border-cly-brand hover:bg-cly-brand hover:text-white active:scale-95"
                 >
-                  <PlusIcon className="size-4" />
-                  Tambah
+                  {editingPlatformId ? <PencilIcon className="size-4" /> : <PlusIcon className="size-4" />}
+                  {editingPlatformId ? 'Simpan' : 'Tambah'}
                 </button>
               </div>
             </div>
@@ -378,13 +351,22 @@ export default function SettingsPage() {
                   {accounts.map(a => (
                     <div key={a.id} className="flex items-center justify-between rounded-lg border border-cly-border bg-cly-muted px-3 py-2.5">
                       <span className="text-cly-sm text-cly-text">{a.name}</span>
-                      <button
-                        onClick={() => removeAccount(a.id)}
-                        className="rounded-md p-1.5 text-cly-text-muted transition-colors hover:bg-cly-muted-2 hover:text-red-600"
-                        aria-label={`Hapus ${a.name}`}
-                      >
-                        <Trash2Icon className="size-4" />
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleEditAccount(a.id)}
+                          className="rounded-md p-1.5 text-cly-text-muted transition-colors hover:bg-cly-muted-2 hover:text-cly-brand"
+                          aria-label={`Edit ${a.name}`}
+                        >
+                          <PencilIcon className="size-4" />
+                        </button>
+                        <button
+                          onClick={() => removeAccount(a.id)}
+                          className="rounded-md p-1.5 text-cly-text-muted transition-colors hover:bg-cly-muted-2 hover:text-red-600"
+                          aria-label={`Hapus ${a.name}`}
+                        >
+                          <Trash2Icon className="size-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -402,8 +384,8 @@ export default function SettingsPage() {
                   onClick={handleAddAccount}
                   className="flex items-center gap-1.5 rounded-lg border border-cly-border bg-cly-surface px-3 py-2 text-cly-sm font-medium text-cly-text transition-all hover:border-cly-brand hover:bg-cly-brand hover:text-white active:scale-95"
                 >
-                  <PlusIcon className="size-4" />
-                  Tambah
+                  {editingAccountId ? <PencilIcon className="size-4" /> : <PlusIcon className="size-4" />}
+                  {editingAccountId ? 'Simpan' : 'Tambah'}
                 </button>
               </div>
             </div>
@@ -421,13 +403,22 @@ export default function SettingsPage() {
                         <span className="size-3 rounded-full" style={{ backgroundColor: p.color }} />
                         <span className="text-cly-sm text-cly-text">{p.label}</span>
                       </div>
-                      <button
-                        onClick={() => removePillar(p.id)}
-                        className="rounded-md p-1.5 text-cly-text-muted transition-colors hover:bg-cly-muted-2 hover:text-red-600"
-                        aria-label={`Hapus ${p.label}`}
-                      >
-                        <Trash2Icon className="size-4" />
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleEditPillar(p.id)}
+                          className="rounded-md p-1.5 text-cly-text-muted transition-colors hover:bg-cly-muted-2 hover:text-cly-brand"
+                          aria-label={`Edit ${p.label}`}
+                        >
+                          <PencilIcon className="size-4" />
+                        </button>
+                        <button
+                          onClick={() => removePillar(p.id)}
+                          className="rounded-md p-1.5 text-cly-text-muted transition-colors hover:bg-cly-muted-2 hover:text-red-600"
+                          aria-label={`Hapus ${p.label}`}
+                        >
+                          <Trash2Icon className="size-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -451,8 +442,8 @@ export default function SettingsPage() {
                   onClick={handleAddPillar}
                   className="col-span-2 flex items-center justify-center gap-1.5 rounded-lg border border-cly-border bg-cly-surface px-3 py-2 text-cly-sm font-medium text-cly-text transition-all hover:border-cly-brand hover:bg-cly-brand hover:text-white active:scale-95"
                 >
-                  <PlusIcon className="size-4" />
-                  Tambah Pilar
+                  {editingPillarId ? <PencilIcon className="size-4" /> : <PlusIcon className="size-4" />}
+                  {editingPillarId ? 'Simpan Perubahan' : 'Tambah Pilar'}
                 </button>
               </div>
             </div>

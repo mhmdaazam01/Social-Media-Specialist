@@ -143,7 +143,9 @@ export function GoalModal({ open, onOpenChange, editGoal }: GoalModalProps) {
             <Label>Metrik</Label>
             <Select value={form.metric} onValueChange={v => set('metric', v ?? 'followers')}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue>
+                  {form.metric.charAt(0).toUpperCase() + form.metric.slice(1)}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {METRICS.map(m => (
@@ -158,7 +160,9 @@ export function GoalModal({ open, onOpenChange, editGoal }: GoalModalProps) {
             <Label>Platform</Label>
             <Select value={form.platform} onValueChange={v => set('platform', v ?? 'all')}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue>
+                  {form.platform === 'all' ? 'Semua Platform' : platforms.find(p => p.platform_id === form.platform)?.name || form.platform}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Platform</SelectItem>
