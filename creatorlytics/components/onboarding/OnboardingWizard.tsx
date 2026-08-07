@@ -17,7 +17,6 @@ import {
   ChevronLeft,
   Layers,
   Plus,
-  Smartphone,
   Sparkles,
   User,
   X,
@@ -49,7 +48,7 @@ const PILLAR_COLORS = [
   { color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
 ];
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 3;
 
 export function OnboardingWizard() {
   const { user, profile, refreshProfile } = useUser();
@@ -66,24 +65,14 @@ export function OnboardingWizard() {
   const [niche, setNiche] = useState(profile?.niche || '');
   const [customNiche, setCustomNiche] = useState('');
 
-  // Step 2 — Platforms
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-
-  // Step 3 — Account name
+  // Step 2 — Account name
   const [accountName, setAccountName] = useState('');
 
-  // Step 4 — Pillars
+  // Step 3 — Pillars
   const [pillars, setPillars] = useState<{ label: string; emoji: string }[]>([]);
   const [pillarInput, setPillarInput] = useState('');
-  const [pillarEmoji, setPillarEmoji] = useState('');
 
   // -------- helpers --------
-  const togglePlatform = (id: string) => {
-    setSelectedPlatforms(prev =>
-      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
-    );
-  };
-
   const addPillarItem = () => {
     const label = pillarInput.trim();
     if (!label) return;
@@ -91,9 +80,8 @@ export function OnboardingWizard() {
     if (pillars.some(p => p.label.toLowerCase() === label.toLowerCase())) {
       toast.error('Pilar sudah ada'); return;
     }
-    setPillars(prev => [...prev, { label, emoji: pillarEmoji || '📌' }]);
+    setPillars(prev => [...prev, { label, emoji: '📌' }]);
     setPillarInput('');
-    setPillarEmoji('');
   };
 
   const removePillarItem = (label: string) => {
@@ -103,9 +91,8 @@ export function OnboardingWizard() {
   // -------- navigation --------
   const canNext = () => {
     if (step === 1) return displayName.trim().length > 0 && (niche.trim().length > 0 || customNiche.trim().length > 0);
-    if (step === 2) return selectedPlatforms.length > 0;
-    if (step === 3) return accountName.trim().length > 0;
-    return true; // step 4 (pillars) is optional
+    if (step === 2) return accountName.trim().length > 0;
+    return true; // step 3 (pillars) is optional
   };
 
   const next = () => { if (step < TOTAL_STEPS) setStep(s => s + 1); };
@@ -127,21 +114,12 @@ export function OnboardingWizard() {
 
       if (profileError) throw profileError;
 
-      // 2. Add selected platforms (skip if already exists — DataContext handles optimistic)
-      await Promise.all(
-        selectedPlatforms.map(id => {
-          const preset = PRESET_PLATFORMS.find(p => p.platform_id === id);
-          if (!preset) return Promise.resolve();
-          return addPlatform({ platform_id: preset.platform_id, name: preset.name, emoji: preset.emoji });
-        })
-      );
-
-      // 3. Add account
+      // 2. Add account
       if (accountName.trim()) {
         await addAccount(accountName.trim());
       }
 
-      // 4. Add pillars
+      // 3. Add pillars
       await Promise.all(
         pillars.map((p, i) => {
           const c = PILLAR_COLORS[i % PILLAR_COLORS.length];
@@ -155,7 +133,7 @@ export function OnboardingWizard() {
         })
       );
 
-      // 5. Refresh profile so OnboardingGuard sees is_onboarded = true
+      // 4. Refresh profile so OnboardingGuard sees is_onboarded = true
       await refreshProfile();
       toast.success('Selamat datang di Creatorlytics!');
     } catch (err) {
@@ -184,9 +162,8 @@ export function OnboardingWizard() {
               Langkah {step} dari {TOTAL_STEPS}
             </p>
             {step === 1 && <StepHeader icon={<User className="size-5" />} title="Siapa kamu?" desc="Biar dashboard bisa disesuaikan buat kamu." />}
-            {step === 2 && <StepHeader icon={<Smartphone className="size-5" />} title="Platform mana yang kamu pakai?" desc="Pilih semua platform tempat kamu aktif berkreasi." />}
-            {step === 3 && <StepHeader icon={<BarChart3 className="size-5" />} title="Nama akun sosmedmu?" desc="Ini akan jadi akun default saat kamu input data konten." />}
-            {step === 4 && <StepHeader icon={<Layers className="size-5" />} title="Pilar konten kamu (opsional)" desc="Kategori konten yang sering kamu buat. Bisa ditambah nanti di Settings." />}
+            {step === 2 && <StepHeader icon={<BarChart3 className="size-5" />} title="Nama akun sosmedmu?" desc="Ini akan jadi akun default saat kamu input data konten." />}
+            {step === 3 && <StepHeader icon={<Layers className="size-5" />} title="Pilar konten kamu (opsional)" desc="Kategori konten yang sering kamu buat. Bisa ditambah nanti di Settings." />}
           </div>
 
           {/* Step content */}
@@ -230,29 +207,6 @@ export function OnboardingWizard() {
             )}
 
             {step === 2 && (
-              <div className="grid grid-cols-2 gap-2">
-                {PRESET_PLATFORMS.map(p => (
-                  <button
-                    key={p.platform_id}
-                    type="button"
-                    onClick={() => togglePlatform(p.platform_id)}
-                    className={`flex items-center gap-2.5 p-3 rounded-xl border text-sm font-medium transition-all ${
-                      selectedPlatforms.includes(p.platform_id)
-                        ? 'bg-primary/10 border-primary text-primary'
-                        : 'bg-muted/30 border-border text-muted-foreground hover:border-primary/40'
-                    }`}
-                  >
-                    <span className="text-lg">{p.emoji}</span>
-                    <span>{p.name}</span>
-                    {selectedPlatforms.includes(p.platform_id) && (
-                      <CheckCircle2 className="size-4 ml-auto shrink-0" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {step === 3 && (
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <Label>Username atau nama akun</Label>
@@ -269,16 +223,9 @@ export function OnboardingWizard() {
               </div>
             )}
 
-            {step === 4 && (
+            {step === 3 && (
               <div className="space-y-3">
                 <div className="flex gap-2">
-                  <Input
-                    placeholder="Emoji"
-                    value={pillarEmoji}
-                    onChange={e => setPillarEmoji(e.target.value)}
-                    className="w-20 text-center"
-                    maxLength={2}
-                  />
                   <Input
                     placeholder="Nama pilar, misal: Edukasi"
                     value={pillarInput}
@@ -349,7 +296,7 @@ export function OnboardingWizard() {
             )}
           </div>
 
-          {step === 4 && (
+          {step === 3 && (
             <button
               type="button"
               onClick={finish}
