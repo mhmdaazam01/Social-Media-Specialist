@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, DM_Sans, DM_Mono, Inter } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers/Providers";
 
@@ -42,14 +41,6 @@ export default function RootLayout({
       className={`${bricolage.variable} ${dmSans.variable} ${dmMono.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        {/* Reads theme cookie BEFORE paint to eliminate flash */}
-        <Script
-          id="theme-init"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var c=document.cookie.match(/(?:^|;\\s*)theme=([^;]*)/);var t=c?c[1]:'light';if(t!=='dark')t='light';document.documentElement.classList.add(t);}catch(e){document.documentElement.classList.add('light');}})();`,
-          }}
-        />
         <Providers>{children}</Providers>
       </body>
     </html>

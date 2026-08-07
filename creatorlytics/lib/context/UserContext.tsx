@@ -11,7 +11,6 @@ interface Profile {
   avatar_url: string | null;
   niche: string;
   er_mode: 'impression' | 'reach' | 'followers';
-  theme: 'dark' | 'light';
   is_onboarded: boolean;
 }
 
@@ -21,7 +20,6 @@ interface UserContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  setTheme: (theme: 'dark' | 'light') => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -82,19 +80,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user, fetchProfile]);
 
-  const setTheme = useCallback(async (theme: 'dark' | 'light') => {
-    if (!user) return;
-    // Optimistic: update local state + DOM immediately so UI feels instant
-    setProfile(prev => prev ? { ...prev, theme } : prev);
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(theme);
-    document.cookie = `theme=${theme};path=/;max-age=31536000;SameSite=Lax`;
-    // Persist to DB in background (no await needed for UX)
-    supabase.from('profiles').update({ theme }).eq('id', user.id);
-  }, [user, supabase]);
-
   return (
-    <UserContext.Provider value={{ user, profile, loading, signOut, refreshProfile, setTheme }}>
+    <UserContext.Provider value={{ user, profile, loading, signOut, refreshProfile }}>
       {children}
     </UserContext.Provider>
   );
