@@ -8,7 +8,7 @@ import { usePosts } from '@/lib/hooks/usePosts';
 import { useAccounts } from '@/lib/hooks/useAccounts';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { postsToCSV } from '@/lib/utils/export';
-import { PlusIcon, DownloadIcon, Trash2, Search } from 'lucide-react';
+import { PlusIcon, DownloadIcon, Trash2, Search, CheckSquare } from 'lucide-react';
 import type { Post } from '@/types';
 
 export default function ContentPage() {
@@ -32,6 +32,7 @@ export default function ContentPage() {
   
   // Bulk delete state
   const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set());
+  const [bulkSelectMode, setBulkSelectMode] = useState(false);
 
   const handleImport = useCallback(() => {
     // Refresh after import
@@ -125,6 +126,11 @@ export default function ContentPage() {
       await deletePost(postId);
     }
     setSelectedPosts(new Set());
+  }
+  
+  function toggleBulkSelectMode() {
+    setBulkSelectMode(!bulkSelectMode);
+    setSelectedPosts(new Set()); // Clear selection when toggling
   }
 
   async function handleAddRow() {
@@ -302,7 +308,19 @@ export default function ContentPage() {
                 Tambah Baris
               </button>
               
-              {selectedPosts.size > 0 && (
+              <button
+                onClick={toggleBulkSelectMode}
+                className={`h-[34px] px-[13px] rounded-lg border text-cly-sm font-semibold transition-colors inline-flex items-center gap-2 ${
+                  bulkSelectMode 
+                    ? 'bg-cly-brand text-white border-cly-brand hover:bg-cly-brand-hover' 
+                    : 'bg-cly-surface text-cly-text-2 border-cly-border hover:bg-cly-muted'
+                }`}
+              >
+                <CheckSquare size={14} />
+                {bulkSelectMode ? 'Batal' : 'Pilih'}
+              </button>
+              
+              {bulkSelectMode && selectedPosts.size > 0 && (
                 <button
                   onClick={handleBulkDelete}
                   className="h-[34px] px-[13px] rounded-lg bg-cly-red text-white text-cly-sm font-semibold hover:bg-red-600 transition-colors inline-flex items-center gap-2"
@@ -332,14 +350,16 @@ export default function ContentPage() {
           <table className="w-full border-collapse min-w-[1400px]">
             <thead className="sticky top-0 bg-cly-muted z-10">
               <tr>
-                <th className="text-center text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-12 bg-cly-muted">
-                  <input
-                    type="checkbox"
-                    checked={filteredPosts.length > 0 && selectedPosts.size === filteredPosts.length}
-                    onChange={toggleSelectAll}
-                    className="w-4 h-4 cursor-pointer accent-cly-brand"
-                  />
-                </th>
+                {bulkSelectMode && (
+                  <th className="text-center text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-12 bg-cly-muted">
+                    <input
+                      type="checkbox"
+                      checked={filteredPosts.length > 0 && selectedPosts.size === filteredPosts.length}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 cursor-pointer accent-cly-brand"
+                    />
+                  </th>
+                )}
                 <th className="text-center text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-12 bg-cly-muted">
                   #
                 </th>
@@ -389,13 +409,13 @@ export default function ContentPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={accountFilter === 'all' ? 15 : 14} className="py-12 text-center text-cly-sm text-cly-text-3 animate-pulse">
+                  <td colSpan={bulkSelectMode ? (accountFilter === 'all' ? 15 : 14) : (accountFilter === 'all' ? 14 : 13)} className="py-12 text-center text-cly-sm text-cly-text-3 animate-pulse">
                     Memuat data...
                   </td>
                 </tr>
               ) : filteredPosts.length === 0 ? (
                 <tr>
-                  <td colSpan={accountFilter === 'all' ? 15 : 14} className="py-12 text-center text-cly-sm text-cly-text-3">
+                  <td colSpan={bulkSelectMode ? (accountFilter === 'all' ? 15 : 14) : (accountFilter === 'all' ? 14 : 13)} className="py-12 text-center text-cly-sm text-cly-text-3">
                     {accountFilter !== 'all' 
                       ? `Belum ada konten untuk akun "${accountFilter}".`
                       : 'Belum ada konten. Klik "Tambah Baris" untuk mulai.'}
@@ -411,14 +431,16 @@ export default function ContentPage() {
                     key={post.id}
                     className="border-b border-cly-border hover:bg-cly-muted/30 transition-colors"
                   >
-                    <td className="py-2 px-3 text-center border-r border-cly-border">
-                      <input
-                        type="checkbox"
-                        checked={selectedPosts.has(post.id)}
-                        onChange={() => toggleSelectPost(post.id)}
-                        className="w-4 h-4 cursor-pointer accent-cly-brand"
-                      />
-                    </td>
+                    {bulkSelectMode && (
+                      <td className="py-2 px-3 text-center border-r border-cly-border">
+                        <input
+                          type="checkbox"
+                          checked={selectedPosts.has(post.id)}
+                          onChange={() => toggleSelectPost(post.id)}
+                          className="w-4 h-4 cursor-pointer accent-cly-brand"
+                        />
+                      </td>
+                    )}
                     <td className="py-2 px-3 text-center text-cly-sm text-cly-text-3 font-bold border-r border-cly-border">
                       {idx + 1}
                     </td>
