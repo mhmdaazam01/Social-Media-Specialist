@@ -302,7 +302,7 @@ export default function AnalyticsPage() {
           <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
             <SectionTitle
               title="Performa Pilar"
-              note="Impression, Reach & ER per pilar"
+              note="Impression & Reach per pilar"
             />
             {loading ? (
               <div className="w-full h-56 bg-cly-border/20 rounded animate-pulse" />
@@ -311,39 +311,73 @@ export default function AnalyticsPage() {
                 <p className="text-cly-sm text-cly-text-3">Belum ada data pilar.</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart 
-                  data={pillarData} 
-                  layout="vertical" 
-                  margin={{ top: 5, right: 20, left: 5, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" horizontal={false} />
-                  <XAxis 
-                    type="number" 
-                    tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} 
-                    axisLine={false} 
-                    tickLine={false}
-                  />
-                  <YAxis 
-                    type="category" 
-                    dataKey="name" 
-                    tick={{ fontSize: 11, fill: 'var(--color-cly-text-2)' }} 
-                    axisLine={false} 
-                    tickLine={false}
-                    width={100}
-                  />
-                  <Tooltip
-                    contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
-                    formatter={(v, name) => {
-                      if (name === 'er') return [`${v}%`, 'ER'];
-                      return [fmt(Number(v)), name === 'impression' ? 'Impression' : 'Reach'];
-                    }}
-                  />
-                  <Bar dataKey="impression" fill="var(--color-cly-green)" radius={[0, 4, 4, 0]} />
-                  <Bar dataKey="reach" fill="var(--color-cly-brand)" radius={[0, 4, 4, 0]} />
-                  <Bar dataKey="er" fill="var(--color-cly-amber)" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <>
+                {/* Impression & Reach Chart */}
+                <ResponsiveContainer width="100%" height={140}>
+                  <BarChart 
+                    data={pillarData} 
+                    layout="vertical" 
+                    margin={{ top: 5, right: 20, left: 5, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" horizontal={false} />
+                    <XAxis 
+                      type="number" 
+                      tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} 
+                      axisLine={false} 
+                      tickLine={false}
+                      tickFormatter={(v) => fmt(v)}
+                    />
+                    <YAxis 
+                      type="category" 
+                      dataKey="name" 
+                      tick={{ fontSize: 11, fill: 'var(--color-cly-text-2)' }} 
+                      axisLine={false} 
+                      tickLine={false}
+                      width={100}
+                    />
+                    <Tooltip
+                      contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
+                      formatter={(v, name) => [fmt(Number(v)), name === 'impression' ? 'Impression' : 'Reach']}
+                    />
+                    <Bar dataKey="impression" fill="var(--color-cly-green)" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="reach" fill="var(--color-cly-brand)" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+                
+                {/* ER Chart */}
+                <div className="mt-4">
+                  <p className="text-cly-xs font-semibold text-cly-text-2 mb-2">Engagement Rate (%)</p>
+                  <ResponsiveContainer width="100%" height={120}>
+                    <BarChart 
+                      data={pillarData} 
+                      layout="vertical" 
+                      margin={{ top: 5, right: 20, left: 5, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" horizontal={false} />
+                      <XAxis 
+                        type="number" 
+                        tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} 
+                        axisLine={false} 
+                        tickLine={false}
+                        tickFormatter={(v) => `${v}%`}
+                      />
+                      <YAxis 
+                        type="category" 
+                        dataKey="name" 
+                        tick={{ fontSize: 11, fill: 'var(--color-cly-text-2)' }} 
+                        axisLine={false} 
+                        tickLine={false}
+                        width={100}
+                      />
+                      <Tooltip
+                        contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
+                        formatter={(v) => [`${v}%`, 'ER']}
+                      />
+                      <Bar dataKey="er" fill="var(--color-cly-amber)" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </>
             )}
           </div>
         </div>
