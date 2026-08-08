@@ -153,7 +153,11 @@ export default function ContentPage() {
   }
 
   function moveToNextCell(reverse: boolean, postId: string) {
-    const fields = ['name', 'date', 'platform', 'link', 'impression', 'reach', 'like', 'comment', 'share', 'save'];
+    const baseFields = ['name', 'date'];
+    const conditionalFields = accountFilter === 'all' ? ['account'] : [];
+    const restFields = ['platform', 'link', 'impression', 'reach', 'like', 'comment', 'share', 'save'];
+    const fields = [...baseFields, ...conditionalFields, ...restFields];
+    
     const currentIndex = editingCell ? fields.indexOf(editingCell.field) : -1;
     
     if (currentIndex === -1) return;
@@ -267,6 +271,11 @@ export default function ContentPage() {
                 <th className="text-left text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-[100px] bg-cly-muted">
                   Date
                 </th>
+                {accountFilter === 'all' && (
+                  <th className="text-left text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-[120px] bg-cly-muted">
+                    Account
+                  </th>
+                )}
                 <th className="text-left text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-[110px] bg-cly-muted">
                   Platform
                 </th>
@@ -302,13 +311,13 @@ export default function ContentPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={13} className="py-12 text-center text-cly-sm text-cly-text-3 animate-pulse">
+                  <td colSpan={accountFilter === 'all' ? 14 : 13} className="py-12 text-center text-cly-sm text-cly-text-3 animate-pulse">
                     Memuat data...
                   </td>
                 </tr>
               ) : filteredPosts.length === 0 ? (
                 <tr>
-                  <td colSpan={13} className="py-12 text-center text-cly-sm text-cly-text-3">
+                  <td colSpan={accountFilter === 'all' ? 14 : 13} className="py-12 text-center text-cly-sm text-cly-text-3">
                     {accountFilter !== 'all' 
                       ? `Belum ada konten untuk akun "${accountFilter}".`
                       : 'Belum ada konten. Klik "Tambah Baris" untuk mulai.'}
@@ -352,7 +361,7 @@ export default function ContentPage() {
 
                     {/* Date */}
                     <td
-                      className="py-2 px-3 border-r border-cly-border cursor-text"
+                      className="py-2 px-3 border-r border-cly-brand cursor-text"
                       onClick={() => startEdit(post.id, 'date', post.date)}
                     >
                       {editingCell?.postId === post.id && editingCell?.field === 'date' ? (
@@ -371,6 +380,36 @@ export default function ContentPage() {
                         </div>
                       )}
                     </td>
+
+                    {/* Account (Conditional) */}
+                    {accountFilter === 'all' && (
+                      <td
+                        className="py-2 px-3 border-r border-cly-border cursor-pointer"
+                        onClick={() => startEdit(post.id, 'account', post.account)}
+                      >
+                        {editingCell?.postId === post.id && editingCell?.field === 'account' ? (
+                          <select
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onBlur={() => saveEdit()}
+                            onKeyDown={handleKeyDown}
+                            autoFocus
+                            className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
+                          >
+                            <option value="">-</option>
+                            {accounts.map(a => (
+                              <option key={a.id} value={a.name}>
+                                {a.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="h-7 flex items-center text-cly-sm text-cly-text-2">
+                            {post.account || '-'}
+                          </div>
+                        )}
+                      </td>
+                    )}
 
                     {/* Platform */}
                     <td
@@ -487,7 +526,7 @@ export default function ContentPage() {
 
                     {/* Like */}
                     <td
-                      className="py-2 px-3 text-right border-cly-border cursor-text"
+                      className="py-2 px-3 text-right border-r border-cly-border cursor-text"
                       onClick={() => startEdit(post.id, 'like', post.like)}
                     >
                       {editingCell?.postId === post.id && editingCell?.field === 'like' ? (
