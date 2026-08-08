@@ -28,7 +28,6 @@ export default function SettingsPage() {
   const [platformName, setPlatformName] = useState('');
   const [accountName, setAccountName] = useState('');
   const [pillarLabel, setPillarLabel] = useState('');
-  const [pillarColor, setPillarColor] = useState('#3B82F6');
 
   // Edit states
   const [editingPlatformId, setEditingPlatformId] = useState<string | null>(null);
@@ -90,7 +89,6 @@ export default function SettingsPage() {
     const pillar = pillars.find(p => p.id === id);
     if (pillar) {
       setPillarLabel(pillar.label);
-      setPillarColor(pillar.color);
       setEditingPillarId(id);
     }
   }
@@ -137,17 +135,23 @@ export default function SettingsPage() {
       toast.error('Label pilar wajib diisi');
       return;
     }
+    
+    // Default colors array
+    const DEFAULT_COLORS = ['#2F6F45', '#2563A7', '#A15C07', '#B93B32', '#7C4D9D', '#13747C'];
+    const pillarColor = DEFAULT_COLORS[pillars.length % DEFAULT_COLORS.length];
+    
     if (editingPillarId) {
-      // Update existing pillar
+      // Update existing pillar (keep existing color)
+      const existingPillar = pillars.find(p => p.id === editingPillarId);
       updatePillar(editingPillarId, {
         label: pillarLabel,
-        color: pillarColor,
-        bg: pillarColor + '20',
+        color: existingPillar?.color || pillarColor,
+        bg: (existingPillar?.color || pillarColor) + '20',
       });
       setEditingPillarId(null);
       toast.success('Pilar berhasil diperbarui');
     } else {
-      // Add new pillar
+      // Add new pillar with auto color
       const pillarId = pillarLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       addPillar({
         pillar_id: pillarId,
@@ -159,7 +163,6 @@ export default function SettingsPage() {
       toast.success('Pilar berhasil ditambahkan');
     }
     setPillarLabel('');
-    setPillarColor('#3B82F6');
   }
 
   async function handleFactoryReset() {
@@ -423,27 +426,21 @@ export default function SettingsPage() {
                   ))}
                 </div>
               )}
-              <div className="grid grid-cols-[1fr_auto] gap-2">
+              <div className="flex gap-2">
                 <input
                   type="text"
                   value={pillarLabel}
                   onChange={e => setPillarLabel(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddPillar()}
-                  className="h-[34px] rounded-lg border border-cly-border bg-cly-surface px-2.5 text-cly-sm text-cly-text outline-none transition-colors focus:border-cly-brand"
+                  className="h-[34px] flex-1 rounded-lg border border-cly-border bg-cly-surface px-2.5 text-cly-sm text-cly-text outline-none transition-colors focus:border-cly-brand"
                   placeholder="Label pilar (misal: Edukasi)"
-                />
-                <input
-                  type="color"
-                  value={pillarColor}
-                  onChange={e => setPillarColor(e.target.value)}
-                  className="h-[34px] w-[60px] cursor-pointer rounded-lg border border-cly-border bg-cly-surface"
                 />
                 <button
                   onClick={handleAddPillar}
-                  className="col-span-2 flex items-center justify-center gap-1.5 rounded-lg border border-cly-border bg-cly-surface px-3 py-2 text-cly-sm font-medium text-cly-text transition-all hover:border-cly-brand hover:bg-cly-brand hover:text-white active:scale-95"
+                  className="flex items-center gap-1.5 rounded-lg border border-cly-border bg-cly-surface px-3 py-2 text-cly-sm font-medium text-cly-text transition-all hover:border-cly-brand hover:bg-cly-brand hover:text-white active:scale-95"
                 >
                   {editingPillarId ? <PencilIcon className="size-4" /> : <PlusIcon className="size-4" />}
-                  {editingPillarId ? 'Simpan Perubahan' : 'Tambah Pilar'}
+                  {editingPillarId ? 'Simpan' : 'Tambah'}
                 </button>
               </div>
             </div>
