@@ -29,6 +29,9 @@ export default function ContentPage() {
   // Editing state
   const [editingCell, setEditingCell] = useState<{ postId: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState('');
+  
+  // Bulk delete state
+  const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set());
 
   const handleImport = useCallback(() => {
     // Refresh after import
@@ -90,6 +93,38 @@ export default function ContentPage() {
       deletePost(postToDelete.id);
       setPostToDelete(null);
     }
+  }
+  
+  function toggleSelectPost(postId: string) {
+    setSelectedPosts(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(postId)) {
+        newSet.delete(postId);
+      } else {
+        newSet.add(postId);
+      }
+      return newSet;
+    });
+  }
+  
+  function toggleSelectAll() {
+    if (selectedPosts.size === filteredPosts.length) {
+      setSelectedPosts(new Set());
+    } else {
+      setSelectedPosts(new Set(filteredPosts.map(p => p.id)));
+    }
+  }
+  
+  async function handleBulkDelete() {
+    if (selectedPosts.size === 0) return;
+    
+    const confirmed = window.confirm(`Hapus ${selectedPosts.size} postingan yang dipilih?`);
+    if (!confirmed) return;
+    
+    for (const postId of selectedPosts) {
+      await deletePost(postId);
+    }
+    setSelectedPosts(new Set());
   }
 
   async function handleAddRow() {
@@ -266,6 +301,16 @@ export default function ContentPage() {
                 <PlusIcon size={14} />
                 Tambah Baris
               </button>
+              
+              {selectedPosts.size > 0 && (
+                <button
+                  onClick={handleBulkDelete}
+                  className="h-[34px] px-[13px] rounded-lg bg-cly-red text-white text-cly-sm font-semibold hover:bg-red-600 transition-colors inline-flex items-center gap-2"
+                >
+                  <Trash2 size={14} />
+                  Hapus ({selectedPosts.size})
+                </button>
+              )}
             </div>
 
             {/* Actions */}
@@ -287,6 +332,14 @@ export default function ContentPage() {
           <table className="w-full border-collapse min-w-[1400px]">
             <thead className="sticky top-0 bg-cly-muted z-10">
               <tr>
+                <th className="text-center text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-12 bg-cly-muted">
+                  <input
+                    type="checkbox"
+                    checked={filteredPosts.length > 0 && selectedPosts.size === filteredPosts.length}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 cursor-pointer accent-cly-brand"
+                  />
+                </th>
                 <th className="text-center text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-12 bg-cly-muted">
                   #
                 </th>
@@ -336,13 +389,13 @@ export default function ContentPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={accountFilter === 'all' ? 14 : 13} className="py-12 text-center text-cly-sm text-cly-text-3 animate-pulse">
+                  <td colSpan={accountFilter === 'all' ? 15 : 14} className="py-12 text-center text-cly-sm text-cly-text-3 animate-pulse">
                     Memuat data...
                   </td>
                 </tr>
               ) : filteredPosts.length === 0 ? (
                 <tr>
-                  <td colSpan={accountFilter === 'all' ? 14 : 13} className="py-12 text-center text-cly-sm text-cly-text-3">
+                  <td colSpan={accountFilter === 'all' ? 15 : 14} className="py-12 text-center text-cly-sm text-cly-text-3">
                     {accountFilter !== 'all' 
                       ? `Belum ada konten untuk akun "${accountFilter}".`
                       : 'Belum ada konten. Klik "Tambah Baris" untuk mulai.'}
@@ -358,6 +411,14 @@ export default function ContentPage() {
                     key={post.id}
                     className="border-b border-cly-border hover:bg-cly-muted/30 transition-colors"
                   >
+                    <td className="py-2 px-3 text-center border-r border-cly-border">
+                      <input
+                        type="checkbox"
+                        checked={selectedPosts.has(post.id)}
+                        onChange={() => toggleSelectPost(post.id)}
+                        className="w-4 h-4 cursor-pointer accent-cly-brand"
+                      />
+                    </td>
                     <td className="py-2 px-3 text-center text-cly-sm text-cly-text-3 font-bold border-r border-cly-border">
                       {idx + 1}
                     </td>
