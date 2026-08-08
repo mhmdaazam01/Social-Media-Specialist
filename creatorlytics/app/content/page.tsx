@@ -68,9 +68,14 @@ export default function ContentPage() {
       );
     }
     
-    // Sort
+    // Sort - default by date descending (newest first)
     filtered.sort((a, b) => {
-      if (sortBy === 'date') return (b.date || '').localeCompare(a.date || '');
+      if (sortBy === 'date') {
+        // Sort by date descending (newest first)
+        const dateA = a.date || '';
+        const dateB = b.date || '';
+        return dateB.localeCompare(dateA);
+      }
       if (sortBy === 'impression') return (b.impression || 0) - (a.impression || 0);
       if (sortBy === 'reach') return (b.reach || 0) - (a.reach || 0);
       return 0;
@@ -156,7 +161,7 @@ export default function ContentPage() {
     await createPost(newPost);
   }
 
-  function startEdit(postId: string, field: string, currentValue: any) {
+  function startEdit(postId: string, field: string, currentValue: string | number) {
     setEditingCell({ postId, field });
     setEditValue(String(currentValue || ''));
   }
@@ -168,7 +173,7 @@ export default function ContentPage() {
     const post = posts.find(p => p.id === postId);
     if (!post) return;
 
-    let value: any = editValue;
+    let value: string | number = editValue;
     
     // Convert to number for numeric fields
     if (['impression', 'reach', 'like', 'comment', 'share', 'save'].includes(field)) {
@@ -218,7 +223,8 @@ export default function ContentPage() {
         const nextField = fields[nextIndex];
         // Use setTimeout to ensure state updates properly
         setTimeout(() => {
-          startEdit(postId, nextField, (post as any)[nextField]);
+          const fieldValue = post[nextField as keyof Post];
+          startEdit(postId, nextField, fieldValue as string | number);
         }, 0);
       }
     } else {

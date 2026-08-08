@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/hooks/useUser';
-import { useData } from '@/lib/context/DataContext';
 import { usePillars } from '@/lib/hooks/usePillars';
 import { useAccounts } from '@/lib/hooks/useAccounts';
 import { Button } from '@/components/ui/button';
@@ -23,16 +22,6 @@ import {
 } from 'lucide-react';
 
 // --- Preset data ---
-const PRESET_PLATFORMS = [
-  { platform_id: 'instagram', name: 'Instagram', emoji: '📸' },
-  { platform_id: 'tiktok', name: 'TikTok', emoji: '🎵' },
-  { platform_id: 'youtube', name: 'YouTube', emoji: '▶️' },
-  { platform_id: 'twitter', name: 'Twitter / X', emoji: '🐦' },
-  { platform_id: 'linkedin', name: 'LinkedIn', emoji: '💼' },
-  { platform_id: 'facebook', name: 'Facebook', emoji: '📘' },
-  { platform_id: 'threads', name: 'Threads', emoji: '🧵' },
-];
-
 const PRESET_NICHES = [
   'Lifestyle', 'Fashion & Beauty', 'Food & Kuliner', 'Travel',
   'Edukasi', 'Teknologi', 'Bisnis & Finansial', 'Kesehatan & Fitness',
@@ -52,7 +41,6 @@ const TOTAL_STEPS = 3;
 
 export function OnboardingWizard() {
   const { user, profile, refreshProfile } = useUser();
-  const { addPlatform } = useData();
   const { addPillar } = usePillars();
   const { addAccount } = useAccounts();
   const supabase = createClient();

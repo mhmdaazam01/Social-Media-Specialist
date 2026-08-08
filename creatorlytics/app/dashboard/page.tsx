@@ -6,7 +6,7 @@ import { MetricCard, InsightCard, SectionTitle, Badge } from '@/components/cly';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { useGoals } from '@/lib/hooks/useGoals';
 import { useUser } from '@/lib/hooks/useUser';
-import { calcTotalER, fmt, aggregateByMonth, isPostInMonth } from '@/lib/utils/analytics';
+import { calcTotalER, fmt, isPostInMonth } from '@/lib/utils/analytics';
 import {
   Eye, TrendingUp, BookOpen, Target,
   ArrowUpRight, AlertTriangle, CheckCircle2,
