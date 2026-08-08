@@ -7,6 +7,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { useAccounts } from '@/lib/hooks/useAccounts';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
+import { usePillars } from '@/lib/hooks/usePillars';
 import { postsToCSV } from '@/lib/utils/export';
 import { PlusIcon, DownloadIcon, Trash2, Search, CheckSquare } from 'lucide-react';
 import type { Post } from '@/types';
@@ -17,6 +18,7 @@ export default function ContentPage() {
   const { posts, loading, createPost, updatePost, deletePost } = usePosts();
   const { accounts } = useAccounts();
   const { platforms: userPlatforms } = usePlatforms();
+  const { pillars: userPillars } = usePillars();
   
   // Filters
   const [accountFilter, setAccountFilter] = useState('all');
@@ -209,7 +211,7 @@ export default function ContentPage() {
   }
 
   function moveToNextCell(reverse: boolean, postId: string) {
-    const fields = ['name', 'date', 'platform', 'link', 'impression', 'reach', 'like', 'comment', 'share', 'save'];
+    const fields = ['name', 'date', 'platform', 'pillar', 'link', 'impression', 'reach', 'like', 'comment', 'share', 'save'];
     
     const currentIndex = editingCell ? fields.indexOf(editingCell.field) : -1;
     
@@ -383,6 +385,9 @@ export default function ContentPage() {
                 <th className="text-left text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-[110px] bg-cly-muted">
                   Platform
                 </th>
+                <th className="text-left text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-[110px] bg-cly-muted">
+                  Pillar
+                </th>
                 <th className="text-center text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-[110px] bg-cly-muted">
                   Link Content
                 </th>
@@ -528,6 +533,34 @@ export default function ContentPage() {
                       ) : (
                         <div className="h-7 flex items-center text-cly-sm text-cly-text-2">
                           {post.platform || '-'}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Pillar */}
+                    <td
+                      className="py-2 px-3 border-r border-cly-border cursor-pointer"
+                      onClick={() => startEdit(post.id, 'pillar', post.pillar)}
+                    >
+                      {editingCell?.postId === post.id && editingCell?.field === 'pillar' ? (
+                        <select
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onBlur={() => saveEdit()}
+                          onKeyDown={handleKeyDown}
+                          autoFocus
+                          className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
+                        >
+                          <option value="">-</option>
+                          {userPillars.map(p => (
+                            <option key={p.id} value={p.label}>
+                              {p.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="h-7 flex items-center text-cly-sm text-cly-text-2">
+                          {post.pillar || '-'}
                         </div>
                       )}
                     </td>
