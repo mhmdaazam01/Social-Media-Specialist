@@ -7,7 +7,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { useAccounts } from '@/lib/hooks/useAccounts';
 import { postsToCSV } from '@/lib/utils/export';
-import { PlusIcon, DownloadIcon, Trash2 } from 'lucide-react';
+import { PlusIcon, DownloadIcon, Trash2, Search } from 'lucide-react';
 import type { Post } from '@/types';
 
 export default function ContentPage() {
@@ -18,6 +18,9 @@ export default function ContentPage() {
   
   // Filters
   const [accountFilter, setAccountFilter] = useState('all');
+  const [platformFilter, setPlatformFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('date');
 
   // Editing state
   const [editingCell, setEditingCell] = useState<{ postId: string; field: string } | null>(null);
@@ -35,11 +38,35 @@ export default function ContentPage() {
       filtered = filtered.filter(p => p.account === accountFilter);
     }
     
-    // Sort by date desc
-    filtered.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    // Platform filter
+    if (platformFilter !== 'all') {
+      filtered = filtered.filter(p => p.platform === platformFilter);
+    }
+    
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => 
+        p.name?.toLowerCase().includes(query) ||
+        p.platform?.toLowerCase().includes(query)
+      );
+    }
+    
+    // Sort
+    filtered.sort((a, b) => {
+      if (sortBy === 'date') return (b.date || '').localeCompare(a.date || '');
+      if (sortBy === 'impression') return (b.impression || 0) - (a.impression || 0);
+      if (sortBy === 'reach') return (b.reach || 0) - (a.reach || 0);
+      return 0;
+    });
     
     return filtered;
-  }, [posts, accountFilter]);
+  }, [posts, accountFilter, platformFilter, searchQuery, sortBy]);
+
+  const platforms = useMemo(() => {
+    const unique = new Set(posts.map(p => p.platform).filter(Boolean));
+    return Array.from(unique);
+  }, [posts]);
 
   function confirmDelete(post: Post) {
     setPostToDelete(post);
@@ -106,10 +133,38 @@ export default function ContentPage() {
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
       saveEdit();
+      // Move to next cell if Tab
+      if (e.key === 'Tab' && editingCell) {
+        moveToNextCell(e.shiftKey);
+      }
     } else if (e.key === 'Escape') {
       cancelEdit();
+    } else if (e.key === 'ArrowRight' && !editingCell) {
+      moveToNextCell(false);
+    } else if (e.key === 'ArrowLeft' && !editingCell) {
+      moveToNextCell(true);
+    }
+  }
+
+  function moveToNextCell(reverse: boolean) {
+    if (!editingCell) return;
+    
+    const fields = ['name', 'date', 'platform', 'link', 'impression', 'reach', 'like', 'comment', 'share', 'save'];
+    const currentIndex = fields.indexOf(editingCell.field);
+    
+    if (currentIndex === -1) return;
+    
+    const nextIndex = reverse ? currentIndex - 1 : currentIndex + 1;
+    
+    if (nextIndex >= 0 && nextIndex < fields.length) {
+      const post = posts.find(p => p.id === editingCell.postId);
+      if (post) {
+        const nextField = fields[nextIndex];
+        startEdit(editingCell.postId, nextField, (post as any)[nextField]);
+      }
     }
   }
 
@@ -117,39 +172,76 @@ export default function ContentPage() {
     <AppShell title="Konten">
       <div className="flex flex-col gap-[18px]">
         {/* Toolbar */}
-        <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-2.5 flex gap-2 items-center justify-between">
-          <div className="flex gap-2 items-center">
-            {/* Account Filter */}
-            <select
-              value={accountFilter}
-              onChange={(e) => setAccountFilter(e.target.value)}
-              className="h-[34px] px-2.5 pr-7 border border-cly-border rounded-lg bg-cly-surface text-cly-text-2 text-cly-sm font-semibold outline-none focus:border-cly-brand transition-colors"
-            >
-              <option value="all">Semua Akun</option>
-              {accounts.map(a => (
-                <option key={a.id} value={a.name}>{a.name}</option>
-              ))}
-            </select>
+        <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-2.5 flex flex-col gap-2">
+          <div className="flex gap-2 items-center justify-between">
+            <div className="flex gap-2 items-center flex-1">
+              {/* Search */}
+              <div className="relative flex-1 max-w-[280px]">
+                <Search size={14} className="absolute left-2.5 top-2.5 text-cly-text-3" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search title, platform..."
+                  className="w-full h-[34px] pl-8 pr-2.5 border border-cly-border rounded-lg bg-cly-surface text-cly-text text-cly-sm outline-none focus:border-cly-brand transition-colors"
+                />
+              </div>
 
-            <button
-              onClick={handleAddRow}
-              className="h-[34px] px-[13px] rounded-lg bg-cly-brand text-white text-cly-sm font-semibold hover:bg-cly-brand-hover transition-colors inline-flex items-center gap-2"
-            >
-              <PlusIcon size={14} />
-              Tambah Baris
-            </button>
-          </div>
+              {/* Account Filter */}
+              <select
+                value={accountFilter}
+                onChange={(e) => setAccountFilter(e.target.value)}
+                className="h-[34px] px-2.5 pr-7 border border-cly-border rounded-lg bg-cly-surface text-cly-text-2 text-cly-sm font-semibold outline-none focus:border-cly-brand transition-colors"
+              >
+                <option value="all">Semua Akun</option>
+                {accounts.map(a => (
+                  <option key={a.id} value={a.name}>{a.name}</option>
+                ))}
+              </select>
 
-          {/* Actions */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => postsToCSV(posts)}
-              className="h-[34px] px-[13px] rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 text-cly-sm font-semibold hover:bg-cly-muted transition-colors inline-flex items-center gap-2"
-            >
-              <DownloadIcon size={14} />
-              Export
-            </button>
-            <CSVImport onImport={handleImport} />
+              {/* Platform Filter */}
+              <select
+                value={platformFilter}
+                onChange={(e) => setPlatformFilter(e.target.value)}
+                className="h-[34px] px-2.5 pr-7 border border-cly-border rounded-lg bg-cly-surface text-cly-text-2 text-cly-sm font-semibold outline-none focus:border-cly-brand transition-colors"
+              >
+                <option value="all">All Platforms</option>
+                {platforms.map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+
+              {/* Sort */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="h-[34px] px-2.5 pr-7 border border-cly-border rounded-lg bg-cly-surface text-cly-text-2 text-cly-sm font-semibold outline-none focus:border-cly-brand transition-colors"
+              >
+                <option value="date">Latest First</option>
+                <option value="impression">Highest Impression</option>
+                <option value="reach">Highest Reach</option>
+              </select>
+
+              <button
+                onClick={handleAddRow}
+                className="h-[34px] px-[13px] rounded-lg bg-cly-brand text-white text-cly-sm font-semibold hover:bg-cly-brand-hover transition-colors inline-flex items-center gap-2"
+              >
+                <PlusIcon size={14} />
+                Tambah Baris
+              </button>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => postsToCSV(posts)}
+                className="h-[34px] px-[13px] rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 text-cly-sm font-semibold hover:bg-cly-muted transition-colors inline-flex items-center gap-2"
+              >
+                <DownloadIcon size={14} />
+                Export
+              </button>
+              <CSVImport onImport={handleImport} />
+            </div>
           </div>
         </div>
 
@@ -296,34 +388,41 @@ export default function ContentPage() {
 
                     {/* Link Content */}
                     <td className="py-2 px-3 border-r border-cly-border text-center">
-                      {post.link ? (
-                        <a
-                          href={post.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block h-7 px-3 leading-7 text-cly-xs font-semibold text-white bg-cly-brand rounded hover:bg-cly-brand-hover transition-colors"
-                        >
-                          Link Content
-                        </a>
+                      {editingCell?.postId === post.id && editingCell?.field === 'link' ? (
+                        <input
+                          type="text"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onBlur={saveEdit}
+                          onKeyDown={handleKeyDown}
+                          autoFocus
+                          placeholder="URL"
+                          className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
+                        />
+                      ) : post.link ? (
+                        <div className="flex items-center gap-1 justify-center">
+                          <a
+                            href={post.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block h-7 px-3 leading-7 text-cly-xs font-semibold text-white bg-cly-brand rounded hover:bg-cly-brand-hover transition-colors"
+                          >
+                            Link Content
+                          </a>
+                          <button
+                            onClick={() => startEdit(post.id, 'link', post.link)}
+                            className="h-7 w-7 rounded border border-cly-border bg-cly-surface text-cly-text-3 hover:bg-cly-muted hover:text-cly-text transition-colors text-xs"
+                            title="Edit link"
+                          >
+                            ✎
+                          </button>
+                        </div>
                       ) : (
                         <div
                           className="h-7 flex items-center justify-center cursor-text"
                           onClick={() => startEdit(post.id, 'link', post.link)}
                         >
-                          {editingCell?.postId === post.id && editingCell?.field === 'link' ? (
-                            <input
-                              type="text"
-                              value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
-                              onBlur={saveEdit}
-                              onKeyDown={handleKeyDown}
-                              autoFocus
-                              placeholder="URL"
-                              className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
-                            />
-                          ) : (
-                            <span className="text-cly-xs text-cly-text-3">-</span>
-                          )}
+                          <span className="text-cly-xs text-cly-text-3">-</span>
                         </div>
                       )}
                     </td>
