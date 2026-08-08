@@ -517,8 +517,15 @@ export default function ContentPage() {
                       {editingCell?.postId === post.id && editingCell?.field === 'platform' ? (
                         <select
                           value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={() => saveEdit()}
+                          onChange={(e) => {
+                            setEditValue(e.target.value);
+                            // Auto-save on change for dropdown
+                            setTimeout(() => {
+                              updatePost(post.id, { platform: e.target.value });
+                              setEditingCell(null);
+                              setEditValue('');
+                            }, 0);
+                          }}
                           onKeyDown={handleKeyDown}
                           autoFocus
                           className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
@@ -545,8 +552,15 @@ export default function ContentPage() {
                       {editingCell?.postId === post.id && editingCell?.field === 'pillar' ? (
                         <select
                           value={editValue}
-                          onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={() => saveEdit()}
+                          onChange={(e) => {
+                            setEditValue(e.target.value);
+                            // Auto-save on change for dropdown
+                            setTimeout(() => {
+                              updatePost(post.id, { pillar: e.target.value });
+                              setEditingCell(null);
+                              setEditValue('');
+                            }, 0);
+                          }}
                           onKeyDown={handleKeyDown}
                           autoFocus
                           className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
