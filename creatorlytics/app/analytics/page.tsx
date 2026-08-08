@@ -29,6 +29,7 @@ export default function AnalyticsPage() {
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [chartView, setChartView] = useState<'daily' | 'monthly'>('monthly');
   
   const filteredPosts = useMemo(() => {
     let filtered = posts;
@@ -57,27 +58,93 @@ export default function AnalyticsPage() {
   const byPlatform = useMemo(() => aggregateByPlatform(posts, erMode), [posts, erMode]);
   const { pillars } = usePillars();
 
-  const chartData = useMemo(() =>
-    aggregateByMonth(filteredPosts, erMode).slice(-8).map(m => ({
-      month: m.month.slice(5),
-      reach: m.totalReach,
-      er: parseFloat(m.avgER.toFixed(2)),
-    })),
-    [filteredPosts, erMode]
-  );
+  const chartData = useMemo(() => {
+    if (chartView === 'monthly') {
+      // Monthly aggregation
+      const monthMap: Record<string, { reach: number; impression: number; engagement: number; count: number }> = {};
+      
+      filteredPosts.forEach(p => {
+        if (!p.date) return;
+        const month = p.date.slice(0, 7); // "YYYY-MM"
+        if (!monthMap[month]) {
+          monthMap[month] = { reach: 0, impression: 0, engagement: 0, count: 0 };
+        }
+        monthMap[month].reach += p.reach || 0;
+        monthMap[month].impression += p.impression || 0;
+        monthMap[month].engagement += (p.like || 0) + (p.comment || 0) + (p.save || 0) + (p.share || 0);
+        monthMap[month].count += 1;
+      });
+      
+      const sorted = Object.entries(monthMap).sort(([a], [b]) => a.localeCompare(b));
+      const data = dateFrom || dateTo ? sorted : sorted.slice(-8);
+      
+      return data.map(([month, d]) => {
+        const er = d.impression > 0 ? (d.engagement / d.impression) * 100 : 0;
+        return {
+          label: month.slice(5), // "YYYY-MM" → "MM"
+          reach: d.reach,
+          impression: d.impression,
+          er: parseFloat(er.toFixed(2)),
+        };
+      });
+    } else {
+      // Daily view
+      const dailyMap: Record<string, { reach: number; impression: number; engagement: number }> = {};
+      
+      filteredPosts.forEach(p => {
+        if (!p.date) return;
+        if (!dailyMap[p.date]) {
+          dailyMap[p.date] = { reach: 0, impression: 0, engagement: 0 };
+        }
+        dailyMap[p.date].reach += p.reach || 0;
+        dailyMap[p.date].impression += p.impression || 0;
+        dailyMap[p.date].engagement += (p.like || 0) + (p.comment || 0) + (p.save || 0) + (p.share || 0);
+      });
+      
+      return Object.entries(dailyMap)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, d]) => {
+          const er = d.impression > 0 ? (d.engagement / d.impression) * 100 : 0;
+          return {
+            label: new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+            reach: d.reach,
+            impression: d.impression,
+            er: parseFloat(er.toFixed(2)),
+          };
+        });
+    }
+  }, [filteredPosts, chartView, dateFrom, dateTo]);
 
   const pillarData = useMemo(() => {
-    const raw = aggregateByPillar(filteredPosts, erMode);
-    const COLORS = ['#2F6F45', '#2563A7', '#A15C07', '#B93B32', '#7C4D9D', '#13747C'];
-    return raw.slice(0, 6).map((p, i) => {
-      const pillar = pillars.find(pl => pl.pillar_id === p.pillar);
-      return {
-        name: pillar?.label ?? p.pillar,
-        er: parseFloat(p.avgER.toFixed(2)),
-        fill: pillar?.color || COLORS[i % COLORS.length],
-      };
+    const pillarMap: Record<string, { reach: number; impression: number; engagement: number }> = {};
+    
+    filteredPosts.forEach(p => {
+      if (!p.pillar) return;
+      if (!pillarMap[p.pillar]) {
+        pillarMap[p.pillar] = { reach: 0, impression: 0, engagement: 0 };
+      }
+      pillarMap[p.pillar].reach += p.reach || 0;
+      pillarMap[p.pillar].impression += p.impression || 0;
+      pillarMap[p.pillar].engagement += (p.like || 0) + (p.comment || 0) + (p.save || 0) + (p.share || 0);
     });
-  }, [filteredPosts, erMode, pillars]);
+    
+    const COLORS = ['#2F6F45', '#2563A7', '#A15C07', '#B93B32', '#7C4D9D', '#13747C'];
+    
+    return Object.entries(pillarMap)
+      .slice(0, 6)
+      .map(([pillarName, data], i) => {
+        const pillar = pillars.find(pl => pl.label === pillarName);
+        const er = data.impression > 0 ? (data.engagement / data.impression) * 100 : 0;
+        return {
+          name: pillar?.label ?? pillarName,
+          reach: data.reach,
+          impression: data.impression,
+          er: parseFloat(er.toFixed(2)),
+          fill: pillar?.color || COLORS[i % COLORS.length],
+        };
+      })
+      .sort((a, b) => b.er - a.er); // Sort by ER descending
+  }, [filteredPosts, pillars]);
 
 
 
@@ -169,10 +236,40 @@ export default function AnalyticsPage() {
         <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.2fr)_390px]">
           {/* Trend Chart Card */}
           <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
-            <SectionTitle
-              title="Reach dan tren engagement"
-              note="Bar = total reach, garis = rata-rata ER per bulan."
-            />
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <SectionTitle
+                title="Tren Performa"
+                note={chartView === 'monthly' ? 'Impression, Reach & ER per bulan' : 'Impression, Reach & ER per hari'}
+              />
+              
+              {/* Chart controls */}
+              <div className="flex items-center gap-2">
+                {/* View toggle */}
+                <div className="flex border border-cly-border rounded overflow-hidden">
+                  <button
+                    onClick={() => setChartView('daily')}
+                    className={`h-[30px] px-3 text-cly-xs font-semibold transition-colors ${
+                      chartView === 'daily' 
+                        ? 'bg-cly-brand text-white' 
+                        : 'bg-cly-surface text-cly-text-2 hover:bg-cly-muted'
+                    }`}
+                  >
+                    Harian
+                  </button>
+                  <button
+                    onClick={() => setChartView('monthly')}
+                    className={`h-[30px] px-3 text-cly-xs font-semibold border-l border-cly-border transition-colors ${
+                      chartView === 'monthly' 
+                        ? 'bg-cly-brand text-white' 
+                        : 'bg-cly-surface text-cly-text-2 hover:bg-cly-muted'
+                    }`}
+                  >
+                    Bulanan
+                  </button>
+                </div>
+              </div>
+            </div>
+            
             {loading ? (
               <div className="w-full h-80 bg-cly-border/20 rounded animate-pulse" />
             ) : chartData.length === 0 ? (
@@ -183,13 +280,17 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height={280}>
                 <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" vertical={false} />
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} axisLine={false} tickLine={false} />
                   <YAxis yAxisId="left" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => fmt(v)} axisLine={false} tickLine={false} />
                   <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => `${v}%`} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
-                    formatter={(v, name) => [name === 'reach' ? fmt(Number(v)) : `${v}%`, name === 'reach' ? 'Reach' : 'Avg ER']}
+                    formatter={(v, name) => {
+                      if (name === 'er') return [`${v}%`, 'ER'];
+                      return [fmt(Number(v)), name === 'impression' ? 'Impression' : 'Reach'];
+                    }}
                   />
+                  <Line yAxisId="left" type="monotone" dataKey="impression" stroke="var(--color-cly-green)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-green)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
                   <Line yAxisId="left" type="monotone" dataKey="reach" stroke="var(--color-cly-brand)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-brand)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
                   <Line yAxisId="right" type="monotone" dataKey="er" stroke="var(--color-cly-amber)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-amber)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
                 </ComposedChart>
@@ -201,7 +302,7 @@ export default function AnalyticsPage() {
           <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
             <SectionTitle
               title="Performa Pilar"
-              note={`Berdasarkan ER (${erMode})`}
+              note="Impression, Reach & ER per pilar"
             />
             {loading ? (
               <div className="w-full h-56 bg-cly-border/20 rounded animate-pulse" />
@@ -222,7 +323,6 @@ export default function AnalyticsPage() {
                     tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} 
                     axisLine={false} 
                     tickLine={false}
-                    tickFormatter={(v) => `${v}%`}
                   />
                   <YAxis 
                     type="category" 
@@ -234,13 +334,14 @@ export default function AnalyticsPage() {
                   />
                   <Tooltip
                     contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
-                    formatter={(v) => [`${v}%`, 'Avg ER']}
+                    formatter={(v, name) => {
+                      if (name === 'er') return [`${v}%`, 'ER'];
+                      return [fmt(Number(v)), name === 'impression' ? 'Impression' : 'Reach'];
+                    }}
                   />
-                  <Bar dataKey="er" radius={[0, 4, 4, 0]}>
-                    {pillarData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Bar>
+                  <Bar dataKey="impression" fill="var(--color-cly-green)" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="reach" fill="var(--color-cly-brand)" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="er" fill="var(--color-cly-amber)" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
