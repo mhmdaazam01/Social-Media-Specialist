@@ -153,10 +153,7 @@ export default function ContentPage() {
   }
 
   function moveToNextCell(reverse: boolean, postId: string) {
-    const baseFields = ['name', 'date'];
-    const conditionalFields = accountFilter === 'all' ? ['account'] : [];
-    const restFields = ['platform', 'link', 'impression', 'reach', 'like', 'comment', 'share', 'save'];
-    const fields = [...baseFields, ...conditionalFields, ...restFields];
+    const fields = ['name', 'date', 'platform', 'link', 'impression', 'reach', 'like', 'comment', 'share', 'save'];
     
     const currentIndex = editingCell ? fields.indexOf(editingCell.field) : -1;
     
@@ -381,33 +378,12 @@ export default function ContentPage() {
                       )}
                     </td>
 
-                    {/* Account (Conditional) */}
+                    {/* Account (Conditional - Auto-filled) */}
                     {accountFilter === 'all' && (
-                      <td
-                        className="py-2 px-3 border-r border-cly-border cursor-pointer"
-                        onClick={() => startEdit(post.id, 'account', post.account)}
-                      >
-                        {editingCell?.postId === post.id && editingCell?.field === 'account' ? (
-                          <select
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            onBlur={() => saveEdit()}
-                            onKeyDown={handleKeyDown}
-                            autoFocus
-                            className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
-                          >
-                            <option value="">-</option>
-                            {accounts.map(a => (
-                              <option key={a.id} value={a.name}>
-                                {a.name}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <div className="h-7 flex items-center text-cly-sm text-cly-text-2">
-                            {post.account || '-'}
-                          </div>
-                        )}
+                      <td className="py-2 px-3 border-r border-cly-border">
+                        <div className="h-7 flex items-center text-cly-sm text-cly-text-2">
+                          {post.account || '-'}
+                        </div>
                       </td>
                     )}
 
