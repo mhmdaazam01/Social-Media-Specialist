@@ -23,6 +23,8 @@ export default function ContentPage() {
   const [platformFilter, setPlatformFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('date');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   // Editing state
   const [editingCell, setEditingCell] = useState<{ postId: string; field: string } | null>(null);
@@ -45,6 +47,14 @@ export default function ContentPage() {
       filtered = filtered.filter(p => p.platform === platformFilter);
     }
     
+    // Date range filter
+    if (dateFrom) {
+      filtered = filtered.filter(p => p.date && p.date >= dateFrom);
+    }
+    if (dateTo) {
+      filtered = filtered.filter(p => p.date && p.date <= dateTo);
+    }
+    
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -63,7 +73,7 @@ export default function ContentPage() {
     });
     
     return filtered;
-  }, [posts, accountFilter, platformFilter, searchQuery, sortBy]);
+  }, [posts, accountFilter, platformFilter, dateFrom, dateTo, searchQuery, sortBy]);
 
   const platforms = useMemo(() => {
     const unique = new Set(posts.map(p => p.platform).filter(Boolean));
@@ -195,6 +205,24 @@ export default function ContentPage() {
                   className="w-full h-[34px] pl-8 pr-2.5 border border-cly-border rounded-lg bg-cly-surface text-cly-text text-cly-sm outline-none focus:border-cly-brand transition-colors"
                 />
               </div>
+
+              {/* Date From */}
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="h-[34px] px-2.5 border border-cly-border rounded-lg bg-cly-surface text-cly-text-2 text-cly-sm font-semibold outline-none focus:border-cly-brand transition-colors"
+                placeholder="Dari"
+              />
+
+              {/* Date To */}
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="h-[34px] px-2.5 border border-cly-border rounded-lg bg-cly-surface text-cly-text-2 text-cly-sm font-semibold outline-none focus:border-cly-brand transition-colors"
+                placeholder="Sampai"
+              />
 
               {/* Account Filter */}
               <select
