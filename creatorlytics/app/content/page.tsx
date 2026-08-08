@@ -6,6 +6,7 @@ import { CSVImport } from '@/components/posts/CSVImport';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { useAccounts } from '@/lib/hooks/useAccounts';
+import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { postsToCSV } from '@/lib/utils/export';
 import { PlusIcon, DownloadIcon, Trash2, Search } from 'lucide-react';
 import type { Post } from '@/types';
@@ -15,6 +16,7 @@ export default function ContentPage() {
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
   const { posts, loading, createPost, updatePost, deletePost } = usePosts();
   const { accounts } = useAccounts();
+  const { platforms: userPlatforms } = usePlatforms();
   
   // Filters
   const [accountFilter, setAccountFilter] = useState('all');
@@ -372,19 +374,25 @@ export default function ContentPage() {
 
                     {/* Platform */}
                     <td
-                      className="py-2 px-3 border-r border-cly-border cursor-text"
+                      className="py-2 px-3 border-r border-cly-border cursor-pointer"
                       onClick={() => startEdit(post.id, 'platform', post.platform)}
                     >
                       {editingCell?.postId === post.id && editingCell?.field === 'platform' ? (
-                        <input
-                          type="text"
+                        <select
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
                           onBlur={() => saveEdit()}
                           onKeyDown={handleKeyDown}
                           autoFocus
                           className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
-                        />
+                        >
+                          <option value="">-</option>
+                          {userPlatforms.map(p => (
+                            <option key={p.id} value={p.name}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </select>
                       ) : (
                         <div className="h-7 flex items-center text-cly-sm text-cly-text-2">
                           {post.platform || '-'}
