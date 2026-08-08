@@ -512,23 +512,32 @@ export default function ContentPage() {
                     {/* Platform */}
                     <td
                       className="py-2 px-3 border-r border-cly-border cursor-pointer"
-                      onClick={() => startEdit(post.id, 'platform', post.platform)}
+                      onClick={() => {
+                        if (!(editingCell?.postId === post.id && editingCell?.field === 'platform')) {
+                          startEdit(post.id, 'platform', post.platform);
+                        }
+                      }}
                     >
                       {editingCell?.postId === post.id && editingCell?.field === 'platform' ? (
                         <select
                           value={editValue}
                           onChange={(e) => {
-                            setEditValue(e.target.value);
-                            // Auto-save on change for dropdown
-                            setTimeout(() => {
-                              updatePost(post.id, { platform: e.target.value });
+                            const newValue = e.target.value;
+                            setEditValue(newValue);
+                            updatePost(post.id, { platform: newValue });
+                            setEditingCell(null);
+                            setEditValue('');
+                          }}
+                          onBlur={(e) => {
+                            // Only close if click is outside the select
+                            if (!e.currentTarget.contains(e.relatedTarget as Node)) {
                               setEditingCell(null);
                               setEditValue('');
-                            }, 0);
+                            }
                           }}
                           onKeyDown={handleKeyDown}
                           autoFocus
-                          className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
+                          className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none cursor-pointer"
                         >
                           <option value="">-</option>
                           {userPlatforms.map(p => (
@@ -547,23 +556,32 @@ export default function ContentPage() {
                     {/* Pillar */}
                     <td
                       className="py-2 px-3 border-r border-cly-border cursor-pointer"
-                      onClick={() => startEdit(post.id, 'pillar', post.pillar)}
+                      onClick={() => {
+                        if (!(editingCell?.postId === post.id && editingCell?.field === 'pillar')) {
+                          startEdit(post.id, 'pillar', post.pillar);
+                        }
+                      }}
                     >
                       {editingCell?.postId === post.id && editingCell?.field === 'pillar' ? (
                         <select
                           value={editValue}
                           onChange={(e) => {
-                            setEditValue(e.target.value);
-                            // Auto-save on change for dropdown
-                            setTimeout(() => {
-                              updatePost(post.id, { pillar: e.target.value });
+                            const newValue = e.target.value;
+                            setEditValue(newValue);
+                            updatePost(post.id, { pillar: newValue });
+                            setEditingCell(null);
+                            setEditValue('');
+                          }}
+                          onBlur={(e) => {
+                            // Only close if click is outside the select
+                            if (!e.currentTarget.contains(e.relatedTarget as Node)) {
                               setEditingCell(null);
                               setEditValue('');
-                            }, 0);
+                            }
                           }}
                           onKeyDown={handleKeyDown}
                           autoFocus
-                          className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
+                          className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none cursor-pointer"
                         >
                           <option value="">-</option>
                           {userPillars.map(p => (
