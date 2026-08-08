@@ -370,7 +370,15 @@ export default function DashboardPage() {
                         <span className="text-cly-micro font-black text-cly-text-3 w-4 shrink-0 pt-0.5">{idx + 1}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-cly-base font-bold text-cly-text truncate">{post.name || 'Untitled'}</p>
-                          <p className="text-cly-sm text-cly-text-3 capitalize">{post.platform}</p>
+                          <p className="text-cly-sm text-cly-text-3 capitalize">
+                            {post.platform}
+                            {post.account && (
+                              <>
+                                <span className="mx-1">|</span>
+                                <span>{post.account}</span>
+                              </>
+                            )}
+                          </p>
                         </div>
                         <span className="text-cly-sm font-black text-cly-brand shrink-0">{fmt(post.reach)}</span>
                       </div>
