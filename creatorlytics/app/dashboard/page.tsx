@@ -12,7 +12,7 @@ import {
   ArrowUpRight, AlertTriangle, CheckCircle2,
 } from 'lucide-react';
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 
 export default function DashboardPage() {
@@ -275,17 +275,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
-                <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorReach" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-cly-brand)" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="var(--color-cly-brand)" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorImpression" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-cly-green)" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="var(--color-cly-green)" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
+                <LineChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => fmt(v)} axisLine={false} tickLine={false} />
@@ -293,9 +283,9 @@ export default function DashboardPage() {
                     contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
                     formatter={(v, name) => [fmt(Number(v)), name === 'reach' ? 'Reach' : 'Impression']}
                   />
-                  <Area type="monotone" dataKey="impression" stroke="var(--color-cly-green)" fillOpacity={1} fill="url(#colorImpression)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-green)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
-                  <Area type="monotone" dataKey="reach" stroke="var(--color-cly-brand)" fillOpacity={1} fill="url(#colorReach)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-brand)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
-                </AreaChart>
+                  <Line type="monotone" dataKey="impression" stroke="var(--color-cly-green)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-green)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="reach" stroke="var(--color-cly-brand)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-brand)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                </LineChart>
               </ResponsiveContainer>
             )}
 
