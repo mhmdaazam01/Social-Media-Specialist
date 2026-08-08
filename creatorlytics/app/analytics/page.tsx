@@ -15,7 +15,7 @@ import {
 import { TrendingUp, BookOpen, AlertTriangle } from 'lucide-react';
 import {
   ComposedChart, Line, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, CartesianGrid, RadialBarChart, RadialBar, Legend,
+  ResponsiveContainer, CartesianGrid, BarChart, Bar, Cell,
 } from 'recharts';
 
 export default function AnalyticsPage() {
@@ -73,7 +73,7 @@ export default function AnalyticsPage() {
       const pillar = pillars.find(pl => pl.pillar_id === p.pillar);
       return {
         name: pillar?.label ?? p.pillar,
-        value: parseFloat(p.avgER.toFixed(2)),
+        er: parseFloat(p.avgER.toFixed(2)),
         fill: pillar?.color || COLORS[i % COLORS.length],
       };
     });
@@ -211,19 +211,37 @@ export default function AnalyticsPage() {
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
-                <RadialBarChart
-                  cx="50%" cy="50%"
-                  innerRadius="20%" outerRadius="80%"
-                  data={pillarData}
-                  startAngle={180} endAngle={0}
+                <BarChart 
+                  data={pillarData} 
+                  layout="vertical" 
+                  margin={{ top: 5, right: 20, left: 5, bottom: 5 }}
                 >
-                  <RadialBar dataKey="value" label={{ position: 'insideStart', fill: '#fff', fontSize: 10 }} />
-                  <Legend iconSize={10} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" horizontal={false} />
+                  <XAxis 
+                    type="number" 
+                    tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} 
+                    axisLine={false} 
+                    tickLine={false}
+                    tickFormatter={(v) => `${v}%`}
+                  />
+                  <YAxis 
+                    type="category" 
+                    dataKey="name" 
+                    tick={{ fontSize: 11, fill: 'var(--color-cly-text-2)' }} 
+                    axisLine={false} 
+                    tickLine={false}
+                    width={100}
+                  />
                   <Tooltip
                     contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
                     formatter={(v) => [`${v}%`, 'Avg ER']}
                   />
-                </RadialBarChart>
+                  <Bar dataKey="er" radius={[0, 4, 4, 0]}>
+                    {pillarData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             )}
           </div>
