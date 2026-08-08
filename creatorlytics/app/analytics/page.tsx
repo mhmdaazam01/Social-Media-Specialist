@@ -13,7 +13,7 @@ import {
 } from '@/lib/utils/analytics';
 import { TrendingUp, BookOpen, AlertTriangle } from 'lucide-react';
 import {
-  ComposedChart, Line, Area, XAxis, YAxis, Tooltip,
+  ComposedChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, RadialBarChart, RadialBar, Legend,
 } from 'recharts';
 
@@ -127,12 +127,6 @@ export default function AnalyticsPage() {
             ) : (
               <ResponsiveContainer width="100%" height={280}>
                 <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorReachComposed" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="var(--color-cly-brand)" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="var(--color-cly-brand)" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} axisLine={false} tickLine={false} />
                   <YAxis yAxisId="left" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => fmt(v)} axisLine={false} tickLine={false} />
@@ -141,7 +135,7 @@ export default function AnalyticsPage() {
                     contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
                     formatter={(v, name) => [name === 'reach' ? fmt(Number(v)) : `${v}%`, name === 'reach' ? 'Reach' : 'Avg ER']}
                   />
-                  <Area yAxisId="left" type="monotone" dataKey="reach" stroke="var(--color-cly-brand)" fillOpacity={1} fill="url(#colorReachComposed)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-brand)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                  <Line yAxisId="left" type="monotone" dataKey="reach" stroke="var(--color-cly-brand)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-brand)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
                   <Line yAxisId="right" type="monotone" dataKey="er" stroke="var(--color-cly-amber)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-amber)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
                 </ComposedChart>
               </ResponsiveContainer>
