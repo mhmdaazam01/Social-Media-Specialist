@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { MetricCard, InsightCard, SectionTitle, Badge } from '@/components/cly';
 import { usePosts } from '@/lib/hooks/usePosts';
@@ -21,6 +21,11 @@ export default function DashboardPage() {
   const { profile } = useUser();
   const erMode = profile?.er_mode || 'impression';
   const loading = postsLoading || goalsLoading;
+  
+  // Chart filters
+  const [chartView, setChartView] = useState<'daily' | 'monthly'>('monthly');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const now = useMemo(() => new Date(), []);
   const thisMonth = now.getMonth() + 1;
@@ -75,15 +80,54 @@ export default function DashboardPage() {
     return { totalPosts, totalReach, avgER, activePosts, reachDelta, goalConfidence };
   }, [posts, goals, erMode, thisMonth, thisYear, now]);
 
-  // Chart data — last 6 months
+  // Chart data — last 6 months or filtered by date range
   const chartData = useMemo(() => {
-    const byMonth = aggregateByMonth(posts, erMode);
-    return byMonth.slice(-6).map(m => ({
-      month: m.month.slice(5), // "YYYY-MM" → "MM"
-      reach: m.totalReach,
-      er: parseFloat(m.avgER.toFixed(2)),
-    }));
-  }, [posts, erMode]);
+    let filteredPosts = posts;
+    
+    // Apply date filters
+    if (dateFrom) {
+      filteredPosts = filteredPosts.filter(p => p.date && p.date >= dateFrom);
+    }
+    if (dateTo) {
+      filteredPosts = filteredPosts.filter(p => p.date && p.date <= dateTo);
+    }
+    
+    if (chartView === 'monthly') {
+      // Monthly aggregation
+      const byMonth = aggregateByMonth(filteredPosts, erMode);
+      const data = dateFrom || dateTo ? byMonth : byMonth.slice(-6);
+      return data.map(m => ({
+        label: m.month.slice(5), // "YYYY-MM" → "MM"
+        reach: m.totalReach,
+        er: parseFloat(m.avgER.toFixed(2)),
+      }));
+    } else {
+      // Daily view
+      const dailyMap: Record<string, { reach: number; impression: number; engagement: number; count: number }> = {};
+      
+      filteredPosts.forEach(p => {
+        if (!p.date) return;
+        if (!dailyMap[p.date]) {
+          dailyMap[p.date] = { reach: 0, impression: 0, engagement: 0, count: 0 };
+        }
+        dailyMap[p.date].reach += p.reach || 0;
+        dailyMap[p.date].impression += p.impression || 0;
+        dailyMap[p.date].engagement += (p.like || 0) + (p.comment || 0) + (p.save || 0) + (p.share || 0);
+        dailyMap[p.date].count += 1;
+      });
+      
+      return Object.entries(dailyMap)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([date, data]) => {
+          const er = data.impression > 0 ? (data.engagement / data.impression) * 100 : 0;
+          return {
+            label: new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+            reach: data.reach,
+            er: parseFloat(er.toFixed(2)),
+          };
+        });
+    }
+  }, [posts, erMode, chartView, dateFrom, dateTo]);
 
   // Best post (no mutation)
   const bestPost = useMemo(
@@ -166,10 +210,57 @@ export default function DashboardPage() {
 
           {/* Reach trend chart */}
           <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
-            <SectionTitle
-              title="Tren Reach"
-              note="Reach per bulan dari 6 bulan terakhir."
-            />
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <SectionTitle
+                title="Tren Reach"
+                note={chartView === 'monthly' ? 'Reach per bulan' : 'Reach per hari'}
+              />
+              
+              {/* Chart controls */}
+              <div className="flex items-center gap-2">
+                {/* Date filters */}
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="h-[30px] px-2 border border-cly-border rounded bg-cly-surface text-cly-text-2 text-cly-xs font-semibold outline-none focus:border-cly-brand transition-colors"
+                  placeholder="Dari"
+                />
+                <span className="text-cly-xs text-cly-text-3">-</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="h-[30px] px-2 border border-cly-border rounded bg-cly-surface text-cly-text-2 text-cly-xs font-semibold outline-none focus:border-cly-brand transition-colors"
+                  placeholder="Sampai"
+                />
+                
+                {/* View toggle */}
+                <div className="flex border border-cly-border rounded overflow-hidden">
+                  <button
+                    onClick={() => setChartView('daily')}
+                    className={`h-[30px] px-3 text-cly-xs font-semibold transition-colors ${
+                      chartView === 'daily' 
+                        ? 'bg-cly-brand text-white' 
+                        : 'bg-cly-surface text-cly-text-2 hover:bg-cly-muted'
+                    }`}
+                  >
+                    Harian
+                  </button>
+                  <button
+                    onClick={() => setChartView('monthly')}
+                    className={`h-[30px] px-3 text-cly-xs font-semibold border-l border-cly-border transition-colors ${
+                      chartView === 'monthly' 
+                        ? 'bg-cly-brand text-white' 
+                        : 'bg-cly-surface text-cly-text-2 hover:bg-cly-muted'
+                    }`}
+                  >
+                    Bulanan
+                  </button>
+                </div>
+              </div>
+            </div>
+            
             {chartData.length === 0 ? (
               <div className="h-[250px] bg-cly-muted rounded-lg flex items-center justify-center">
                 <p className="text-cly-sm text-cly-text-3">Belum ada data — tambahkan post untuk melihat tren.</p>
@@ -184,7 +275,7 @@ export default function DashboardPage() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" vertical={false} />
-                  <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => fmt(v)} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
