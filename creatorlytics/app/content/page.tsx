@@ -108,7 +108,7 @@ export default function ContentPage() {
     setEditValue(String(currentValue || ''));
   }
 
-  async function saveEdit() {
+  async function saveEdit(andMoveNext?: { reverse: boolean }) {
     if (!editingCell) return;
     
     const { postId, field } = editingCell;
@@ -123,8 +123,14 @@ export default function ContentPage() {
     }
 
     await updatePost(postId, { [field]: value });
-    setEditingCell(null);
-    setEditValue('');
+    
+    // Move to next cell if requested
+    if (andMoveNext) {
+      moveToNextCell(andMoveNext.reverse, postId);
+    } else {
+      setEditingCell(null);
+      setEditValue('');
+    }
   }
 
   function cancelEdit() {
@@ -133,38 +139,38 @@ export default function ContentPage() {
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter' || e.key === 'Tab') {
+    if (e.key === 'Enter') {
       e.preventDefault();
-      saveEdit();
-      // Move to next cell if Tab
-      if (e.key === 'Tab' && editingCell) {
-        moveToNextCell(e.shiftKey);
-      }
+      saveEdit({ reverse: false });
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      saveEdit({ reverse: e.shiftKey });
     } else if (e.key === 'Escape') {
       cancelEdit();
-    } else if (e.key === 'ArrowRight' && !editingCell) {
-      moveToNextCell(false);
-    } else if (e.key === 'ArrowLeft' && !editingCell) {
-      moveToNextCell(true);
     }
   }
 
-  function moveToNextCell(reverse: boolean) {
-    if (!editingCell) return;
-    
+  function moveToNextCell(reverse: boolean, postId: string) {
     const fields = ['name', 'date', 'platform', 'link', 'impression', 'reach', 'like', 'comment', 'share', 'save'];
-    const currentIndex = fields.indexOf(editingCell.field);
+    const currentIndex = editingCell ? fields.indexOf(editingCell.field) : -1;
     
     if (currentIndex === -1) return;
     
     const nextIndex = reverse ? currentIndex - 1 : currentIndex + 1;
     
     if (nextIndex >= 0 && nextIndex < fields.length) {
-      const post = posts.find(p => p.id === editingCell.postId);
+      const post = posts.find(p => p.id === postId);
       if (post) {
         const nextField = fields[nextIndex];
-        startEdit(editingCell.postId, nextField, (post as any)[nextField]);
+        // Use setTimeout to ensure state updates properly
+        setTimeout(() => {
+          startEdit(postId, nextField, (post as any)[nextField]);
+        }, 0);
       }
+    } else {
+      // End of row, just close
+      setEditingCell(null);
+      setEditValue('');
     }
   }
 
@@ -330,7 +336,7 @@ export default function ContentPage() {
                           type="text"
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={saveEdit}
+                          onBlur={() => saveEdit()}
                           onKeyDown={handleKeyDown}
                           autoFocus
                           className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
@@ -352,7 +358,7 @@ export default function ContentPage() {
                           type="date"
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={saveEdit}
+                          onBlur={() => saveEdit()}
                           onKeyDown={handleKeyDown}
                           autoFocus
                           className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
@@ -374,7 +380,7 @@ export default function ContentPage() {
                           type="text"
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={saveEdit}
+                          onBlur={() => saveEdit()}
                           onKeyDown={handleKeyDown}
                           autoFocus
                           className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
@@ -393,7 +399,7 @@ export default function ContentPage() {
                           type="text"
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={saveEdit}
+                          onBlur={() => saveEdit()}
                           onKeyDown={handleKeyDown}
                           autoFocus
                           placeholder="URL"
@@ -437,7 +443,7 @@ export default function ContentPage() {
                           type="number"
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={saveEdit}
+                          onBlur={() => saveEdit()}
                           onKeyDown={handleKeyDown}
                           autoFocus
                           className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text text-right outline-none"
@@ -459,7 +465,7 @@ export default function ContentPage() {
                           type="number"
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={saveEdit}
+                          onBlur={() => saveEdit()}
                           onKeyDown={handleKeyDown}
                           autoFocus
                           className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text text-right outline-none"
@@ -481,7 +487,7 @@ export default function ContentPage() {
                           type="number"
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={saveEdit}
+                          onBlur={() => saveEdit()}
                           onKeyDown={handleKeyDown}
                           autoFocus
                           className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text text-right outline-none"
@@ -503,7 +509,7 @@ export default function ContentPage() {
                           type="number"
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={saveEdit}
+                          onBlur={() => saveEdit()}
                           onKeyDown={handleKeyDown}
                           autoFocus
                           className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text text-right outline-none"
@@ -525,7 +531,7 @@ export default function ContentPage() {
                           type="number"
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={saveEdit}
+                          onBlur={() => saveEdit()}
                           onKeyDown={handleKeyDown}
                           autoFocus
                           className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text text-right outline-none"
@@ -547,7 +553,7 @@ export default function ContentPage() {
                           type="number"
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={saveEdit}
+                          onBlur={() => saveEdit()}
                           onKeyDown={handleKeyDown}
                           autoFocus
                           className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text text-right outline-none"
