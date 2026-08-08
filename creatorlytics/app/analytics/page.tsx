@@ -6,6 +6,7 @@ import { SectionTitle, InsightCard, PlatformBadge } from '@/components/cly';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { usePillars } from '@/lib/hooks/usePillars';
+import { useAccounts } from '@/lib/hooks/useAccounts';
 import { useUser } from '@/lib/hooks/useUser';
 import {
   aggregateByMonth, aggregateByPlatform, aggregateByPillar, isPostInMonth,
@@ -20,15 +21,38 @@ import {
 export default function AnalyticsPage() {
   const { posts, loading } = usePosts();
   const { platforms } = usePlatforms();
+  const { accounts } = useAccounts();
   const { profile } = useUser();
   const erMode = profile?.er_mode || 'impression';
 
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
+  const [selectedAccount, setSelectedAccount] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   
   const filteredPosts = useMemo(() => {
-    if (selectedPlatform === 'all') return posts;
-    return posts.filter(p => p.platform === selectedPlatform);
-  }, [posts, selectedPlatform]);
+    let filtered = posts;
+    
+    // Platform filter
+    if (selectedPlatform !== 'all') {
+      filtered = filtered.filter(p => p.platform === selectedPlatform);
+    }
+    
+    // Account filter
+    if (selectedAccount !== 'all') {
+      filtered = filtered.filter(p => p.account === selectedAccount);
+    }
+    
+    // Date range filter
+    if (dateFrom) {
+      filtered = filtered.filter(p => p.date && p.date >= dateFrom);
+    }
+    if (dateTo) {
+      filtered = filtered.filter(p => p.date && p.date <= dateTo);
+    }
+    
+    return filtered;
+  }, [posts, selectedPlatform, selectedAccount, dateFrom, dateTo]);
 
   const byPlatform = useMemo(() => aggregateByPlatform(posts, erMode), [posts, erMode]);
   const { pillars } = usePillars();
@@ -98,6 +122,37 @@ export default function AnalyticsPage() {
       <div className="flex flex-col gap-[18px]">
         {/* Filter Buttons */}
         <div className="flex justify-end gap-2 flex-wrap">
+          {/* Date From */}
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="h-[34px] px-[13px] rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 text-cly-sm font-semibold hover:bg-cly-muted transition-colors outline-none"
+            placeholder="Dari"
+          />
+          
+          {/* Date To */}
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="h-[34px] px-[13px] rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 text-cly-sm font-semibold hover:bg-cly-muted transition-colors outline-none"
+            placeholder="Sampai"
+          />
+          
+          {/* Account Filter */}
+          <select 
+            value={selectedAccount}
+            onChange={(e) => setSelectedAccount(e.target.value)}
+            className="h-[34px] px-[13px] rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 text-cly-sm font-semibold hover:bg-cly-muted transition-colors outline-none cursor-pointer"
+          >
+            <option value="all">Semua Akun</option>
+            {accounts.map(a => (
+              <option key={a.id} value={a.name}>{a.name}</option>
+            ))}
+          </select>
+          
+          {/* Platform Filter */}
           <select 
             value={selectedPlatform}
             onChange={(e) => setSelectedPlatform(e.target.value)}
