@@ -94,40 +94,48 @@ export default function DashboardPage() {
     
     if (chartView === 'monthly') {
       // Monthly aggregation
-      const byMonth = aggregateByMonth(filteredPosts, erMode);
-      const data = dateFrom || dateTo ? byMonth : byMonth.slice(-6);
-      return data.map(m => ({
-        label: m.month.slice(5), // "YYYY-MM" → "MM"
-        reach: m.totalReach,
-        er: parseFloat(m.avgER.toFixed(2)),
+      const monthMap: Record<string, { reach: number; impression: number }> = {};
+      
+      filteredPosts.forEach(p => {
+        if (!p.date) return;
+        const month = p.date.slice(0, 7); // "YYYY-MM"
+        if (!monthMap[month]) {
+          monthMap[month] = { reach: 0, impression: 0 };
+        }
+        monthMap[month].reach += p.reach || 0;
+        monthMap[month].impression += p.impression || 0;
+      });
+      
+      const sorted = Object.entries(monthMap).sort(([a], [b]) => a.localeCompare(b));
+      const data = dateFrom || dateTo ? sorted : sorted.slice(-6);
+      
+      return data.map(([month, data]) => ({
+        label: month.slice(5), // "YYYY-MM" → "MM"
+        reach: data.reach,
+        impression: data.impression,
       }));
     } else {
       // Daily view
-      const dailyMap: Record<string, { reach: number; impression: number; engagement: number; count: number }> = {};
+      const dailyMap: Record<string, { reach: number; impression: number }> = {};
       
       filteredPosts.forEach(p => {
         if (!p.date) return;
         if (!dailyMap[p.date]) {
-          dailyMap[p.date] = { reach: 0, impression: 0, engagement: 0, count: 0 };
+          dailyMap[p.date] = { reach: 0, impression: 0 };
         }
         dailyMap[p.date].reach += p.reach || 0;
         dailyMap[p.date].impression += p.impression || 0;
-        dailyMap[p.date].engagement += (p.like || 0) + (p.comment || 0) + (p.save || 0) + (p.share || 0);
-        dailyMap[p.date].count += 1;
       });
       
       return Object.entries(dailyMap)
         .sort(([a], [b]) => a.localeCompare(b))
-        .map(([date, data]) => {
-          const er = data.impression > 0 ? (data.engagement / data.impression) * 100 : 0;
-          return {
-            label: new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
-            reach: data.reach,
-            er: parseFloat(er.toFixed(2)),
-          };
-        });
+        .map(([date, data]) => ({
+          label: new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+          reach: data.reach,
+          impression: data.impression,
+        }));
     }
-  }, [posts, erMode, chartView, dateFrom, dateTo]);
+  }, [posts, chartView, dateFrom, dateTo]);
 
   // Best post (no mutation)
   const bestPost = useMemo(
@@ -212,8 +220,8 @@ export default function DashboardPage() {
           <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
             <div className="flex items-start justify-between gap-3 mb-4">
               <SectionTitle
-                title="Tren Reach"
-                note={chartView === 'monthly' ? 'Reach per bulan' : 'Reach per hari'}
+                title="Tren Performa"
+                note={chartView === 'monthly' ? 'Impression & Reach per bulan' : 'Impression & Reach per hari'}
               />
               
               {/* Chart controls */}
@@ -273,14 +281,19 @@ export default function DashboardPage() {
                       <stop offset="5%" stopColor="var(--color-cly-brand)" stopOpacity={0.3}/>
                       <stop offset="95%" stopColor="var(--color-cly-brand)" stopOpacity={0}/>
                     </linearGradient>
+                    <linearGradient id="colorImpression" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--color-cly-green)" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="var(--color-cly-green)" stopOpacity={0}/>
+                    </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => fmt(v)} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
-                    formatter={(v) => [fmt(Number(v)), 'Reach']}
+                    formatter={(v, name) => [fmt(Number(v)), name === 'reach' ? 'Reach' : 'Impression']}
                   />
+                  <Area type="monotone" dataKey="impression" stroke="var(--color-cly-green)" fillOpacity={1} fill="url(#colorImpression)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-green)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
                   <Area type="monotone" dataKey="reach" stroke="var(--color-cly-brand)" fillOpacity={1} fill="url(#colorReach)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-brand)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
                 </AreaChart>
               </ResponsiveContainer>
