@@ -155,22 +155,28 @@ export default function ContentPage() {
 
         {/* Spreadsheet Table */}
         <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly overflow-x-auto">
-          <table className="w-full border-collapse min-w-[1200px]">
+          <table className="w-full border-collapse min-w-[1400px]">
             <thead className="sticky top-0 bg-cly-muted z-10">
               <tr>
                 <th className="text-center text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-12 bg-cly-muted">
                   #
                 </th>
-                <th className="text-left text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border min-w-[200px] bg-cly-muted">
+                <th className="text-left text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border min-w-[180px] bg-cly-muted">
                   Title
                 </th>
-                <th className="text-left text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border min-w-[180px] bg-cly-muted">
+                <th className="text-left text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-[100px] bg-cly-muted">
+                  Date
+                </th>
+                <th className="text-left text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-[110px] bg-cly-muted">
+                  Platform
+                </th>
+                <th className="text-center text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-[110px] bg-cly-muted">
                   Link Content
                 </th>
                 <th className="text-right text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-[100px] bg-cly-muted">
                   Impression
                 </th>
-                <th className="text-right text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-[100px] bg-cly-muted">
+                <th className="text-right text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-[90px] bg-cly-muted">
                   Reach
                 </th>
                 <th className="text-right text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-[80px] bg-cly-muted">
@@ -185,6 +191,9 @@ export default function ContentPage() {
                 <th className="text-right text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-[80px] bg-cly-muted">
                   Save
                 </th>
+                <th className="text-right text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 border-r border-cly-border w-[70px] bg-cly-muted">
+                  ER
+                </th>
                 <th className="text-center text-cly-xs font-black text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[60px] bg-cly-muted">
                   <Trash2 size={14} className="mx-auto" />
                 </th>
@@ -193,20 +202,24 @@ export default function ContentPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={10} className="py-12 text-center text-cly-sm text-cly-text-3 animate-pulse">
+                  <td colSpan={13} className="py-12 text-center text-cly-sm text-cly-text-3 animate-pulse">
                     Memuat data...
                   </td>
                 </tr>
               ) : filteredPosts.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-12 text-center text-cly-sm text-cly-text-3">
+                  <td colSpan={13} className="py-12 text-center text-cly-sm text-cly-text-3">
                     {accountFilter !== 'all' 
                       ? `Belum ada konten untuk akun "${accountFilter}".`
                       : 'Belum ada konten. Klik "Tambah Baris" untuk mulai.'}
                   </td>
                 </tr>
               ) : (
-                filteredPosts.map((post, idx) => (
+                filteredPosts.map((post, idx) => {
+                  const totalEngagement = (post.like || 0) + (post.comment || 0) + (post.share || 0) + (post.save || 0);
+                  const er = post.impression > 0 ? (totalEngagement / post.impression) * 100 : 0;
+
+                  return (
                   <tr
                     key={post.id}
                     className="border-b border-cly-border hover:bg-cly-muted/30 transition-colors"
@@ -237,12 +250,34 @@ export default function ContentPage() {
                       )}
                     </td>
 
-                    {/* Link */}
+                    {/* Date */}
                     <td
                       className="py-2 px-3 border-r border-cly-border cursor-text"
-                      onClick={() => startEdit(post.id, 'link', post.link)}
+                      onClick={() => startEdit(post.id, 'date', post.date)}
                     >
-                      {editingCell?.postId === post.id && editingCell?.field === 'link' ? (
+                      {editingCell?.postId === post.id && editingCell?.field === 'date' ? (
+                        <input
+                          type="date"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onBlur={saveEdit}
+                          onKeyDown={handleKeyDown}
+                          autoFocus
+                          className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
+                        />
+                      ) : (
+                        <div className="h-7 flex items-center text-cly-sm text-cly-text-2">
+                          {post.date ? new Date(post.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Platform */}
+                    <td
+                      className="py-2 px-3 border-r border-cly-border cursor-text"
+                      onClick={() => startEdit(post.id, 'platform', post.platform)}
+                    >
+                      {editingCell?.postId === post.id && editingCell?.field === 'platform' ? (
                         <input
                           type="text"
                           value={editValue}
@@ -253,8 +288,42 @@ export default function ContentPage() {
                           className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
                         />
                       ) : (
-                        <div className="h-7 flex items-center text-cly-sm text-cly-text-2 truncate">
-                          {post.link || '-'}
+                        <div className="h-7 flex items-center text-cly-sm text-cly-text-2">
+                          {post.platform || '-'}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Link Content */}
+                    <td className="py-2 px-3 border-r border-cly-border text-center">
+                      {post.link ? (
+                        <a
+                          href={post.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block h-7 px-3 leading-7 text-cly-xs font-semibold text-white bg-cly-brand rounded hover:bg-cly-brand-hover transition-colors"
+                        >
+                          Link Content
+                        </a>
+                      ) : (
+                        <div
+                          className="h-7 flex items-center justify-center cursor-text"
+                          onClick={() => startEdit(post.id, 'link', post.link)}
+                        >
+                          {editingCell?.postId === post.id && editingCell?.field === 'link' ? (
+                            <input
+                              type="text"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              onBlur={saveEdit}
+                              onKeyDown={handleKeyDown}
+                              autoFocus
+                              placeholder="URL"
+                              className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
+                            />
+                          ) : (
+                            <span className="text-cly-xs text-cly-text-3">-</span>
+                          )}
                         </div>
                       )}
                     </td>
@@ -391,6 +460,13 @@ export default function ContentPage() {
                       )}
                     </td>
 
+                    {/* ER (Auto-calculated) */}
+                    <td className="py-2 px-3 text-right border-r border-cly-border">
+                      <div className="h-7 flex items-center justify-end text-cly-sm text-cly-text font-bold">
+                        {er.toFixed(2)}%
+                      </div>
+                    </td>
+
                     {/* Delete */}
                     <td className="py-2 px-3 text-center">
                       <button
@@ -402,7 +478,8 @@ export default function ContentPage() {
                       </button>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
