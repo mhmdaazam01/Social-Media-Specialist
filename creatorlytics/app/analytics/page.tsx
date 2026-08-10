@@ -8,14 +8,15 @@ import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { usePillars } from '@/lib/hooks/usePillars';
 import { useAccounts } from '@/lib/hooks/useAccounts';
 import { useUser } from '@/lib/hooks/useUser';
+import { useGoals } from '@/lib/hooks/useGoals';
 import {
-  aggregateByMonth, aggregateByPlatform, aggregateByPillar, isPostInMonth,
+  aggregateByPlatform, isPostInMonth,
   fmt, fmtPercent,
 } from '@/lib/utils/analytics';
-import { TrendingUp, BookOpen, AlertTriangle } from 'lucide-react';
+import { TrendingUp, BookOpen, AlertTriangle, Target } from 'lucide-react';
 import {
   ComposedChart, Line, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, CartesianGrid, BarChart, Bar, Cell,
+  ResponsiveContainer, CartesianGrid, BarChart, Bar,
 } from 'recharts';
 
 export default function AnalyticsPage() {
@@ -23,6 +24,7 @@ export default function AnalyticsPage() {
   const { platforms } = usePlatforms();
   const { accounts } = useAccounts();
   const { profile } = useUser();
+  const { goals, loading: goalsLoading } = useGoals();
   const erMode = profile?.er_mode || 'impression';
 
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
@@ -80,8 +82,12 @@ export default function AnalyticsPage() {
       
       return data.map(([month, d]) => {
         const er = d.impression > 0 ? (d.engagement / d.impression) * 100 : 0;
+        // Convert "YYYY-MM" to month name (e.g., "2026-08" → "Agu")
+        const [year, monthNum] = month.split('-');
+        const monthName = new Date(parseInt(year), parseInt(monthNum) - 1).toLocaleDateString('id-ID', { month: 'short' });
+        
         return {
-          label: month.slice(5), // "YYYY-MM" → "MM"
+          label: monthName,
           reach: d.reach,
           impression: d.impression,
           er: parseFloat(er.toFixed(2)),
@@ -440,10 +446,10 @@ export default function AnalyticsPage() {
               <thead>
                 <tr className="border-b border-cly-border">
                   <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50">Platform</th>
-                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-right">Reach</th>
-                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-right">Impression</th>
-                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-right">Engagement</th>
-                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-right">ER</th>
+                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-center">Reach</th>
+                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-center">Impression</th>
+                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-center">Engagement</th>
+                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-center">ER</th>
                 </tr>
               </thead>
               <tbody className="text-cly-sm">
@@ -461,24 +467,25 @@ export default function AnalyticsPage() {
                   </tr>
                 ) : (
                   byPlatform.map((p, idx) => {
-                    // Real MoM reach delta per platform
-                    const now = new Date();
-                    const thisM = now.getMonth() + 1;
-                    const thisY = now.getFullYear();
-                    const prevM = thisM === 1 ? 12 : thisM - 1;
-                    const prevY = thisM === 1 ? thisY - 1 : thisY;
-
-                    const thisReach = posts
-                      .filter(po => po.platform === p.platform && isPostInMonth(po, thisY, thisM))
-                      .reduce((s, po) => s + po.reach, 0);
-
-                    const prevReach = posts
-                      .filter(po => po.platform === p.platform && isPostInMonth(po, prevY, prevM))
-                      .reduce((s, po) => s + po.reach, 0);
-
-                    const growth = prevReach > 0
-                      ? Math.round(((thisReach - prevReach) / prevReach) * 100)
-                      : null;
+                    // Calculate engagement and ER for this platform
+                    const platformPosts = filteredPosts.filter(post => post.platform === p.platform);
+                    
+                    // Total impression for this platform
+                    const totalImpression = platformPosts.reduce((s, post) => s + (post.impression || 0), 0);
+                    
+                    // Total engagement (like + comment + share + save)
+                    const totalEngagement = platformPosts.reduce((s, post) => 
+                      s + (post.like || 0) + (post.comment || 0) + (post.share || 0) + (post.save || 0), 0
+                    );
+                    
+                    // ER calculation based on erMode (impression or reach)
+                    let er = 0;
+                    if (erMode === 'impression' && totalImpression > 0) {
+                      er = (totalEngagement / totalImpression) * 100;
+                    } else if (erMode === 'reach' && p.totalReach > 0) {
+                      er = (totalEngagement / p.totalReach) * 100;
+                    }
+                    
                     return (
                       <tr
                         key={p.platform}
@@ -487,18 +494,11 @@ export default function AnalyticsPage() {
                         <td className="py-3">
                           <PlatformBadge platform={platformName(p.platform)} />
                         </td>
-                        <td className="text-right text-cly-text-2">{p.count}</td>
-                        <td className="text-right text-cly-text-2">{fmt(p.totalReach)}</td>
-                        <td className="text-right text-cly-text font-black">
-                          {fmtPercent(p.avgER)}
-                        </td>
-                        <td
-                          className={`text-right font-black ${
-                            growth === null ? 'text-cly-text-3' :
-                            growth >= 0 ? 'text-cly-green' : 'text-cly-red'
-                          }`}
-                        >
-                          {growth === null ? '—' : `${growth >= 0 ? '+' : ''}${growth}%`}
+                        <td className="py-3 text-center text-cly-text-2">{fmt(p.totalReach)}</td>
+                        <td className="py-3 text-center text-cly-text-2">{fmt(totalImpression)}</td>
+                        <td className="py-3 text-center text-cly-text-2">{fmt(totalEngagement)}</td>
+                        <td className="py-3 text-center text-cly-text font-black">
+                          {fmtPercent(er)}
                         </td>
                       </tr>
                     );
@@ -507,6 +507,98 @@ export default function AnalyticsPage() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Goals Progress */}
+        <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
+          <SectionTitle 
+            title="Goals Progress" 
+            note={selectedAccount === 'all' ? 'Semua Akun' : accounts.find(a => a.name === selectedAccount)?.name || selectedAccount}
+          />
+          {goalsLoading ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="border border-cly-border rounded-lg p-4 h-[120px] animate-pulse" />
+              ))}
+            </div>
+          ) : goals.filter(g => selectedAccount === 'all' || !g.account || g.account === 'all' || g.account === selectedAccount).length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-12 h-12 rounded-full bg-cly-muted text-cly-text-3 flex items-center justify-center mb-3">
+                <Target size={24} />
+              </div>
+              <p className="text-cly-sm text-cly-text-3">Belum ada goal untuk filter ini.</p>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {goals
+                .filter(g => {
+                  // Filter by account - more permissive
+                  if (selectedAccount === 'all') {
+                    // Show all goals when 'all' is selected
+                    return true;
+                  } else {
+                    // Show goals for selected account OR goals for 'all' accounts
+                    return !g.account || g.account === 'all' || g.account === selectedAccount;
+                  }
+                })
+                .map(goal => {
+                  // Calculate progress
+                  const relevant = filteredPosts.filter(p => {
+                    const matchMonth = isPostInMonth(p, goal.year, goal.month);
+                    // Case-insensitive platform matching
+                    const matchPlatform = goal.platform === 'all' || 
+                      (p.platform && goal.platform && p.platform.toLowerCase() === goal.platform.toLowerCase());
+                    const matchAccount = !goal.account || goal.account === 'all' || p.account === goal.account;
+                    return matchMonth && matchPlatform && matchAccount;
+                  });
+                  
+                  let actual = 0;
+                  if (goal.metric === 'reach') {
+                    actual = relevant.reduce((s, p) => s + (p.reach || 0), 0);
+                  } else if (goal.metric === 'followers') {
+                    actual = relevant.reduce((s, p) => s + (p.followers_gained || 0), 0);
+                  } else if (goal.metric === 'posts') {
+                    actual = relevant.length;
+                  } else if (goal.metric === 'impression') {
+                    actual = relevant.reduce((s, p) => s + (p.impression || 0), 0);
+                  } else if (goal.metric === 'engagement' || goal.metric === 'likes' || goal.metric === 'comments') {
+                    // engagement = like + comment + share + save
+                    actual = relevant.reduce((s, p) => s + (p.like || 0) + (p.comment || 0) + (p.save || 0) + (p.share || 0), 0);
+                  }
+                  
+                  const progress = goal.target > 0 ? Math.min((actual / goal.target) * 100, 100) : 0;
+                  
+                  return (
+                    <div key={goal.id} className="border border-cly-border rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <span className="text-cly-sm font-semibold text-cly-text">{goal.label}</span>
+                        <span className="text-cly-xs text-cly-text-3 uppercase font-black">
+                          {goal.platform === 'all' ? 'All' : platformName(goal.platform)}
+                        </span>
+                      </div>
+                      {goal.account && goal.account !== 'all' && (
+                        <div className="text-cly-xs text-cly-text-3 mb-2">
+                          Akun: {goal.account}
+                        </div>
+                      )}
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-cly-xs">
+                          <span className="text-cly-text-3">Progress</span>
+                          <span className="font-black text-cly-text">{fmt(actual)} / {fmt(goal.target)}</span>
+                        </div>
+                        <div className="h-2 bg-cly-muted rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-cly-brand transition-all" 
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                        <div className="text-right text-cly-xs font-black text-cly-brand">{fmtPercent(progress)}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
         </div>
       </div>
     </AppShell>

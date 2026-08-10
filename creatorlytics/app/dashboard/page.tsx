@@ -57,10 +57,15 @@ export default function DashboardPage() {
     // Goal confidence — % of active goals on track
     const activeGoals = goals.filter(g => g.month === thisMonth && g.year === thisYear);
     const onTrackGoals = activeGoals.filter(g => {
-      const relevant = posts.filter(p => 
-        isPostInMonth(p, g.year, g.month) && 
-        (g.platform === 'all' || p.platform === g.platform)
-      );
+      const relevant = posts.filter(p => {
+        const monthMatch = isPostInMonth(p, g.year, g.month);
+        // Case-insensitive platform matching
+        const platformMatch = g.platform === 'all' || 
+          (p.platform && g.platform && p.platform.toLowerCase() === g.platform.toLowerCase());
+        // Account filtering
+        const accountMatch = !g.account || g.account === 'all' || p.account === g.account;
+        return monthMatch && platformMatch && accountMatch;
+      });
       let actual = 0;
       if (g.metric === 'reach') actual = relevant.reduce((s, p) => s + p.reach, 0);
       else if (g.metric === 'followers') actual = relevant.reduce((s, p) => s + p.followers_gained, 0);
@@ -109,11 +114,17 @@ export default function DashboardPage() {
       const sorted = Object.entries(monthMap).sort(([a], [b]) => a.localeCompare(b));
       const data = dateFrom || dateTo ? sorted : sorted.slice(-6);
       
-      return data.map(([month, data]) => ({
-        label: month.slice(5), // "YYYY-MM" → "MM"
-        reach: data.reach,
-        impression: data.impression,
-      }));
+      return data.map(([month, data]) => {
+        // Convert "YYYY-MM" to month name (e.g., "2026-08" → "Agustus")
+        const [year, monthNum] = month.split('-');
+        const monthName = new Date(parseInt(year), parseInt(monthNum) - 1).toLocaleDateString('id-ID', { month: 'short' });
+        
+        return {
+          label: monthName,
+          reach: data.reach,
+          impression: data.impression,
+        };
+      });
     } else {
       // Daily view
       const dailyMap: Record<string, { reach: number; impression: number }> = {};
@@ -345,7 +356,7 @@ export default function DashboardPage() {
 
             {/* Top posts */}
             <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
-              <SectionTitle title="Top konten" note="5 post dengan reach tertinggi." />
+              <SectionTitle title="Top konten" note="5 post dengan impression tertinggi." />
               <div className="space-y-0">
                 {loading ? (
                   <div className="space-y-3 py-2">
@@ -363,7 +374,7 @@ export default function DashboardPage() {
                   <p className="text-cly-sm text-cly-text-3 py-4 text-center">Belum ada post.</p>
                 ) : (
                   [...posts]
-                    .sort((a, b) => b.reach - a.reach)
+                    .sort((a, b) => b.impression - a.impression)
                     .slice(0, 5)
                     .map((post, idx) => (
                       <div key={post.id} className="flex gap-2.5 py-[10px] px-1 border-b border-cly-border last:border-0">
@@ -380,7 +391,7 @@ export default function DashboardPage() {
                             )}
                           </p>
                         </div>
-                        <span className="text-cly-sm font-black text-cly-brand shrink-0">{fmt(post.reach)}</span>
+                        <span className="text-cly-sm font-black text-cly-brand shrink-0">{fmt(post.impression)}</span>
                       </div>
                     ))
                 )}
@@ -402,24 +413,49 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
-              ) : goals.filter(g => g.month === thisMonth && g.year === thisYear).length === 0 ? (
+              ) : goals.filter(g => 
+                // Show goals for current OR next month (for early planning)
+                (g.month === thisMonth || g.month === thisMonth + 1) && g.year === thisYear
+                // Don't filter by account - show all goals
+              ).length === 0 ? (
                 <p className="text-cly-sm text-cly-text-3 py-4 text-center">Belum ada goal bulan ini.</p>
               ) : (
                 <div className="space-y-3">
                   {goals
-                    .filter(g => g.month === thisMonth && g.year === thisYear)
+                    .filter(g => 
+                      (g.month === thisMonth || g.month === thisMonth + 1) && g.year === thisYear
+                      // Don't filter by account - show all goals
+                    )
                     .slice(0, 3)
                     .map(goal => {
-                      const relevant = posts.filter(p => 
-                        isPostInMonth(p, goal.year, goal.month) && 
-                        (goal.platform === 'all' || p.platform === goal.platform)
-                      );
+                      // Filter posts based on goal criteria
+                      const relevant = posts.filter(p => {
+                        const monthMatch = isPostInMonth(p, goal.year, goal.month);
+                        // Case-insensitive platform matching
+                        const platformMatch = goal.platform === 'all' || 
+                          (p.platform && goal.platform && p.platform.toLowerCase() === goal.platform.toLowerCase());
+                        // For 'all' account goals, include all posts regardless of account
+                        const accountMatch = !goal.account || goal.account === 'all' || p.account === goal.account;
+                        return monthMatch && platformMatch && accountMatch;
+                      });
+                      
+                      // Calculate actual value based on metric
                       let actual = 0;
-                      if (goal.metric === 'reach') actual = relevant.reduce((s, p) => s + p.reach, 0);
-                      else if (goal.metric === 'followers') actual = relevant.reduce((s, p) => s + p.followers_gained, 0);
-                      else if (goal.metric === 'posts') actual = relevant.length;
-                      else actual = relevant.reduce((s, p) => s + p.like + p.comment + p.save + p.share, 0);
+                      if (goal.metric === 'reach') {
+                        actual = relevant.reduce((s, p) => s + (p.reach || 0), 0);
+                      } else if (goal.metric === 'followers') {
+                        actual = relevant.reduce((s, p) => s + (p.followers_gained || 0), 0);
+                      } else if (goal.metric === 'posts') {
+                        actual = relevant.length;
+                      } else if (goal.metric === 'impression') {
+                        actual = relevant.reduce((s, p) => s + (p.impression || 0), 0);
+                      } else if (goal.metric === 'engagement' || goal.metric === 'likes' || goal.metric === 'comments') {
+                        // engagement = like + comment + share + save
+                        actual = relevant.reduce((s, p) => s + (p.like || 0) + (p.comment || 0) + (p.save || 0) + (p.share || 0), 0);
+                      }
+                      
                       const pct = Math.min(goal.target > 0 ? Math.round((actual / goal.target) * 100) : 0, 100);
+                      
                       return (
                         <div key={goal.id}>
                           <div className="flex justify-between text-cly-sm mb-1">

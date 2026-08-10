@@ -47,28 +47,48 @@ export default function ReportPage() {
   const avgER = totalPosts > 0 ? calcTotalER(filteredPosts, erMode) : 0;
 
   const platformData = useMemo(() => aggregateByPlatform(filteredPosts, erMode), [filteredPosts, erMode]);
-  const topPosts = useMemo(() => [...filteredPosts].sort((a, b) => b.reach - a.reach).slice(0, 5), [filteredPosts]);
+  const topPosts = useMemo(() => {
+    // Calculate overall score for each post (normalized metrics)
+    return [...filteredPosts]
+      .map(p => {
+        const engagement = (p.like || 0) + (p.comment || 0) + (p.share || 0) + (p.save || 0);
+        const er = p.impression > 0 ? (engagement / p.impression) * 100 : 0;
+        // Overall score: weighted combination of normalized values
+        // Higher weight for ER and engagement quality, not just views
+        const score = 
+          (p.impression || 0) * 0.2 + 
+          (p.reach || 0) * 0.2 + 
+          engagement * 2 + 
+          er * 100;
+        return { post: p, engagement, er, score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+  }, [filteredPosts]);
 
   const pillarData = useMemo(() => {
-    const grouped: Record<string, { count: number; reach: number; engagement: number }> = {};
+    const grouped: Record<string, { count: number; impression: number; reach: number; engagement: number }> = {};
     for (const p of filteredPosts) {
       if (!p.pillar) continue;
-      if (!grouped[p.pillar]) grouped[p.pillar] = { count: 0, reach: 0, engagement: 0 };
+      if (!grouped[p.pillar]) grouped[p.pillar] = { count: 0, impression: 0, reach: 0, engagement: 0 };
       grouped[p.pillar].count++;
+      grouped[p.pillar].impression += p.impression;
       grouped[p.pillar].reach += p.reach;
-      grouped[p.pillar].engagement += p.like + p.comment + p.share;
+      grouped[p.pillar].engagement += p.like + p.comment + p.share + p.save;
     }
     return Object.entries(grouped).sort(([, a], [, b]) => b.reach - a.reach);
   }, [filteredPosts]);
 
   const monthlyData = useMemo(() => {
-    const grouped: Record<string, { posts: number; reach: number; followers: number }> = {};
+    const grouped: Record<string, { posts: number; impression: number; reach: number; engagement: number; followers: number }> = {};
     for (const p of filteredPosts) {
       if (!p.date) continue;
       const month = p.date.substring(0, 7);
-      if (!grouped[month]) grouped[month] = { posts: 0, reach: 0, followers: 0 };
+      if (!grouped[month]) grouped[month] = { posts: 0, impression: 0, reach: 0, engagement: 0, followers: 0 };
       grouped[month].posts++;
+      grouped[month].impression += p.impression;
       grouped[month].reach += p.reach;
+      grouped[month].engagement += (p.like || 0) + (p.comment || 0) + (p.share || 0) + (p.save || 0);
       grouped[month].followers += p.followers_gained;
     }
     return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
@@ -232,27 +252,31 @@ export default function ReportPage() {
                   </div>
                   
                   <div className="overflow-x-auto">
-                    <table className="w-full border-collapse min-w-[600px]">
+                    <table className="w-full border-collapse min-w-[700px]">
                       <thead>
                         <tr className="border-b border-cly-border">
                           <th className="text-left text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Platform</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Posts</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Reach</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Avg ER</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Posts</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Impression</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Reach</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Engagement</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Avg ER</th>
                         </tr>
                       </thead>
                       <tbody>
                         {platformData.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="py-8 text-center text-cly-sm text-cly-text-3">Tidak ada data platform.</td>
+                            <td colSpan={6} className="py-8 text-center text-cly-sm text-cly-text-3">Tidak ada data platform.</td>
                           </tr>
                         ) : (
                           platformData.map((pd, idx) => (
                             <tr key={pd.platform} className={idx < platformData.length - 1 ? 'border-b border-cly-border' : ''}>
                               <td className="py-3"><PlatformBadge platform={pd.platform} /></td>
-                              <td className="py-3 text-right text-cly-sm text-cly-text-2">{pd.count}</td>
-                              <td className="py-3 text-right text-cly-sm text-cly-text-2">{fmt(pd.totalReach)}</td>
-                              <td className="py-3 text-right text-cly-sm text-cly-text font-black">{fmtPercent(pd.avgER)}</td>
+                              <td className="py-3 text-center text-cly-sm text-cly-text-2">{pd.count}</td>
+                              <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(pd.totalImpression)}</td>
+                              <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(pd.totalReach)}</td>
+                              <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(pd.totalEngagement)}</td>
+                              <td className="py-3 text-center text-cly-sm text-cly-text font-black">{fmtPercent(pd.avgER)}</td>
                             </tr>
                           ))
                         )}
@@ -264,29 +288,45 @@ export default function ReportPage() {
                 {/* Top Content */}
                 <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[10px_18px]">
                   <div className="pt-2.5">
-                    <SectionTitle title="Top 5 Content" note="Best performing posts by reach" />
+                    <SectionTitle title="Top 5 Content" note="Best performing posts by overall score" />
                   </div>
                   
                   <div className="overflow-x-auto">
-                    <table className="w-full border-collapse min-w-[500px]">
+                    <table className="w-full border-collapse min-w-[700px]">
                       <thead>
                         <tr className="border-b border-cly-border">
                           <th className="text-left text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Title</th>
-                          <th className="text-left text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Platform</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Reach</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Platform</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Impression</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Reach</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Engagement</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">ER</th>
                         </tr>
                       </thead>
                       <tbody>
                         {topPosts.length === 0 ? (
                           <tr>
-                            <td colSpan={3} className="py-8 text-center text-cly-sm text-cly-text-3">Tidak ada konten.</td>
+                            <td colSpan={6} className="py-8 text-center text-cly-sm text-cly-text-3">Tidak ada konten.</td>
                           </tr>
                         ) : (
-                          topPosts.map((p, idx) => (
+                          topPosts.map(({ post: p, engagement, er }, idx) => (
                             <tr key={p.id} className={idx < topPosts.length - 1 ? 'border-b border-cly-border' : ''}>
                               <td className="py-3 text-cly-sm text-cly-text font-semibold max-w-xs truncate">{p.name || 'Untitled'}</td>
-                              <td className="py-3"><PlatformBadge platform={p.platform} /></td>
-                              <td className="py-3 text-right text-cly-sm text-cly-text-2">{fmt(p.reach)}</td>
+                              <td className="py-3">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <PlatformBadge platform={p.platform} />
+                                  {selectedAccount === 'all' && p.account && (
+                                    <>
+                                      <span className="text-cly-xs text-cly-text-3">|</span>
+                                      <span className="text-cly-xs text-cly-text-3">{p.account}</span>
+                                    </>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(p.impression)}</td>
+                              <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(p.reach)}</td>
+                              <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(engagement)}</td>
+                              <td className="py-3 text-center text-cly-sm text-cly-text font-black">{fmtPercent(er)}</td>
                             </tr>
                           ))
                         )}
@@ -302,23 +342,32 @@ export default function ReportPage() {
                   </div>
                   
                   <div className="overflow-x-auto">
-                    <table className="w-full border-collapse min-w-[600px]">
+                    <table className="w-full border-collapse min-w-[800px]">
                       <thead>
                         <tr className="border-b border-cly-border">
                           <th className="text-left text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Pillar</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Posts</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Reach</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Engagement</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Posts</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Impression</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Reach</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Engagement</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">ER</th>
                         </tr>
                       </thead>
                       <tbody>
                         {pillarData.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="py-8 text-center text-cly-sm text-cly-text-3">Tidak ada data pillar.</td>
+                            <td colSpan={6} className="py-8 text-center text-cly-sm text-cly-text-3">Tidak ada data pillar.</td>
                           </tr>
                         ) : (
                           pillarData.map(([pillarId, data], idx) => {
                             const pillar = pillars.find(p => p.pillar_id === pillarId);
+                            // Calculate ER for this pillar
+                            const er = erMode === 'impression' && data.impression > 0
+                              ? (data.engagement / data.impression) * 100
+                              : erMode === 'reach' && data.reach > 0
+                              ? (data.engagement / data.reach) * 100
+                              : 0;
+                            
                             return (
                               <tr key={pillarId} className={idx < pillarData.length - 1 ? 'border-b border-cly-border' : ''}>
                                 <td className="py-3">
@@ -327,9 +376,11 @@ export default function ReportPage() {
                                     <span>{pillar?.label || pillarId}</span>
                                   </span>
                                 </td>
-                                <td className="py-3 text-right text-cly-sm text-cly-text-2">{data.count}</td>
-                                <td className="py-3 text-right text-cly-sm text-cly-text-2">{fmt(data.reach)}</td>
-                                <td className="py-3 text-right text-cly-sm text-cly-text-2">{fmt(data.engagement)}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text-2">{data.count}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(data.impression)}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(data.reach)}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(data.engagement)}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text font-black">{fmtPercent(er)}</td>
                               </tr>
                             );
                           })
@@ -347,16 +398,33 @@ export default function ReportPage() {
                     <div className="grid gap-3 sm:grid-cols-2">
                       {goals.map(goal => {
                         const relevantPosts = filteredPosts.filter(p => {
-                          const matchPlatform = !goal.platform || p.platform === goal.platform;
+                          // Case-insensitive platform matching
+                          const matchPlatform = !goal.platform || goal.platform === 'all' || 
+                            (p.platform && goal.platform && p.platform.toLowerCase() === goal.platform.toLowerCase());
+                          
+                          // Date matching
                           const matchDate = p.date && p.date.startsWith(`${goal.year}-${String(goal.month).padStart(2, '0')}`);
-                          return matchPlatform && matchDate;
+                          
+                          // Account filtering
+                          const matchAccount = !goal.account || goal.account === 'all' || p.account === goal.account;
+                          
+                          return matchPlatform && matchDate && matchAccount;
                         });
                         
-                        const current = goal.metric === 'reach' 
-                          ? relevantPosts.reduce((s, p) => s + p.reach, 0)
-                          : goal.metric === 'followers'
-                          ? relevantPosts.reduce((s, p) => s + p.followers_gained, 0)
-                          : relevantPosts.reduce((s, p) => s + p.impression, 0);
+                        // Calculate current value based on metric
+                        let current = 0;
+                        if (goal.metric === 'reach') {
+                          current = relevantPosts.reduce((s, p) => s + (p.reach || 0), 0);
+                        } else if (goal.metric === 'followers' || goal.metric === 'followers_gained') {
+                          current = relevantPosts.reduce((s, p) => s + (p.followers_gained || 0), 0);
+                        } else if (goal.metric === 'impression') {
+                          current = relevantPosts.reduce((s, p) => s + (p.impression || 0), 0);
+                        } else if (goal.metric === 'engagement' || goal.metric === 'interactions' || goal.metric === 'likes' || goal.metric === 'comments') {
+                          // engagement = like + comment + share + save
+                          current = relevantPosts.reduce((s, p) => s + (p.like || 0) + (p.comment || 0) + (p.save || 0) + (p.share || 0), 0);
+                        } else if (goal.metric === 'posts' || goal.metric === 'post') {
+                          current = relevantPosts.length;
+                        }
                         
                         const progress = goal.target > 0 ? Math.min((current / goal.target) * 100, 100) : 0;
                         
@@ -401,29 +469,44 @@ export default function ReportPage() {
                   </div>
                   
                   <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
+                    <table className="w-full border-collapse min-w-[800px]">
                       <thead>
                         <tr className="border-b border-cly-border">
                           <th className="text-left text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Month</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Posts</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Reach</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Followers</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Posts</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Impression</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Reach</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Engagement</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">ER</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Followers</th>
                         </tr>
                       </thead>
                       <tbody>
                         {monthlyData.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="py-8 text-center text-cly-sm text-cly-text-3">Tidak ada data bulanan.</td>
+                            <td colSpan={7} className="py-8 text-center text-cly-sm text-cly-text-3">Tidak ada data bulanan.</td>
                           </tr>
                         ) : (
-                          monthlyData.map(([month, data], idx) => (
-                            <tr key={month} className={idx < monthlyData.length - 1 ? 'border-b border-cly-border' : ''}>
-                              <td className="py-3 text-cly-sm text-cly-text font-semibold">{formatMonth(month)}</td>
-                              <td className="py-3 text-right text-cly-sm text-cly-text-2">{data.posts}</td>
-                              <td className="py-3 text-right text-cly-sm text-cly-text-2">{fmt(data.reach)}</td>
-                              <td className="py-3 text-right text-cly-sm text-cly-text-2">{fmt(data.followers)}</td>
-                            </tr>
-                          ))
+                          monthlyData.map(([month, data], idx) => {
+                            // Calculate ER for the month
+                            const er = erMode === 'impression' && data.impression > 0
+                              ? (data.engagement / data.impression) * 100
+                              : erMode === 'reach' && data.reach > 0
+                              ? (data.engagement / data.reach) * 100
+                              : 0;
+                            
+                            return (
+                              <tr key={month} className={idx < monthlyData.length - 1 ? 'border-b border-cly-border' : ''}>
+                                <td className="py-3 text-cly-sm text-cly-text font-semibold">{formatMonth(month)}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text-2">{data.posts}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(data.impression)}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(data.reach)}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(data.engagement)}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text font-black">{fmtPercent(er)}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(data.followers)}</td>
+                              </tr>
+                            );
+                          })
                         )}
                       </tbody>
                     </table>
@@ -441,20 +524,23 @@ export default function ReportPage() {
                       <thead>
                         <tr className="border-b border-cly-border">
                           <th className="text-left text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Title</th>
-                          <th className="text-left text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Platform</th>
-                          <th className="text-left text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Date</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Impression</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Reach</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Like</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Comment</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Share</th>
-                          <th className="text-right text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">ER</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Platform</th>
+                          {selectedAccount === 'all' && (
+                            <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Account</th>
+                          )}
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Date</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Impression</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Reach</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Like</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Comment</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">Share</th>
+                          <th className="text-center text-cly-micro font-black text-cly-text-3 uppercase tracking-wider py-3">ER</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredPosts.length === 0 ? (
                           <tr>
-                            <td colSpan={9} className="py-8 text-center text-cly-sm text-cly-text-3">Tidak ada data konten.</td>
+                            <td colSpan={selectedAccount === 'all' ? 10 : 9} className="py-8 text-center text-cly-sm text-cly-text-3">Tidak ada data konten.</td>
                           </tr>
                         ) : (
                           filteredPosts.map((p, idx) => {
@@ -463,16 +549,19 @@ export default function ReportPage() {
                             return (
                               <tr key={p.id} className={idx < filteredPosts.length - 1 ? 'border-b border-cly-border' : ''}>
                                 <td className="py-3 text-cly-sm text-cly-text font-semibold max-w-xs truncate">{p.name || 'Untitled'}</td>
-                                <td className="py-3"><PlatformBadge platform={p.platform} /></td>
-                                <td className="py-3 text-cly-xs text-cly-text-2">
+                                <td className="py-3 text-center"><PlatformBadge platform={p.platform} /></td>
+                                {selectedAccount === 'all' && (
+                                  <td className="py-3 text-center text-cly-sm text-cly-text-2">{p.account || '-'}</td>
+                                )}
+                                <td className="py-3 text-center text-cly-xs text-cly-text-2">
                                   {p.date ? new Date(p.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                                 </td>
-                                <td className="py-3 text-right text-cly-sm text-cly-text-2">{fmt(p.impression)}</td>
-                                <td className="py-3 text-right text-cly-sm text-cly-text-2">{fmt(p.reach)}</td>
-                                <td className="py-3 text-right text-cly-sm text-cly-text-2">{fmt(p.like)}</td>
-                                <td className="py-3 text-right text-cly-sm text-cly-text-2">{fmt(p.comment)}</td>
-                                <td className="py-3 text-right text-cly-sm text-cly-text-2">{fmt(p.share)}</td>
-                                <td className="py-3 text-right text-cly-sm text-cly-text font-black">{fmtPercent(er)}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(p.impression)}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(p.reach)}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(p.like)}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(p.comment)}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(p.share)}</td>
+                                <td className="py-3 text-center text-cly-sm text-cly-text font-black">{fmtPercent(er)}</td>
                               </tr>
                             );
                           })

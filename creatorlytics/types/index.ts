@@ -36,6 +36,7 @@ export interface Post {
   format: string;
   caption_len: number;
   link: string;
+  thumbnail?: string; // URL to thumbnail image
   created_at: string;
 }
 
@@ -45,6 +46,7 @@ export interface Goal {
   emoji: string;
   target: number;
   platform: string;
+  account?: string; // account name or 'all' for all accounts
   metric: string;
   month: number;
   year: number;

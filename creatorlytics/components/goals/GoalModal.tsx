@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useGoals } from '@/lib/hooks/useGoals';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
+import { useAccounts } from '@/lib/hooks/useAccounts';
 import { currentMonth, currentYear } from '@/lib/utils/formatting';
 import { toast } from 'sonner';
 import type { Goal } from '@/types';
@@ -27,19 +28,19 @@ interface GoalModalProps {
 }
 
 interface FormState {
-  label: string;
   target: string;
   metric: string;
   platform: string;
+  account: string;
   month: string;
   year: string;
 }
 
 const initialState: FormState = {
-  label: '',
   target: '',
   metric: 'followers',
   platform: 'all',
+  account: 'all',
   month: String(currentMonth()),
   year: String(currentYear()),
 };
@@ -47,16 +48,17 @@ const initialState: FormState = {
 export function GoalModal({ open, onOpenChange, editGoal }: GoalModalProps) {
   const { createGoal, updateGoal } = useGoals();
   const { platforms } = usePlatforms();
+  const { accounts } = useAccounts();
 
   const [form, setForm] = useState<FormState>(initialState);
 
   const reset = useCallback(() => {
     if (editGoal) {
       setForm({
-        label: editGoal.label,
         target: String(editGoal.target),
         metric: editGoal.metric,
         platform: editGoal.platform,
+        account: editGoal.account || 'all',
         month: String(editGoal.month),
         year: String(editGoal.year),
       });
@@ -78,10 +80,6 @@ export function GoalModal({ open, onOpenChange, editGoal }: GoalModalProps) {
   }
 
   async function handleSave() {
-    if (!form.label.trim()) {
-      toast.error('Label goal harus diisi');
-      return;
-    }
     const target = parseInt(form.target, 10);
     if (isNaN(target) || target <= 0) {
       toast.error('Target harus berupa angka positif');
@@ -98,30 +96,41 @@ export function GoalModal({ open, onOpenChange, editGoal }: GoalModalProps) {
       return;
     }
 
-    const data = {
-      label: form.label.trim(),
+    // Generate auto label based on metric, target, and month
+    const metricLabel = form.metric.charAt(0).toUpperCase() + form.metric.slice(1);
+    const monthName = new Date(year, month - 1).toLocaleDateString('id-ID', { month: 'long' });
+    const autoLabel = `${metricLabel} ${target.toLocaleString('id-ID')} - ${monthName} ${year}`;
+
+    const goalData: Omit<Goal, 'id' | 'created_at'> = {
+      label: autoLabel,
       emoji: '',
       target,
       metric: form.metric,
       platform: form.platform,
+      account: form.account === 'all' ? 'all' : form.account,
       month,
       year,
     };
 
-    if (editGoal) {
-      await updateGoal(editGoal.id, data);
-      toast.success('Goal berhasil diperbarui');
-    } else {
-      const result = await createGoal(data);
-      if (result) {
-        toast.success('Goal berhasil dibuat');
+    try {
+      if (editGoal) {
+        await updateGoal(editGoal.id, goalData);
+        toast.success('Goal berhasil diperbarui');
       } else {
-        toast.error('Gagal membuat goal. Silakan coba lagi.');
-        return;
+        const result = await createGoal(goalData);
+        if (result) {
+          toast.success('Goal berhasil dibuat');
+        } else {
+          toast.error('Gagal membuat goal. Periksa console browser untuk detail error (tekan F12).');
+          return;
+        }
       }
-    }
 
-    onOpenChange(false);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error saving goal:', error);
+      toast.error('Gagal menyimpan goal. Periksa console untuk detail error.');
+    }
   }
 
   return (
@@ -131,10 +140,6 @@ export function GoalModal({ open, onOpenChange, editGoal }: GoalModalProps) {
           <DialogTitle>{editGoal ? 'Edit Goal' : 'Buat Goal Baru'}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-2">
-          <div className="grid gap-2">
-            <Label htmlFor="label">Label</Label>
-            <Input id="label" value={form.label} onChange={e => set('label', e.target.value)} placeholder="Contoh: Raih 10rb Followers" />
-          </div>
           <div className="grid gap-2">
             <Label htmlFor="target">Target</Label>
             <Input id="target" type="number" value={form.target} onChange={e => set('target', e.target.value)} placeholder="10000" />
@@ -169,6 +174,24 @@ export function GoalModal({ open, onOpenChange, editGoal }: GoalModalProps) {
                 {platforms.map(p => (
                   <SelectItem key={p.id} value={p.platform_id}>
                     {p.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label>Akun</Label>
+            <Select value={form.account} onValueChange={v => set('account', v ?? 'all')}>
+              <SelectTrigger>
+                <SelectValue>
+                  {form.account === 'all' ? 'Semua Akun' : accounts.find(a => a.name === form.account)?.name || form.account}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Akun</SelectItem>
+                {accounts.map(a => (
+                  <SelectItem key={a.id} value={a.name}>
+                    {a.name}
                   </SelectItem>
                 ))}
               </SelectContent>

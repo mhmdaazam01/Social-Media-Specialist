@@ -51,6 +51,7 @@ export function aggregateByPlatform(posts: Post[], erMode: ErMode = 'impression'
     count: items.length,
     totalReach: items.reduce((s, p) => s + p.reach, 0),
     totalImpression: items.reduce((s, p) => s + p.impression, 0),
+    totalEngagement: items.reduce((s, p) => s + p.like + p.comment + p.save + p.share, 0),
     totalInteractions: items.reduce((s, p) => s + p.like + p.comment + p.save + p.share, 0),
     avgER: items.length > 0 ? calcTotalER(items, erMode) : 0,
   }));

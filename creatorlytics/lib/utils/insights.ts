@@ -14,7 +14,17 @@ export function calcGoalProgress(goal: Goal, posts: Post[]): number {
     if (!p.date) return false;
     const [py, pm] = p.date.split('-').map(Number);
     if (py !== goal.year || pm !== goal.month) return false;
-    if (goal.platform !== 'all' && p.platform !== goal.platform) return false;
+    
+    // Case-insensitive platform matching
+    if (goal.platform !== 'all' && p.platform && goal.platform) {
+      if (p.platform.toLowerCase() !== goal.platform.toLowerCase()) return false;
+    } else if (goal.platform !== 'all' && p.platform !== goal.platform) {
+      return false;
+    }
+    
+    // Account filtering
+    if (goal.account && goal.account !== 'all' && p.account !== goal.account) return false;
+    
     return true;
   });
 

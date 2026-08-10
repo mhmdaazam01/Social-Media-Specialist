@@ -152,7 +152,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const updatePost = useCallback(async (id: string, updates: Partial<Post>) => {
     if (!user) return;
     const { error } = await supabase.from('posts').update(updates).eq('id', id).eq('user_id', user.id);
-    if (!error) setPosts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    if (error) {
+      console.error('Failed to update post:', error);
+      toast.error(`Gagal menyimpan data: ${error.message}`);
+    } else {
+      setPosts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    }
   }, [supabase, user]);
 
   const deletePost = useCallback(async (id: string) => {
@@ -183,14 +188,25 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const createGoal = useCallback(async (goal: Omit<Goal, 'id' | 'created_at'>) => {
     if (!user) return null;
     const { data, error } = await supabase.from('goals').insert([{ ...goal, user_id: user.id }]).select().single();
-    if (!error && data) { setGoals(prev => [data, ...prev]); return data; }
+    if (error) {
+      console.error('Error creating goal:', error);
+      return null;
+    }
+    if (data) { 
+      setGoals(prev => [data, ...prev]); 
+      return data; 
+    }
     return null;
   }, [user, supabase]);
 
   const updateGoal = useCallback(async (id: string, updates: Partial<Goal>) => {
     if (!user) return;
     const { error } = await supabase.from('goals').update(updates).eq('id', id).eq('user_id', user.id);
-    if (!error) setGoals(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g));
+    if (error) {
+      console.error('Error updating goal:', error);
+      return;
+    }
+    setGoals(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g));
   }, [supabase, user]);
 
   const deleteGoal = useCallback(async (id: string) => {

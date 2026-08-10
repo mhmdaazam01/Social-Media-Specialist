@@ -110,8 +110,8 @@ export default function GoalsPage() {
           )}
 
             {/* AI Forecast Card */}
-            {topGoal && topGoal.progress > 0 && estimatedDate && (
-              <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
+            {topGoal && topGoal.progress > 0 && (
+              <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px] mt-6">
                 <div className="flex items-start gap-3">
                   <div className="w-[34px] h-[34px] rounded-lg bg-cly-brand-tint text-cly-brand grid place-items-center shrink-0">
                     <Sparkles size={16} />
@@ -121,17 +121,35 @@ export default function GoalsPage() {
                       ✦ AI Forecast
                     </div>
                     <div className="text-cly-base text-cly-text-2 leading-relaxed">
-                      Dengan pertumbuhan saat ini, target{' '}
-                      <strong className="text-cly-text">{topGoal.goal.label}</strong>{' '}
-                      kemungkinan tercapai pada{' '}
-                      <strong className="text-cly-text">
-                        {estimatedDate.toLocaleDateString('id-ID', { 
-                          day: 'numeric', 
-                          month: 'long',
-                          year: 'numeric'
-                        })}
-                      </strong>
-                      . {topGoal.progress >= 80 ? 'Pertahankan momentum!' : 'Tingkatkan frekuensi posting untuk mempercepat pencapaian.'}
+                      {topGoal.progress >= 100 ? (
+                        <>
+                          Selamat! Target{' '}
+                          <strong className="text-cly-text">{topGoal.goal.label}</strong>{' '}
+                          sudah <strong className="text-cly-text">tercapai 100%</strong>. 
+                          {' '}Pertahankan momentum ini untuk bulan depan! 🎉
+                        </>
+                      ) : estimatedDate ? (
+                        <>
+                          Dengan pertumbuhan saat ini, target{' '}
+                          <strong className="text-cly-text">{topGoal.goal.label}</strong>{' '}
+                          kemungkinan tercapai pada{' '}
+                          <strong className="text-cly-text">
+                            {estimatedDate.toLocaleDateString('id-ID', { 
+                              day: 'numeric', 
+                              month: 'long',
+                              year: 'numeric'
+                            })}
+                          </strong>
+                          . {topGoal.progress >= 80 ? 'Pertahankan momentum!' : 'Tingkatkan frekuensi posting untuk mempercepat pencapaian.'}
+                        </>
+                      ) : (
+                        <>
+                          Target{' '}
+                          <strong className="text-cly-text">{topGoal.goal.label}</strong>{' '}
+                          saat ini di <strong className="text-cly-text">{topGoal.progress}%</strong>. 
+                          {' '}Tingkatkan frekuensi posting untuk mempercepat pencapaian.
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
