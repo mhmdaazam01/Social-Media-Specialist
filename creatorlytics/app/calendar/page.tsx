@@ -2,12 +2,13 @@
 
 import { useState, useMemo } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
-import { PlusIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
-import { CalEventModal } from '@/components/calendar/CalEventModal';
+import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, Trash2, CheckSquare, Square } from 'lucide-react';
+import dynamic from 'next/dynamic';
+const CalEventModal = dynamic(() => import('@/components/calendar/CalEventModal').then(m => m.CalEventModal), { ssr: false });
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useEvents } from '@/lib/hooks/useEvents';
 import { today } from '@/lib/utils/formatting';
-import { PlatformBadge, Badge } from '@/components/cly';
+import { PlatformBadge } from '@/components/cly';
 import type { CalendarEvent } from '@/types';
 
 export default function CalendarPage() {
@@ -19,6 +20,9 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const { events, deleteEvent } = useEvents();
 
   const monthName = new Date(year, month - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
@@ -58,17 +62,19 @@ export default function CalendarPage() {
     return conflictDates;
   }, [calendarDays]);
 
-  // Agenda list: upcoming first, then past events
+  // Agenda list: only events in the displayed month, upcoming first then past
   const agenda = useMemo(() => {
+    const monthPrefix = `${year}-${String(month).padStart(2, '0')}`;
+    const monthEvents = events.filter(e => e.scheduled_date.startsWith(monthPrefix));
     const todayStr = today();
-    const upcoming = events
+    const upcoming = monthEvents
       .filter(e => e.scheduled_date >= todayStr)
       .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
-    const past = events
+    const past = monthEvents
       .filter(e => e.scheduled_date < todayStr)
       .sort((a, b) => b.scheduled_date.localeCompare(a.scheduled_date));
-    return [...upcoming, ...past].slice(0, 20);
-  }, [events]);
+    return [...upcoming, ...past];
+  }, [events, year, month]);
 
   function handleDateClick(dateStr: string) {
     setSelectedDate(dateStr);
@@ -101,6 +107,37 @@ export default function CalendarPage() {
       deleteEvent(eventToDelete.id);
       setEventToDelete(null);
     }
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === agenda.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(agenda.map(e => e.id)));
+    }
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }
+
+  async function handleBulkDelete() {
+    const ids = Array.from(selectedIds);
+    for (const id of ids) {
+      await deleteEvent(id);
+    }
+    exitSelectMode();
+    setBulkDeleteOpen(false);
   }
 
   return (
@@ -224,96 +261,123 @@ export default function CalendarPage() {
           </div>
 
           {/* Agenda Sidebar */}
-          <div className="rounded-[10px] bg-cly-surface p-[18px] shadow-cly">
-            <h3 className="mb-4 text-cly-base font-semibold text-cly-text">Semua Event</h3>
+          <div className="rounded-[10px] bg-cly-surface shadow-cly flex flex-col" style={{ maxHeight: 'calc(100vh - 120px)' }}>
+            {/* Sidebar header with select mode controls */}
+            <div className="px-[18px] pt-[18px] pb-3 shrink-0 flex items-center justify-between">
+              <h3 className="text-cly-base font-semibold text-cly-text">Semua Event</h3>
+              {agenda.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  {selectMode ? (
+                    <>
+                      <button
+                        onClick={toggleSelectAll}
+                        className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-cly-text-muted hover:bg-cly-muted transition-colors"
+                        title={selectedIds.size === agenda.length ? 'Batal pilih semua' : 'Pilih semua'}
+                      >
+                        {selectedIds.size === agenda.length ? <CheckSquare className="size-3.5" /> : <Square className="size-3.5" />}
+                        Semua
+                      </button>
+                      {selectedIds.size > 0 && (
+                        <button
+                          onClick={() => setBulkDeleteOpen(true)}
+                          className="flex items-center gap-1 rounded-md bg-red-500 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-red-600 transition-colors"
+                        >
+                          <Trash2 className="size-3" />
+                          Hapus ({selectedIds.size})
+                        </button>
+                      )}
+                      <button
+                        onClick={exitSelectMode}
+                        className="rounded-md px-2 py-1 text-[11px] font-medium text-cly-text-muted hover:bg-cly-muted transition-colors"
+                      >
+                        Batal
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setSelectMode(true)}
+                      className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-cly-text-muted hover:bg-cly-muted transition-colors"
+                    >
+                      <CheckSquare className="size-3.5" />
+                      Pilih
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="overflow-y-auto px-[18px] pb-[18px] flex-1">
             {agenda.length === 0 ? (
               <p className="text-cly-sm text-cly-text-muted">Tidak ada event yang dijadwalkan</p>
             ) : (() => {
               const todayStr = today();
               const upcomingItems = agenda.filter(e => e.scheduled_date >= todayStr);
               const pastItems = agenda.filter(e => e.scheduled_date < todayStr);
+
+              function renderEventCard(evt: CalendarEvent, variant: 'upcoming' | 'past') {
+                const dateObj = new Date(evt.scheduled_date + 'T00:00:00');
+                const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                const isChecked = selectedIds.has(evt.id);
+                const cardClass = variant === 'upcoming'
+                  ? `flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition-all hover:shadow-cly ${
+                      isChecked && selectMode
+                        ? 'border-red-400 bg-red-50 dark:bg-red-950/20'
+                        : 'border-cly-brand/20 bg-cly-brand-tint hover:border-cly-brand'
+                    }`
+                  : `flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition-all hover:shadow-cly ${
+                      isChecked && selectMode
+                        ? 'border-red-400 bg-red-50 dark:bg-red-950/20'
+                        : 'border-cly-border bg-cly-muted-2 hover:border-cly-brand'
+                    }`;
+
+                return (
+                  <button
+                    key={evt.id}
+                    onClick={() => selectMode ? toggleSelect(evt.id) : handleEventClick(evt)}
+                    className={cardClass}
+                  >
+                    {selectMode && (
+                      <span className="shrink-0">
+                        {isChecked
+                          ? <CheckSquare className="size-4 text-red-500" />
+                          : <Square className="size-4 text-cly-text-muted" />}
+                      </span>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <span className={`text-cly-xs font-${variant === 'upcoming' ? 'semibold' : 'medium'} ${variant === 'upcoming' ? 'text-cly-text' : 'text-cly-text-2'} truncate block`}>{evt.title}</span>
+                      <span className={`text-[10px] ${variant === 'upcoming' ? 'text-cly-brand' : 'text-cly-text-muted'}`}>{dateStr}{evt.scheduled_time ? ` · ${evt.scheduled_time}` : ''}</span>
+                    </div>
+                    {!selectMode && <PlatformBadge platform={evt.platform} />}
+                  </button>
+                );
+              }
+
               return (
-                <div className="flex flex-col gap-3">
-                  {/* Upcoming section */}
+                <div className="flex flex-col gap-1.5">
                   {upcomingItems.length > 0 && (
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2 py-1">
                         <span className="h-px flex-1 bg-cly-border" />
-                        <span className="text-cly-xs font-semibold uppercase tracking-wider text-cly-brand">Mendatang</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-cly-brand">Mendatang ({upcomingItems.length})</span>
                         <span className="h-px flex-1 bg-cly-border" />
                       </div>
-                      {upcomingItems.map(evt => {
-                        const dateObj = new Date(evt.scheduled_date + 'T00:00:00');
-                        const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-                        return (
-                          <button
-                            key={evt.id}
-                            onClick={() => handleEventClick(evt)}
-                            className="flex flex-col gap-1.5 rounded-lg border border-cly-brand/30 bg-cly-brand-tint p-3 text-left transition-all hover:border-cly-brand hover:shadow-cly"
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <span className="text-cly-sm font-semibold text-cly-text">{evt.title}</span>
-                              <PlatformBadge platform={evt.platform} />
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-cly-xs text-cly-brand">{dateStr}</span>
-                              {evt.scheduled_time && (
-                                <>
-                                  <span className="text-cly-brand/50">·</span>
-                                  <span className="text-cly-xs text-cly-brand">{evt.scheduled_time}</span>
-                                </>
-                              )}
-                            </div>
-                            <Badge tone={evt.status === 'published' ? 'green' : evt.status === 'scheduled' ? 'blue' : 'neutral'}>
-                              {evt.status}
-                            </Badge>
-                          </button>
-                        );
-                      })}
+                      {upcomingItems.map(evt => renderEventCard(evt, 'upcoming'))}
                     </div>
                   )}
 
-                  {/* Past section */}
                   {pastItems.length > 0 && (
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2 py-1">
                         <span className="h-px flex-1 bg-cly-border" />
-                        <span className="text-cly-xs font-semibold uppercase tracking-wider text-cly-text-muted">Lampau</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-cly-text-muted">Lampau ({pastItems.length})</span>
                         <span className="h-px flex-1 bg-cly-border" />
                       </div>
-                      {pastItems.map(evt => {
-                        const dateObj = new Date(evt.scheduled_date + 'T00:00:00');
-                        const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-                        return (
-                          <button
-                            key={evt.id}
-                            onClick={() => handleEventClick(evt)}
-                            className="flex flex-col gap-1.5 rounded-lg border border-cly-border-strong bg-cly-muted-2 p-3 text-left transition-all hover:border-cly-brand hover:shadow-cly"
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <span className="text-cly-sm font-medium text-cly-text-2 line-through decoration-cly-text-muted">{evt.title}</span>
-                              <PlatformBadge platform={evt.platform} />
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-cly-xs text-cly-text-muted">{dateStr}</span>
-                              {evt.scheduled_time && (
-                                <>
-                                  <span className="text-cly-text-muted">·</span>
-                                  <span className="text-cly-xs text-cly-text-muted">{evt.scheduled_time}</span>
-                                </>
-                              )}
-                            </div>
-                            <Badge tone={evt.status === 'published' ? 'green' : evt.status === 'scheduled' ? 'blue' : 'neutral'}>
-                              {evt.status}
-                            </Badge>
-                          </button>
-                        );
-                      })}
+                      {pastItems.map(evt => renderEventCard(evt, 'past'))}
                     </div>
                   )}
                 </div>
               );
             })()}
+            </div>
           </div>
         </div>
 
@@ -336,6 +400,16 @@ export default function CalendarPage() {
           title="Hapus Event"
           description="Apakah Anda yakin ingin menghapus event ini? Tindakan ini tidak dapat dibatalkan."
           confirmText="Hapus"
+          cancelText="Batal"
+        />
+
+        <ConfirmDialog
+          open={bulkDeleteOpen}
+          onOpenChange={setBulkDeleteOpen}
+          onConfirm={handleBulkDelete}
+          title={`Hapus ${selectedIds.size} Event`}
+          description={`Apakah Anda yakin ingin menghapus ${selectedIds.size} event sekaligus? Tindakan ini tidak dapat dibatalkan.`}
+          confirmText={`Hapus ${selectedIds.size} Event`}
           cancelText="Batal"
         />
       </div>

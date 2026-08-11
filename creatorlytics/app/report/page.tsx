@@ -9,7 +9,8 @@ import { useUser } from '@/lib/hooks/useUser';
 import { useAccounts } from '@/lib/hooks/useAccounts';
 import { usePillars } from '@/lib/hooks/usePillars';
 import { useGoals } from '@/lib/hooks/useGoals';
-import { calcTotalER, fmt, fmtPercent, aggregateByPlatform } from '@/lib/utils/analytics';
+import { calcTotalER, calcER, fmt, fmtPercent, aggregateByPlatform } from '@/lib/utils/analytics';
+import { getValidHref } from '@/lib/utils/link';
 import { formatMonth } from '@/lib/utils/formatting';
 import { FileText, Printer } from 'lucide-react';
 
@@ -42,8 +43,8 @@ export default function ReportPage() {
   }, [posts, selectedMonth, selectedAccount]);
 
   const totalPosts = filteredPosts.length;
-  const totalReach = filteredPosts.reduce((s, p) => s + p.reach, 0);
-  const totalFollowersGained = filteredPosts.reduce((s, p) => s + p.followers_gained, 0);
+  const totalReach = filteredPosts.reduce((s, p) => s + (p.reach || 0), 0);
+  const totalFollowersGained = filteredPosts.reduce((s, p) => s + (p.followers_gained || 0), 0);
   const avgER = totalPosts > 0 ? calcTotalER(filteredPosts, erMode) : 0;
 
   const platformData = useMemo(() => aggregateByPlatform(filteredPosts, erMode), [filteredPosts, erMode]);
@@ -52,7 +53,7 @@ export default function ReportPage() {
     return [...filteredPosts]
       .map(p => {
         const engagement = (p.like || 0) + (p.comment || 0) + (p.share || 0) + (p.save || 0);
-        const er = p.impression > 0 ? (engagement / p.impression) * 100 : 0;
+        const er = calcER(p, erMode);
         // Overall score: weighted combination of normalized values
         // Higher weight for ER and engagement quality, not just views
         const score = 
@@ -64,7 +65,7 @@ export default function ReportPage() {
       })
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
-  }, [filteredPosts]);
+  }, [filteredPosts, erMode]);
 
   const pillarData = useMemo(() => {
     const grouped: Record<string, { count: number; impression: number; reach: number; engagement: number }> = {};
@@ -72,9 +73,9 @@ export default function ReportPage() {
       if (!p.pillar) continue;
       if (!grouped[p.pillar]) grouped[p.pillar] = { count: 0, impression: 0, reach: 0, engagement: 0 };
       grouped[p.pillar].count++;
-      grouped[p.pillar].impression += p.impression;
-      grouped[p.pillar].reach += p.reach;
-      grouped[p.pillar].engagement += p.like + p.comment + p.share + p.save;
+      grouped[p.pillar].impression += (p.impression || 0);
+      grouped[p.pillar].reach += (p.reach || 0);
+      grouped[p.pillar].engagement += (p.like || 0) + (p.comment || 0) + (p.share || 0) + (p.save || 0);
     }
     return Object.entries(grouped).sort(([, a], [, b]) => b.reach - a.reach);
   }, [filteredPosts]);
@@ -86,10 +87,10 @@ export default function ReportPage() {
       const month = p.date.substring(0, 7);
       if (!grouped[month]) grouped[month] = { posts: 0, impression: 0, reach: 0, engagement: 0, followers: 0 };
       grouped[month].posts++;
-      grouped[month].impression += p.impression;
-      grouped[month].reach += p.reach;
+      grouped[month].impression += (p.impression || 0);
+      grouped[month].reach += (p.reach || 0);
       grouped[month].engagement += (p.like || 0) + (p.comment || 0) + (p.share || 0) + (p.save || 0);
-      grouped[month].followers += p.followers_gained;
+      grouped[month].followers += (p.followers_gained || 0);
     }
     return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
   }, [filteredPosts]);
@@ -212,7 +213,7 @@ export default function ReportPage() {
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     <div className="flex flex-col gap-1">
                       <span className="text-cly-xs text-cly-text-3 uppercase font-black tracking-wide">Total Impression</span>
-                      <span className="text-cly-lg font-black text-cly-text">{fmt(filteredPosts.reduce((s, p) => s + p.impression, 0))}</span>
+                      <span className="text-cly-lg font-black text-cly-text">{fmt(filteredPosts.reduce((s, p) => s + (p.impression || 0), 0))}</span>
                     </div>
                     <div className="flex flex-col gap-1">
                       <span className="text-cly-xs text-cly-text-3 uppercase font-black tracking-wide">Total Reach</span>
@@ -220,27 +221,27 @@ export default function ReportPage() {
                     </div>
                     <div className="flex flex-col gap-1">
                       <span className="text-cly-xs text-cly-text-3 uppercase font-black tracking-wide">Total Like</span>
-                      <span className="text-cly-lg font-black text-cly-text">{fmt(filteredPosts.reduce((s, p) => s + p.like, 0))}</span>
+                      <span className="text-cly-lg font-black text-cly-text">{fmt(filteredPosts.reduce((s, p) => s + (p.like || 0), 0))}</span>
                     </div>
                     <div className="flex flex-col gap-1">
                       <span className="text-cly-xs text-cly-text-3 uppercase font-black tracking-wide">Total Comment</span>
-                      <span className="text-cly-lg font-black text-cly-text">{fmt(filteredPosts.reduce((s, p) => s + p.comment, 0))}</span>
+                      <span className="text-cly-lg font-black text-cly-text">{fmt(filteredPosts.reduce((s, p) => s + (p.comment || 0), 0))}</span>
                     </div>
                     <div className="flex flex-col gap-1">
                       <span className="text-cly-xs text-cly-text-3 uppercase font-black tracking-wide">Total Share</span>
-                      <span className="text-cly-lg font-black text-cly-text">{fmt(filteredPosts.reduce((s, p) => s + p.share, 0))}</span>
+                      <span className="text-cly-lg font-black text-cly-text">{fmt(filteredPosts.reduce((s, p) => s + (p.share || 0), 0))}</span>
                     </div>
                     <div className="flex flex-col gap-1">
                       <span className="text-cly-xs text-cly-text-3 uppercase font-black tracking-wide">Total Save</span>
-                      <span className="text-cly-lg font-black text-cly-text">{fmt(filteredPosts.reduce((s, p) => s + p.save, 0))}</span>
+                      <span className="text-cly-lg font-black text-cly-text">{fmt(filteredPosts.reduce((s, p) => s + (p.save || 0), 0))}</span>
                     </div>
                     <div className="flex flex-col gap-1">
                       <span className="text-cly-xs text-cly-text-3 uppercase font-black tracking-wide">Total Repost</span>
-                      <span className="text-cly-lg font-black text-cly-text">{fmt(filteredPosts.reduce((s, p) => s + p.repost, 0))}</span>
+                      <span className="text-cly-lg font-black text-cly-text">{fmt(filteredPosts.reduce((s, p) => s + (p.repost || 0), 0))}</span>
                     </div>
                     <div className="flex flex-col gap-1">
                       <span className="text-cly-xs text-cly-text-3 uppercase font-black tracking-wide">Profile Visit</span>
-                      <span className="text-cly-lg font-black text-cly-text">{fmt(filteredPosts.reduce((s, p) => s + p.profile_visit, 0))}</span>
+                      <span className="text-cly-lg font-black text-cly-text">{fmt(filteredPosts.reduce((s, p) => s + (p.profile_visit || 0), 0))}</span>
                     </div>
                   </div>
                 </div>
@@ -311,7 +312,31 @@ export default function ReportPage() {
                         ) : (
                           topPosts.map(({ post: p, engagement, er }, idx) => (
                             <tr key={p.id} className={idx < topPosts.length - 1 ? 'border-b border-cly-border' : ''}>
-                              <td className="py-3 text-cly-sm text-cly-text font-semibold max-w-xs truncate">{p.name || 'Untitled'}</td>
+                              <td className="py-3">
+                                <div className="flex items-center gap-3">
+                                  {/* Thumbnail Link */}
+                                  <a 
+                                    href={getValidHref(p.link)} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="w-[36px] h-[36px] rounded-md bg-cly-muted border border-cly-border/50 shrink-0 overflow-hidden flex items-center justify-center hover:opacity-80 transition-opacity"
+                                  >
+                                    {p.thumbnail ? (
+                                      <>
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={p.thumbnail} alt={p.name} className="w-full h-full object-cover" />
+                                      </>
+                                    ) : (
+                                      <span className="text-[9px] font-bold text-cly-text-3 uppercase">
+                                        {p.name ? p.name.substring(0, 2) : '?'}
+                                      </span>
+                                    )}
+                                  </a>
+                                  <a href={getValidHref(p.link)} target="_blank" rel="noopener noreferrer" className="text-cly-sm text-cly-text font-semibold max-w-xs truncate hover:underline">
+                                    {p.name || 'Untitled'}
+                                  </a>
+                                </div>
+                              </td>
                               <td className="py-3">
                                 <div className="flex items-center justify-center gap-1.5">
                                   <PlatformBadge platform={p.platform} />
@@ -544,11 +569,33 @@ export default function ReportPage() {
                           </tr>
                         ) : (
                           filteredPosts.map((p, idx) => {
-                            const totalEngagement = (p.like || 0) + (p.comment || 0) + (p.share || 0);
-                            const er = p.impression > 0 ? (totalEngagement / p.impression) * 100 : 0;
+                            const er = calcER(p, erMode);
                             return (
                               <tr key={p.id} className={idx < filteredPosts.length - 1 ? 'border-b border-cly-border' : ''}>
-                                <td className="py-3 text-cly-sm text-cly-text font-semibold max-w-xs truncate">{p.name || 'Untitled'}</td>
+                                <td className="py-3">
+                                  <div className="flex items-center gap-3">
+                                    <a 
+                                      href={getValidHref(p.link)} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="w-[36px] h-[36px] rounded-md bg-cly-muted border border-cly-border/50 shrink-0 overflow-hidden flex items-center justify-center hover:opacity-80 transition-opacity"
+                                    >
+                                      {p.thumbnail ? (
+                                        <>
+                                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                                          <img src={p.thumbnail} alt={p.name} className="w-full h-full object-cover" />
+                                        </>
+                                      ) : (
+                                        <span className="text-[9px] font-bold text-cly-text-3 uppercase">
+                                          {p.name ? p.name.substring(0, 2) : '?'}
+                                        </span>
+                                      )}
+                                    </a>
+                                    <a href={getValidHref(p.link)} target="_blank" rel="noopener noreferrer" className="text-cly-sm text-cly-text font-semibold max-w-xs truncate hover:underline">
+                                      {p.name || 'Untitled'}
+                                    </a>
+                                  </div>
+                                </td>
                                 <td className="py-3 text-center"><PlatformBadge platform={p.platform} /></td>
                                 {selectedAccount === 'all' && (
                                   <td className="py-3 text-center text-cly-sm text-cly-text-2">{p.account || '-'}</td>

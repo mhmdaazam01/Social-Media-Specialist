@@ -31,7 +31,7 @@ export default function AnalyticsPage() {
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [chartView, setChartView] = useState<'daily' | 'monthly'>('monthly');
+  const [chartView, setChartView] = useState<'daily' | 'monthly'>('daily');
   
   const filteredPosts = useMemo(() => {
     let filtered = posts;
@@ -46,12 +46,23 @@ export default function AnalyticsPage() {
       filtered = filtered.filter(p => p.account === selectedAccount);
     }
     
-    // Date range filter
-    if (dateFrom) {
-      filtered = filtered.filter(p => p.date && p.date >= dateFrom);
+    // Date range filter (default to last 7 days if empty)
+    let effectiveDateFrom = dateFrom;
+    let effectiveDateTo = dateTo;
+
+    if (!dateFrom && !dateTo) {
+      const to = new Date();
+      const from = new Date();
+      from.setDate(to.getDate() - 6);
+      effectiveDateFrom = from.toISOString().split('T')[0];
+      effectiveDateTo = to.toISOString().split('T')[0];
     }
-    if (dateTo) {
-      filtered = filtered.filter(p => p.date && p.date <= dateTo);
+
+    if (effectiveDateFrom) {
+      filtered = filtered.filter(p => p.date && p.date >= effectiveDateFrom);
+    }
+    if (effectiveDateTo) {
+      filtered = filtered.filter(p => p.date && p.date <= effectiveDateTo);
     }
     
     return filtered;

@@ -3,7 +3,8 @@
 import { useState, useMemo } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { GoalCard } from '@/components/goals/GoalCard';
-import { GoalModal } from '@/components/goals/GoalModal';
+import dynamic from 'next/dynamic';
+const GoalModal = dynamic(() => import('@/components/goals/GoalModal').then(m => m.GoalModal), { ssr: false });
 import { useGoals } from '@/lib/hooks/useGoals';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { Plus, Target, Sparkles } from 'lucide-react';

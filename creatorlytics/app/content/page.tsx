@@ -12,8 +12,8 @@ import { usePillars } from '@/lib/hooks/usePillars';
 import { postsToCSV } from '@/lib/utils/export';
 import { getPlatformFromUrl } from '@/lib/utils/thumbnail';
 import { 
-  Search, Calendar, Filter, FileDown, Upload, FileText, 
-  Plus, MoreVertical, Link as LinkIcon, ChevronDown,
+  Search, FileDown, FileText, 
+  Plus, Link as LinkIcon,
   ChevronLeft, ChevronRight, Check, Trash2, Loader2
 } from 'lucide-react';
 import type { Post } from '@/types';
@@ -531,8 +531,10 @@ export default function ContentPage() {
                                   <Loader2 size={16} className="animate-spin text-cly-brand" />
                                 </div>
                               ) : post.thumbnail ? (
-                                <img 
-                                  src={post.thumbnail} 
+                                <>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img 
+                                    src={post.thumbnail} 
                                   alt={post.name || 'Thumbnail'} 
                                   className="w-10 h-10 rounded object-cover shrink-0"
                                   onError={(e) => {
@@ -540,7 +542,8 @@ export default function ContentPage() {
                                     e.currentTarget.style.display = 'none';
                                     e.currentTarget.nextElementSibling!.classList.remove('hidden');
                                   }}
-                                />
+                                  />
+                                </>
                               ) : null}
                               <div 
                                 className={`w-10 h-10 rounded bg-cly-muted flex items-center justify-center text-cly-xs font-bold text-cly-text-3 shrink-0 ${post.thumbnail || fetchingThumbnailIds.has(post.id) ? 'hidden' : ''}`}

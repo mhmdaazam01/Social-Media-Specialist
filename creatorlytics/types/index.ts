@@ -63,10 +63,6 @@ export interface ContentBrief {
   format_video: string;
   durasi: string;
   ref_visual: string;
-  timeline_script: string;
-  timeline_shoot: string;
-  timeline_edit: string;
-  timeline_publish: string;
 }
 
 export interface ContentIdea {

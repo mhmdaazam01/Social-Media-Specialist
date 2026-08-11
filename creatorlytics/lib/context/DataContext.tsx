@@ -153,7 +153,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     const { error } = await supabase.from('posts').update(updates).eq('id', id).eq('user_id', user.id);
     if (error) {
-      console.error('Failed to update post:', error);
       toast.error(`Gagal menyimpan data: ${error.message}`);
     } else {
       setPosts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
@@ -189,7 +188,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     if (!user) return null;
     const { data, error } = await supabase.from('goals').insert([{ ...goal, user_id: user.id }]).select().single();
     if (error) {
-      console.error('Error creating goal:', error);
       return null;
     }
     if (data) { 
@@ -203,7 +201,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     if (!user) return;
     const { error } = await supabase.from('goals').update(updates).eq('id', id).eq('user_id', user.id);
     if (error) {
-      console.error('Error updating goal:', error);
       return;
     }
     setGoals(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g));

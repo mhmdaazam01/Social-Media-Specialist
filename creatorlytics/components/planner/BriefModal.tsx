@@ -11,12 +11,13 @@ import { useIdeas } from '@/lib/hooks/useIdeas';
 import { toast } from 'sonner';
 import {
   Pencil, X, Calendar, Target,
-  MessageSquare, Video, ImageIcon, Clock, FileText,
-  Tag, Link2, ClipboardList, Megaphone, Smartphone, CalendarDays,
+  MessageSquare, Video, FileText,
+  Link2, ClipboardList, Megaphone, Smartphone, Flame, Plus, Copy,
 } from 'lucide-react';
 import type { ContentIdea, ContentBrief } from '@/types';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { usePillars } from '@/lib/hooks/usePillars';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 
 interface BriefModalProps {
   open: boolean;
@@ -34,11 +35,9 @@ const EMPTY_BRIEF: ContentBrief = {
   format_video: '',
   durasi: '',
   ref_visual: '',
-  timeline_script: '',
-  timeline_shoot: '',
-  timeline_edit: '',
-  timeline_publish: '',
 };
+
+const FORMAT_BRIEF_OPTIONS = ['Video', 'Carousel', 'Single Post', 'Short-form video'];
 
 function isBrief(b: ContentIdea['brief']): b is ContentBrief {
   return typeof b === 'object' && b !== null && 'deadline' in b;
@@ -55,12 +54,62 @@ const PRIORITY_COLOR: Record<string, string> = {
   low: 'bg-muted text-muted-foreground',
 };
 
+interface EditForm {
+  priority: 'low' | 'med' | 'high';
+  deadline: string;
+  narasi: string;
+  target_usia: string;
+  target_minat: string;
+  target_painpoint: string;
+  tone: string;
+  format_video: string;
+  durasi: string;
+  ref_links: string[];
+}
+
 export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
-  const { updateIdea } = useIdeas();
+  const { createIdea, updateIdea } = useIdeas();
+
+  async function handleDuplicateInModal() {
+    if (!idea) return;
+    try {
+      const briefData = idea.brief && typeof idea.brief === 'object' ? { ...idea.brief } : {};
+      const newTitle = `${idea.title || 'Konten'} (Salinan)`;
+      
+      await createIdea({
+        title: newTitle,
+        description: idea.description,
+        platform: idea.platform,
+        pillar: idea.pillar,
+        format: idea.format,
+        status: idea.status,
+        priority: idea.priority,
+        tags: idea.tags || [],
+        brief: briefData,
+        ref_links: idea.ref_links || [],
+      });
+      toast.success(`Brief "${newTitle}" berhasil diduplikat!`);
+      onOpenChange(false);
+    } catch {
+      toast.error('Gagal menduplikat brief');
+    }
+  }
   const { platforms } = usePlatforms();
   const { pillars } = usePillars();
   const [mode, setMode] = useState<'view' | 'edit'>('view');
-  const [form, setForm] = useState<ContentBrief>(EMPTY_BRIEF);
+  const [brief, setBrief] = useState<ContentBrief>(EMPTY_BRIEF);
+  const [form, setForm] = useState<EditForm>({
+    priority: 'med',
+    deadline: '',
+    narasi: '',
+    target_usia: '',
+    target_minat: '',
+    target_painpoint: '',
+    tone: '',
+    format_video: '',
+    durasi: '',
+    ref_links: [''],
+  });
   const [saving, setSaving] = useState(false);
 
   const platform = platforms.find(p => p.platform_id === idea?.platform);
@@ -72,19 +121,67 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
         setMode('view');
         return;
       }
-      if (idea) setForm(getBrief(idea));
+      if (idea) {
+        const b = getBrief(idea);
+        setBrief(b);
+        setForm({
+          priority: idea.priority ?? 'med',
+          deadline: b.deadline ?? '',
+          narasi: b.narasi ?? idea.description ?? '',
+          target_usia: b.target_usia ?? '',
+          target_minat: b.target_minat ?? '',
+          target_painpoint: b.target_painpoint ?? '',
+          tone: b.tone ?? '',
+          format_video: b.format_video ?? idea.format ?? '',
+          durasi: b.durasi ?? '',
+          ref_links: idea.ref_links?.length > 0 ? idea.ref_links : [''],
+        });
+      }
     });
   }, [open, idea]);
 
-  function upd<K extends keyof ContentBrief>(key: K, val: string) {
+  function upd<K extends keyof EditForm>(key: K, val: EditForm[K]) {
     setForm(prev => ({ ...prev, [key]: val }));
+  }
+
+  function handleRefLinkChange(index: number, value: string) {
+    const newLinks = [...form.ref_links];
+    newLinks[index] = value;
+    upd('ref_links', newLinks);
+  }
+
+  function addRefLink() {
+    upd('ref_links', [...form.ref_links, '']);
+  }
+
+  function removeRefLink(index: number) {
+    if (form.ref_links.length === 1) return;
+    upd('ref_links', form.ref_links.filter((_, i) => i !== index));
   }
 
   async function handleSave() {
     if (!idea) return;
     setSaving(true);
     try {
-      await updateIdea(idea.id, { brief: form });
+      const briefData: ContentBrief = {
+        deadline: form.deadline,
+        narasi: form.narasi,
+        target_usia: form.target_usia,
+        target_minat: form.target_minat,
+        target_painpoint: form.target_painpoint,
+        tone: form.tone,
+        format_video: form.format_video,
+        durasi: form.durasi,
+        ref_visual: brief.ref_visual ?? '',
+      };
+      await updateIdea(idea.id, {
+        priority: form.priority,
+        format: form.format_video,
+        description: form.narasi,
+        ref_links: form.ref_links.map(l => l.trim()).filter(Boolean),
+        brief: briefData,
+      });
+      setBrief(briefData);
       toast.success('Brief berhasil disimpan');
       setMode('view');
     } catch {
@@ -101,7 +198,6 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
 
   if (!idea) return null;
 
-  // check if any brief field has been filled
   const hasBriefData = isBrief(idea.brief) && Object.values(idea.brief).some(v => v !== '');
 
   return (
@@ -142,16 +238,29 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
             </div>
 
             {mode === 'view' && (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => setMode('edit')}
-                className="shrink-0 gap-1.5 text-xs"
-              >
-                <Pencil className="size-3.5" />
-                {hasBriefData ? 'Edit Brief' : 'Isi Brief'}
-              </Button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDuplicateInModal}
+                  className="gap-1 text-xs"
+                  title="Duplikat brief ini"
+                >
+                  <Copy className="size-3.5" />
+                  Duplikat
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setMode('edit')}
+                  className="gap-1.5 text-xs"
+                >
+                  <Pencil className="size-3.5" />
+                  {hasBriefData ? 'Edit Brief' : 'Isi Brief'}
+                </Button>
+              </div>
             )}
           </div>
         </DialogHeader>
@@ -160,12 +269,12 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
         {mode === 'view' && (
           <div className="mt-1 space-y-4 text-sm">
 
-            {/* Deadline (from brief) */}
-            {form.deadline && (
+            {/* Deadline */}
+            {brief.deadline && (
               <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
                 <Calendar className="size-3.5 shrink-0" />
                 <span>Deadline:</span>
-                <span className="font-semibold text-foreground">{form.deadline}</span>
+                <span className="font-semibold text-foreground">{brief.deadline}</span>
               </div>
             )}
 
@@ -174,8 +283,8 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
             {/* OVERVIEW */}
             <ViewSection icon={<ClipboardList className="size-3.5" />} title="Overview">
               <ViewRow label="Judul" value={idea.title} />
-              {form.narasi
-                ? <ViewRow label="Narasi" value={form.narasi} multiline />
+              {brief.narasi
+                ? <ViewRow label="Narasi" value={brief.narasi} multiline />
                 : idea.description
                   ? <ViewRow label="Deskripsi" value={idea.description} multiline />
                   : null}
@@ -184,11 +293,11 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
             </ViewSection>
 
             {/* TARGET AUDIENCE */}
-            {(form.target_usia || form.target_minat || form.target_painpoint) ? (
+            {(brief.target_usia || brief.target_minat || brief.target_painpoint) ? (
               <ViewSection icon={<Target className="size-3.5" />} title="Target Audience">
-                {form.target_usia && <ViewRow label="Usia" value={form.target_usia} />}
-                {form.target_minat && <ViewRow label="Minat" value={form.target_minat} />}
-                {form.target_painpoint && <ViewRow label="Pain point" value={form.target_painpoint} />}
+                {brief.target_usia && <ViewRow label="Usia" value={brief.target_usia} />}
+                {brief.target_minat && <ViewRow label="Minat" value={brief.target_minat} />}
+                {brief.target_painpoint && <ViewRow label="Pain point" value={brief.target_painpoint} />}
               </ViewSection>
             ) : (
               <ViewSection icon={<Target className="size-3.5" />} title="Target Audience">
@@ -198,34 +307,22 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
 
             {/* TONE OF VOICE */}
             <ViewSection icon={<Megaphone className="size-3.5" />} title="Tone of Voice">
-              {form.tone
-                ? <p className="text-sm leading-relaxed">{form.tone}</p>
+              {brief.tone
+                ? <p className="text-sm leading-relaxed">{brief.tone}</p>
                 : <p className="text-xs text-muted-foreground/60 italic">Belum diisi.</p>}
             </ViewSection>
 
-            {/* FORMAT */}
+            {/* FORMAT PRODUKSI */}
             <ViewSection icon={<Smartphone className="size-3.5" />} title="Format Produksi">
-              {(form.format_video || form.durasi || idea.format) ? (
+              {(brief.format_video || brief.durasi || idea.format) ? (
                 <>
-                  {(form.format_video || idea.format) && (
-                    <ViewRow label="Format" value={form.format_video || idea.format} />
+                  {(brief.format_video || idea.format) && (
+                    <ViewRow label="Format" value={brief.format_video || idea.format} />
                   )}
-                  {form.durasi && <ViewRow label="Durasi" value={form.durasi} />}
-                </>
-              ) : (
-                <p className="text-xs text-muted-foreground/60 italic">Belum diisi.</p>
-              )}
-            </ViewSection>
-
-            {/* REFERENSI VISUAL */}
-            <ViewSection icon={<ImageIcon className="size-3.5" />} title="Referensi Visual">
-              {form.ref_visual || (idea.ref_links && idea.ref_links.filter(Boolean).length > 0) ? (
-                <>
-                  {form.ref_visual && (
-                    <p className="text-sm leading-relaxed whitespace-pre-line">{form.ref_visual}</p>
-                  )}
+                  {brief.durasi && <ViewRow label="Durasi" value={brief.durasi} />}
                   {idea.ref_links && idea.ref_links.filter(Boolean).length > 0 && (
                     <div className="space-y-1 mt-1">
+                      <span className="text-[11px] text-muted-foreground">Link Referensi</span>
                       {idea.ref_links.filter(Boolean).map((link, i) => (
                         <a
                           key={i}
@@ -242,89 +339,100 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
                   )}
                 </>
               ) : (
-                <p className="text-xs text-muted-foreground/60 italic">Belum ada referensi.</p>
-              )}
-            </ViewSection>
-
-            {/* TIMELINE */}
-            <ViewSection icon={<CalendarDays className="size-3.5" />} title="Timeline Produksi">
-              {(form.timeline_script || form.timeline_shoot || form.timeline_edit || form.timeline_publish) ? (
-                <div className="space-y-2">
-                  {form.timeline_script && <TimelineRow label="Draft script" date={form.timeline_script} />}
-                  {form.timeline_shoot && <TimelineRow label="Shooting" date={form.timeline_shoot} />}
-                  {form.timeline_edit && <TimelineRow label="Editing" date={form.timeline_edit} />}
-                  {form.timeline_publish && <TimelineRow label="Publish" date={form.timeline_publish} done />}
-                </div>
-              ) : (
                 <p className="text-xs text-muted-foreground/60 italic">Belum diisi.</p>
               )}
             </ViewSection>
 
-            {/* TAGS */}
-            {idea.tags && idea.tags.length > 0 && (
-              <ViewSection icon={<Tag className="size-3.5" />} title="Tags">
-                <div className="flex flex-wrap gap-1.5">
-                  {idea.tags.map(tag => (
-                    <span key={tag} className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                      <Tag className="size-2.5" />{tag}
-                    </span>
-                  ))}
-                </div>
-              </ViewSection>
-            )}
           </div>
         )}
 
         {/* ── EDIT MODE ─────────────────────────────────────────────── */}
         {mode === 'edit' && (
-          <div className="mt-2 space-y-5">
+          <div className="mt-2 space-y-4">
 
-            <EditSection icon={<Calendar className="size-4" />} title="Deadline">
-              <Input
-                value={form.deadline}
-                onChange={e => upd('deadline', e.target.value)}
-                placeholder="20 Juli 2025"
-              />
-            </EditSection>
-
-            <EditSection icon={<FileText className="size-4" />} title="Narasi Konten">
-              <Textarea
-                value={form.narasi}
-                onChange={e => upd('narasi', e.target.value)}
-                placeholder="Jelaskan konsep konten, angle cerita, dan tujuan utama..."
-                className="min-h-[80px] text-sm"
-              />
-            </EditSection>
-
-            <EditSection icon={<Target className="size-4" />} title="Target Audience">
-              <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Rentang usia</Label>
-                  <Input value={form.target_usia} onChange={e => upd('target_usia', e.target.value)} placeholder="20–30 tahun" />
+            {/* Prioritas + Deadline */}
+            <SectionBlock icon={<Flame className="size-4" />} title="Prioritas & Deadline">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Prioritas</Label>
+                  <Select value={form.priority} onValueChange={v => v && upd('priority', v as EditForm['priority'])}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue>
+                        {form.priority === 'low' ? 'Rendah' : form.priority === 'med' ? 'Sedang' : 'Tinggi'}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="high">Tinggi</SelectItem>
+                      <SelectItem value="med">Sedang</SelectItem>
+                      <SelectItem value="low">Rendah</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Minat / interest</Label>
-                  <Input value={form.target_minat} onChange={e => upd('target_minat', e.target.value)} placeholder="travel, lifestyle, personal finance" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Pain point</Label>
-                  <Input value={form.target_painpoint} onChange={e => upd('target_painpoint', e.target.value)} placeholder="Ingin liburan tapi takut boros" />
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Deadline</Label>
+                  <Input
+                    value={form.deadline}
+                    onChange={e => upd('deadline', e.target.value)}
+                    placeholder="Contoh: 20 Agustus 2026"
+                  />
                 </div>
               </div>
-            </EditSection>
+            </SectionBlock>
 
-            <EditSection icon={<MessageSquare className="size-4" />} title="Tone of Voice">
+            {/* Narasi Konten */}
+            <SectionBlock icon={<FileText className="size-4" />} title="Narasi Konten">
+              <RichTextEditor
+                value={form.narasi}
+                onValueChange={v => upd('narasi', v)}
+                placeholder="Jelaskan konsep konten, angle cerita, dan tujuan utama konten ini..."
+                className="min-h-[120px] text-sm bg-background"
+              />
+            </SectionBlock>
+
+            {/* Target Audience */}
+            <SectionBlock icon={<Target className="size-4" />} title="Target Audience">
+              <div className="space-y-3">
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Rentang Usia</Label>
+                  <Input
+                    value={form.target_usia}
+                    onChange={e => upd('target_usia', e.target.value)}
+                    placeholder="Contoh: 18–28 tahun"
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Minat / Interest</Label>
+                  <Input
+                    value={form.target_minat}
+                    onChange={e => upd('target_minat', e.target.value)}
+                    placeholder="Contoh: fashion, lifestyle, self-improvement"
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Pain Point</Label>
+                  <Input
+                    value={form.target_painpoint}
+                    onChange={e => upd('target_painpoint', e.target.value)}
+                    placeholder="Contoh: Mau tampil stylish tapi budget terbatas"
+                  />
+                </div>
+              </div>
+            </SectionBlock>
+
+            {/* Tone of Voice */}
+            <SectionBlock icon={<MessageSquare className="size-4" />} title="Tone of Voice">
               <Textarea
                 value={form.tone}
                 onChange={e => upd('tone', e.target.value)}
-                placeholder="Contoh: Fun & Casual — pakai bahasa sehari-hari, relatable, boleh sisipkan humor ringan"
+                placeholder="Contoh: Fun & Casual — bahasa sehari-hari, relatable, boleh sisipkan humor ringan"
                 className="text-sm"
               />
-            </EditSection>
+            </SectionBlock>
 
-            <EditSection icon={<Video className="size-4" />} title="Format Produksi">
+            {/* Format Produksi */}
+            <SectionBlock icon={<Video className="size-4" />} title="Format Produksi">
               <div className="space-y-3">
-                <div className="space-y-1.5">
+                <div className="grid gap-1.5">
                   <Label className="text-xs">Format</Label>
                   <Select value={form.format_video} onValueChange={v => upd('format_video', v ?? '')}>
                     <SelectTrigger className="w-full">
@@ -332,52 +440,61 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">-</SelectItem>
-                      <SelectItem value="Video">Video</SelectItem>
-                      <SelectItem value="Carousel">Carousel</SelectItem>
-                      <SelectItem value="Single Post">Single Post</SelectItem>
+                      {FORMAT_BRIEF_OPTIONS.map(f => (
+                        <SelectItem key={f} value={f}>{f}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1.5">
+                <div className="grid gap-1.5">
                   <Label className="text-xs">Durasi</Label>
-                  <Input value={form.durasi} onChange={e => upd('durasi', e.target.value)} placeholder="30–45 detik" />
+                  <Input
+                    value={form.durasi}
+                    onChange={e => upd('durasi', e.target.value)}
+                    placeholder="Contoh: 30–60 detik"
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">Link Referensi</Label>
+                    <button
+                      type="button"
+                      onClick={addRefLink}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Plus className="size-3" />
+                      Tambah Link
+                    </button>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {form.ref_links.map((link, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          value={link}
+                          onChange={e => handleRefLinkChange(index, e.target.value)}
+                          placeholder="https://..."
+                        />
+                        {form.ref_links.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeRefLink(index)}
+                            className="shrink-0"
+                          >
+                            <X className="size-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </EditSection>
-
-            <EditSection icon={<ImageIcon className="size-4" />} title="Referensi Visual">
-              <Textarea
-                value={form.ref_visual}
-                onChange={e => upd('ref_visual', e.target.value)}
-                placeholder="Deskripsikan referensi visual, mood, tone warna, link Pinterest, akun Instagram, dll..."
-                className="text-sm"
-              />
-            </EditSection>
-
-            <EditSection icon={<Clock className="size-4" />} title="Timeline Produksi">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Draft script</Label>
-                  <Input value={form.timeline_script} onChange={e => upd('timeline_script', e.target.value)} placeholder="15 Juli" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Shooting</Label>
-                  <Input value={form.timeline_shoot} onChange={e => upd('timeline_shoot', e.target.value)} placeholder="17 Juli" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Editing</Label>
-                  <Input value={form.timeline_edit} onChange={e => upd('timeline_edit', e.target.value)} placeholder="19 Juli" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Publish</Label>
-                  <Input value={form.timeline_publish} onChange={e => upd('timeline_publish', e.target.value)} placeholder="20 Juli" />
-                </div>
-              </div>
-            </EditSection>
+            </SectionBlock>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t">
               <Button type="button" variant="outline" size="sm" onClick={() => setMode('view')}>
-                <X className="size-3.5" />
+                <X className="size-3.5 mr-1" />
                 Batal
               </Button>
               <Button type="button" size="sm" onClick={handleSave} disabled={saving}>
@@ -409,7 +526,10 @@ function ViewRow({ label, value, multiline }: { label: string; value: string; mu
     return (
       <div className="space-y-0.5">
         <span className="text-[11px] text-muted-foreground">{label}</span>
-        <p className="text-sm leading-relaxed">{value}</p>
+        <div 
+          className="text-sm leading-relaxed max-w-none [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2 [&_li]:mb-1 [&_b]:font-bold [&_i]:italic"
+          dangerouslySetInnerHTML={{ __html: value }}
+        />
       </div>
     );
   }
@@ -421,20 +541,10 @@ function ViewRow({ label, value, multiline }: { label: string; value: string; mu
   );
 }
 
-function TimelineRow({ label, date, done }: { label: string; date: string; done?: boolean }) {
+function SectionBlock({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-3 text-xs">
-      <div className={`size-2 rounded-full shrink-0 ${done ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
-      <span className="text-muted-foreground w-24 shrink-0">{label}</span>
-      <span className={`font-semibold ${done ? 'text-emerald-600 dark:text-emerald-400' : ''}`}>{date}</span>
-    </div>
-  );
-}
-
-function EditSection({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 text-sm font-semibold">
+    <div className="space-y-3 rounded-xl border bg-card/60 p-4">
+      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
         <span className="text-muted-foreground">{icon}</span>
         {title}
       </div>

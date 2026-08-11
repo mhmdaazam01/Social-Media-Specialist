@@ -22,8 +22,7 @@ export async function getThumbnailFromLink(url: string): Promise<string | null> 
     }
     
     return null;
-  } catch (error) {
-    console.error('Error fetching thumbnail:', error);
+  } catch {
     return null;
   }
 }
@@ -38,17 +37,13 @@ async function getTikTokThumbnail(url: string): Promise<string | null> {
     
     const data = await response.json();
     return data.thumbnail_url || null;
-  } catch (error) {
-    console.error('TikTok thumbnail error:', error);
+  } catch {
     return null;
   }
 }
 
 async function getInstagramThumbnail(url: string): Promise<string | null> {
   try {
-    // Instagram oEmbed API
-    const oembedUrl = `https://graph.facebook.com/v18.0/instagram_oembed?url=${encodeURIComponent(url)}&access_token=your_token`;
-    
     // Note: Instagram oEmbed requires access token
     // Alternative: Try to parse from meta tags
     const response = await fetch(url);
@@ -63,8 +58,7 @@ async function getInstagramThumbnail(url: string): Promise<string | null> {
     }
     
     return null;
-  } catch (error) {
-    console.error('Instagram thumbnail error:', error);
+  } catch {
     return null;
   }
 }
@@ -86,8 +80,7 @@ function getYouTubeThumbnail(url: string): string | null {
     }
     
     return null;
-  } catch (error) {
-    console.error('YouTube thumbnail error:', error);
+  } catch {
     return null;
   }
 }

@@ -34,26 +34,30 @@ export default function SettingsPage() {
   const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
   const [editingPillarId, setEditingPillarId] = useState<string | null>(null);
 
-  // Notification settings (persisted in localStorage)
+  // Notification settings (synced to Supabase profiles)
   const [notifGoal, setNotifGoal] = useState(true);
   const [notifReminder, setNotifReminder] = useState(true);
   const [notifReport, setNotifReport] = useState(false);
 
+  // Load notification prefs from profile (Supabase)
   useEffect(() => {
-    const t = setTimeout(() => {
-      const savedGoal = localStorage.getItem('cly_notif_goal');
-      if (savedGoal !== null) setNotifGoal(savedGoal === 'true');
-      const savedReminder = localStorage.getItem('cly_notif_reminder');
-      if (savedReminder !== null) setNotifReminder(savedReminder === 'true');
-      const savedReport = localStorage.getItem('cly_notif_report');
-      if (savedReport !== null) setNotifReport(savedReport === 'true');
-    }, 0);
-    return () => clearTimeout(t);
-  }, []);
+    if (!profile) return;
+    const p = profile as unknown as Record<string, unknown>;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (p.notif_goal !== undefined && p.notif_goal !== null) setNotifGoal(p.notif_goal as boolean);
+    if (p.notif_reminder !== undefined && p.notif_reminder !== null) setNotifReminder(p.notif_reminder as boolean);
+    if (p.notif_report !== undefined && p.notif_report !== null) setNotifReport(p.notif_report as boolean);
+  }, [profile]);
 
-  const handleNotifGoal = () => { const next = !notifGoal; setNotifGoal(next); localStorage.setItem('cly_notif_goal', String(next)); };
-  const handleNotifReminder = () => { const next = !notifReminder; setNotifReminder(next); localStorage.setItem('cly_notif_reminder', String(next)); };
-  const handleNotifReport = () => { const next = !notifReport; setNotifReport(next); localStorage.setItem('cly_notif_report', String(next)); };
+  async function updateNotifPref(field: string, value: boolean) {
+    if (!profile) return;
+    await supabase.from('profiles').update({ [field]: value }).eq('id', profile.id);
+    await refreshProfile();
+  }
+
+  const handleNotifGoal = async () => { const next = !notifGoal; setNotifGoal(next); await updateNotifPref('notif_goal', next); };
+  const handleNotifReminder = async () => { const next = !notifReminder; setNotifReminder(next); await updateNotifPref('notif_reminder', next); };
+  const handleNotifReport = async () => { const next = !notifReport; setNotifReport(next); await updateNotifPref('notif_report', next); };
 
   async function handleErModeChange(mode: 'impression' | 'reach' | 'followers') {
     if (!profile) return;

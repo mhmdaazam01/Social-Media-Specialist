@@ -5,15 +5,16 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useIdeas } from '@/lib/hooks/useIdeas';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { usePillars } from '@/lib/hooks/usePillars';
-import { FORMAT_OPTIONS } from '@/lib/constants';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Plus, X } from 'lucide-react';
-import type { ContentIdea, PostStatus } from '@/types';
+import type { ContentIdea } from '@/types';
+
+const FORMAT_OPTIONS = ['Video', 'Carousel', 'Single Post', 'Short-form video'];
 
 interface IdeaModalProps {
   open: boolean;
@@ -27,9 +28,7 @@ interface FormFields {
   platform: string;
   pillar: string;
   format: string;
-  status: PostStatus;
   priority: 'low' | 'med' | 'high';
-  tags: string;
   ref_links: string[];
 }
 
@@ -39,9 +38,7 @@ const emptyForm: FormFields = {
   platform: '',
   pillar: '',
   format: '',
-  status: 'idea',
   priority: 'med',
-  tags: '',
   ref_links: [''],
 };
 
@@ -62,9 +59,7 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
           platform: editIdea.platform,
           pillar: editIdea.pillar,
           format: editIdea.format,
-          status: editIdea.status,
           priority: editIdea.priority,
-          tags: editIdea.tags.join(', '),
           ref_links: editIdea.ref_links.length > 0 ? editIdea.ref_links : [''],
         });
       } else {
@@ -88,15 +83,11 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
   }
 
   function removeRefLink(index: number) {
-    if (form.ref_links.length === 1) return; // Keep at least 1
+    if (form.ref_links.length === 1) return;
     update('ref_links', form.ref_links.filter((_, i) => i !== index));
   }
 
   async function handleSubmit() {
-    if (!form.title.trim()) {
-      toast.error('Judul wajib diisi');
-      return;
-    }
     setLoading(true);
     try {
       const data = {
@@ -105,9 +96,9 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
         platform: form.platform,
         pillar: form.pillar,
         format: form.format,
-        status: form.status,
+        status: editIdea ? editIdea.status : 'idea' as const,
         priority: form.priority,
-        tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
+        tags: [],
         brief: {},
         ref_links: form.ref_links.map(l => l.trim()).filter(Boolean),
       };
@@ -131,124 +122,44 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
     onOpenChange(open);
   }
 
+  // Derive display label for platform
+  const platformLabel = form.platform === 'all'
+    ? 'Semua Platform'
+    : form.platform
+      ? platforms.find(p => p.platform_id === form.platform)?.name || form.platform
+      : 'Pilih platform';
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editIdea ? 'Edit Ide' : 'Ide Baru'}</DialogTitle>
+          <DialogTitle>{editIdea ? 'Edit Ide' : 'Ide / Bank Konten'}</DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4">
+          {/* Judul */}
           <div className="grid gap-2">
-            <Label htmlFor="title">Judul</Label>
-            <Input id="title" value={form.title} onChange={e => update('title', e.target.value)} placeholder="Contoh: Review Produk X" />
+            <Label htmlFor="idea-title">Judul</Label>
+            <Input
+              id="idea-title"
+              value={form.title}
+              onChange={e => update('title', e.target.value)}
+              placeholder="Contoh: Review Produk X"
+            />
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="description">Deskripsi</Label>
-            <Textarea id="description" value={form.description} onChange={e => update('description', e.target.value)} placeholder="Deskripsi singkat..." />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <Label htmlFor="platform">Platform</Label>
-              <Select value={form.platform} onValueChange={v => update('platform', v ?? '')}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih platform">
-                    {form.platform ? platforms.find(p => p.platform_id === form.platform)?.name || form.platform : 'Pilih platform'}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">-</SelectItem>
-                  {platforms.map(p => (
-                    <SelectItem key={p.platform_id} value={p.platform_id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="pillar">Pilar</Label>
-              <Select value={form.pillar} onValueChange={v => update('pillar', v ?? '')}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih pilar">
-                    {form.pillar ? pillars.find(p => p.pillar_id === form.pillar)?.label || form.pillar : 'Pilih pilar'}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">-</SelectItem>
-                  {pillars.map(p => (
-                    <SelectItem key={p.pillar_id} value={p.pillar_id}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="format">Format</Label>
-            <Select value={form.format} onValueChange={v => update('format', v ?? '')}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Pilih format" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">-</SelectItem>
-                {FORMAT_OPTIONS.map(f => (
-                  <SelectItem key={f} value={f}>
-                    {f}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-2">
-              <Label htmlFor="status">Status</Label>
-              <Select value={form.status} onValueChange={v => v && update('status', v as PostStatus)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue>
-                    {form.status === 'idea' ? 'Idea Bank' : form.status === 'brief' ? 'Brief' : form.status}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="idea">Idea Bank</SelectItem>
-                  <SelectItem value="brief">Brief</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="priority">Prioritas</Label>
-              <Select value={form.priority} onValueChange={v => v && update('priority', v as FormFields['priority'])}>
-                <SelectTrigger className="w-full">
-                  <SelectValue>
-                    {form.priority === 'low' ? 'Rendah' : form.priority === 'med' ? 'Sedang' : form.priority === 'high' ? 'Tinggi' : form.priority}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Rendah</SelectItem>
-                  <SelectItem value="med">Sedang</SelectItem>
-                  <SelectItem value="high">Tinggi</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="tags">Tags (pisahkan dengan koma)</Label>
-            <Input id="tags" value={form.tags} onChange={e => update('tags', e.target.value)} placeholder="tips, tutorial, edukasi" />
-          </div>
-
+          {/* Link Referensi */}
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <Label>Link Referensi</Label>
-              <Button type="button" variant="ghost" size="sm" onClick={addRefLink}>
-                <Plus className="size-4" />
+              <button
+                type="button"
+                onClick={addRefLink}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Plus className="size-3" />
                 Tambah Link
-              </Button>
+              </button>
             </div>
             <div className="flex flex-col gap-2">
               {form.ref_links.map((link, index) => (
@@ -271,6 +182,93 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Deskripsi */}
+          <div className="grid gap-2">
+            <Label htmlFor="idea-description">Deskripsi</Label>
+            <RichTextEditor
+              value={form.description}
+              onValueChange={v => update('description', v)}
+              placeholder="Deskripsi singkat ide konten..."
+              className="min-h-[120px] text-sm bg-background"
+            />
+          </div>
+
+          {/* Platform + Pilar */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-2">
+              <Label>Platform</Label>
+              <Select value={form.platform} onValueChange={v => update('platform', v ?? '')}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih platform">
+                    {platformLabel}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">-</SelectItem>
+                  <SelectItem value="all">Semua Platform</SelectItem>
+                  {platforms.map(p => (
+                    <SelectItem key={p.platform_id} value={p.platform_id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Pilar</Label>
+              <Select value={form.pillar} onValueChange={v => update('pillar', v ?? '')}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Pilih pilar">
+                    {form.pillar
+                      ? pillars.find(p => p.pillar_id === form.pillar)?.label || form.pillar
+                      : 'Pilih pilar'}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">-</SelectItem>
+                  {pillars.map(p => (
+                    <SelectItem key={p.pillar_id} value={p.pillar_id}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Format */}
+          <div className="grid gap-2">
+            <Label>Format</Label>
+            <Select value={form.format} onValueChange={v => update('format', v ?? '')}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Pilih format" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">-</SelectItem>
+                {FORMAT_OPTIONS.map(f => (
+                  <SelectItem key={f} value={f}>{f}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Prioritas */}
+          <div className="grid gap-2">
+            <Label>Prioritas</Label>
+            <Select value={form.priority} onValueChange={v => v && update('priority', v as FormFields['priority'])}>
+              <SelectTrigger className="w-full">
+                <SelectValue>
+                  {form.priority === 'low' ? 'Rendah' : form.priority === 'med' ? 'Sedang' : 'Tinggi'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="high">Tinggi</SelectItem>
+                <SelectItem value="med">Sedang</SelectItem>
+                <SelectItem value="low">Rendah</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

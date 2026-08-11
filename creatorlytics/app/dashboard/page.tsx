@@ -7,6 +7,7 @@ import { usePosts } from '@/lib/hooks/usePosts';
 import { useGoals } from '@/lib/hooks/useGoals';
 import { useUser } from '@/lib/hooks/useUser';
 import { calcTotalER, fmt, isPostInMonth } from '@/lib/utils/analytics';
+import { getValidHref } from '@/lib/utils/link';
 import {
   Eye, TrendingUp, BookOpen, Target,
   ArrowUpRight, AlertTriangle, CheckCircle2,
@@ -23,7 +24,7 @@ export default function DashboardPage() {
   const loading = postsLoading || goalsLoading;
   
   // Chart filters
-  const [chartView, setChartView] = useState<'daily' | 'monthly'>('monthly');
+  const [chartView, setChartView] = useState<'daily' | 'monthly'>('daily');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -88,13 +89,24 @@ export default function DashboardPage() {
   // Chart data — last 6 months or filtered by date range
   const chartData = useMemo(() => {
     let filteredPosts = posts;
+    let effectiveDateFrom = dateFrom;
+    let effectiveDateTo = dateTo;
+
+    // Apply default 7 days if no date range is selected
+    if (!dateFrom && !dateTo) {
+      const to = new Date();
+      const from = new Date();
+      from.setDate(to.getDate() - 6);
+      effectiveDateFrom = from.toISOString().split('T')[0];
+      effectiveDateTo = to.toISOString().split('T')[0];
+    }
     
     // Apply date filters
-    if (dateFrom) {
-      filteredPosts = filteredPosts.filter(p => p.date && p.date >= dateFrom);
+    if (effectiveDateFrom) {
+      filteredPosts = filteredPosts.filter(p => p.date && p.date >= effectiveDateFrom);
     }
-    if (dateTo) {
-      filteredPosts = filteredPosts.filter(p => p.date && p.date <= dateTo);
+    if (effectiveDateTo) {
+      filteredPosts = filteredPosts.filter(p => p.date && p.date <= effectiveDateTo);
     }
     
     if (chartView === 'monthly') {
@@ -377,10 +389,29 @@ export default function DashboardPage() {
                     .sort((a, b) => b.impression - a.impression)
                     .slice(0, 5)
                     .map((post, idx) => (
-                      <div key={post.id} className="flex gap-2.5 py-[10px] px-1 border-b border-cly-border last:border-0">
-                        <span className="text-cly-micro font-black text-cly-text-3 w-4 shrink-0 pt-0.5">{idx + 1}</span>
+                      <div key={post.id} className="flex gap-2.5 py-[10px] px-1 border-b border-cly-border last:border-0 items-center">
+                        <span className="text-cly-micro font-black text-cly-text-3 w-4 shrink-0">{idx + 1}</span>
+                        <a 
+                          href={getValidHref(post.link)} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="w-[36px] h-[36px] rounded-md bg-cly-muted border border-cly-border/50 shrink-0 overflow-hidden flex items-center justify-center hover:opacity-80 transition-opacity"
+                        >
+                          {post.thumbnail ? (
+                            <>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={post.thumbnail} alt={post.name || 'thumbnail'} className="w-full h-full object-cover" />
+                            </>
+                          ) : (
+                            <span className="text-[9px] font-bold text-cly-text-3 uppercase">
+                              {post.name ? post.name.substring(0, 2) : '?'}
+                            </span>
+                          )}
+                        </a>
                         <div className="flex-1 min-w-0">
-                          <p className="text-cly-base font-bold text-cly-text truncate">{post.name || 'Untitled'}</p>
+                          <a href={getValidHref(post.link)} target="_blank" rel="noopener noreferrer" className="block text-cly-base font-bold text-cly-text truncate hover:underline">
+                            {post.name || 'Untitled'}
+                          </a>
                           <p className="text-cly-sm text-cly-text-3 capitalize">
                             {post.platform}
                             {post.account && (
