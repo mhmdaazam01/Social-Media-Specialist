@@ -37,7 +37,7 @@ export function MetricCard({
   
   const colors = negative 
     ? { icon: 'text-cly-red', bg: 'bg-cly-red-tint' }
-    : colorMap[tone];
+    : (colorMap[tone as keyof typeof colorMap] || colorMap.green);
 
   return (
     <div className="bg-cly-surface border border-cly-border rounded-[10px] p-3.5 shadow-cly min-h-[120px]">
