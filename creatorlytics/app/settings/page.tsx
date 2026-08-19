@@ -354,7 +354,7 @@ export default function SettingsPage() {
               <p className="mb-4 text-xs text-[#B93B32]/80">
                 Menghapus seluruh data (posts, platforms, pillars, dsb) milik Anda dari database. Tindakan ini permanen.
               </p>
-              <div className="mt-4 flex gap-3">
+              <div className="mt-4 flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={handleFactoryReset}
                   className="rounded-lg bg-gradient-to-br from-[#FFB5A0] to-[#FF9680] px-4 py-2 text-xs font-bold text-white transition-all hover:shadow-lg active:scale-95 shadow-md"
