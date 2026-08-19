@@ -364,116 +364,114 @@ export default function ContentPage() {
             <h1 className="text-2xl font-bold text-cly-text mb-1">Konten Performance</h1>
             <p className="text-sm text-cly-text-3">Pantau performa kontenmu dan temukan insight terbaik.</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
             <button 
               onClick={handleExport}
-              className="h-8 px-4 rounded-lg border border-cly-border bg-white text-cly-text-2 text-xs font-medium hover:bg-cly-muted transition-all inline-flex items-center gap-2 shadow-sm"
+              className="h-8 rounded-lg border border-cly-border bg-white text-cly-text-2 text-xs font-medium hover:bg-cly-muted transition-all flex items-center justify-center gap-1.5 shadow-sm px-1 sm:px-4 w-full"
             >
-              <FileDown size={16} />
-              Export
+              <FileDown size={14} className="shrink-0" />
+              <span className="truncate">Export</span>
             </button>
-            <CSVImport onImport={handleImport} />
+            <div className="flex items-center justify-center w-full">
+              <CSVImport onImport={handleImport} />
+            </div>
             <a
               href="/template-konten.csv"
               download
-              className="h-8 px-4 rounded-lg bg-cly-brand text-white text-xs font-semibold hover:bg-cly-brand-hover transition-all inline-flex items-center gap-2 shadow-sm"
+              className="h-8 rounded-lg bg-cly-brand text-white text-xs font-semibold hover:bg-cly-brand-hover transition-all flex items-center justify-center gap-1.5 shadow-sm px-1 sm:px-4 w-full"
             >
-              <FileText size={16} />
-              Template
+              <FileText size={14} className="shrink-0" />
+              <span className="truncate">Template</span>
             </a>
           </div>
         </div>
 
         {/* Filters & Actions */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-          <div className="flex items-center gap-2 flex-1 flex-wrap">
-            {/* Search */}
-            <div className="relative w-full sm:w-64">
+        <div className="flex flex-col gap-3 bg-white dark:bg-cly-surface p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          {/* Top Row: Search & Actions */}
+          <div className="flex flex-col sm:flex-row justify-between gap-3">
+            <div className="relative w-full sm:max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-cly-text-3" size={16} />
               <input
                 type="text"
                 placeholder="Cari judul konten..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-8 pl-10 pr-4 rounded-lg border border-cly-border bg-white text-xs text-cly-text placeholder:text-cly-text-3 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
+                className="w-full h-8 pl-9 pr-3 rounded-lg border border-cly-border bg-white text-xs text-cly-text placeholder:text-cly-text-3 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
               />
             </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="h-8 px-3 flex-1 sm:flex-none rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
-              />
-              <span className="text-xs text-cly-text-3">-</span>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="h-8 px-3 flex-1 sm:flex-none rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
-              />
+            
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleAddRow}
+                disabled={isAddingRow}
+                className={`h-8 px-4 flex-1 sm:flex-none rounded-lg text-white text-xs font-semibold transition-all inline-flex items-center justify-center gap-2 shadow-sm ${isAddingRow ? 'bg-cly-brand/70 cursor-not-allowed' : 'bg-cly-brand hover:bg-cly-brand-hover'}`}
+              >
+                {isAddingRow ? <Loader2 size={16} className="animate-spin shrink-0" /> : <Plus size={16} className="shrink-0" />}
+                <span className="truncate">{isAddingRow ? 'Menambahkan...' : 'Tambah Konten'}</span>
+              </button>
+              <button 
+                onClick={toggleBulkSelectMode}
+                className={`h-8 w-8 rounded-lg border border-cly-border shrink-0 ${bulkSelectMode ? 'bg-cly-brand text-white' : 'bg-white text-cly-text-2'} hover:bg-cly-muted transition-all inline-flex items-center justify-center shadow-sm`}
+              >
+                <Check size={16} />
+              </button>
+              {bulkSelectMode && selectedPosts.size > 0 && (
+                <button 
+                  onClick={handleBulkDelete}
+                  className="h-8 px-3 rounded-lg bg-gradient-to-br from-[#FFB5A0] to-[#FF9680] shrink-0 text-white text-xs font-semibold hover:shadow-md transition-all inline-flex items-center justify-center gap-1.5"
+                >
+                  <Trash2 size={14} className="shrink-0" />
+                  <span className="truncate">Hapus ({selectedPosts.size})</span>
+                </button>
+              )}
             </div>
+          </div>
 
+          {/* Bottom Row: Filter Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="w-full h-8 px-2 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
+            />
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="w-full h-8 px-2 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
+            />
             <select
               value={accountFilter}
               onChange={(e) => setAccountFilter(e.target.value)}
-              className="h-8 px-3 pr-8 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer"
+              className="w-full h-8 px-2 pr-6 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer truncate"
             >
               <option value="all">Semua Akun</option>
               {accounts.map(a => (
                 <option key={a.id} value={a.name}>{a.name}</option>
               ))}
             </select>
-
             <select
               value={platformFilter}
               onChange={(e) => setPlatformFilter(e.target.value)}
-              className="h-8 px-3 pr-8 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer"
+              className="w-full h-8 px-2 pr-6 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer truncate"
             >
               <option value="all">Semua Platform</option>
               {platforms.map(p => (
                 <option key={p} value={p}>{p}</option>
               ))}
             </select>
-
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="h-8 px-3 pr-8 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer"
+              className="w-full h-8 px-2 pr-6 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer truncate col-span-2 md:col-span-1"
             >
               <option value="latest">Latest First</option>
               <option value="oldest">Oldest First</option>
               <option value="impression">Highest Impression</option>
               <option value="reach">Highest Reach</option>
             </select>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2 self-start xl:self-auto w-full xl:w-auto mt-2 xl:mt-0">
-            <button 
-              onClick={handleAddRow}
-              disabled={isAddingRow}
-              className={`h-8 px-4 rounded-lg text-white text-xs font-semibold transition-all inline-flex flex-1 xl:flex-none items-center justify-center gap-2 shadow-sm ${isAddingRow ? 'bg-cly-brand/70 cursor-not-allowed' : 'bg-cly-brand hover:bg-cly-brand-hover'}`}
-            >
-              {isAddingRow ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-              {isAddingRow ? 'Menambahkan...' : 'Tambah Konten'}
-            </button>
-            <button 
-              onClick={toggleBulkSelectMode}
-              className={`h-8 w-8 rounded-lg border border-cly-border shrink-0 ${bulkSelectMode ? 'bg-cly-brand text-white' : 'bg-white text-cly-text-2'} hover:bg-cly-muted transition-all inline-flex items-center justify-center shadow-sm`}
-            >
-              <Check size={16} />
-            </button>
-            {bulkSelectMode && selectedPosts.size > 0 && (
-              <button 
-                onClick={handleBulkDelete}
-                className="h-8 px-4 rounded-lg bg-gradient-to-br from-[#FFB5A0] to-[#FF9680] shrink-0 text-white text-xs font-semibold hover:shadow-md transition-all inline-flex items-center justify-center gap-2"
-              >
-                <Trash2 size={16} />
-                Hapus ({selectedPosts.size})
-              </button>
-            )}
           </div>
         </div>
 
