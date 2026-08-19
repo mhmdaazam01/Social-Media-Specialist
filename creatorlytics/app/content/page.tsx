@@ -359,12 +359,12 @@ export default function ContentPage() {
       <div className="flex flex-col gap-6 content-typography">
         
         {/* Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-cly-text mb-1">Konten Performance</h1>
             <p className="text-sm text-cly-text-3">Pantau performa kontenmu dan temukan insight terbaik.</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button 
               onClick={handleExport}
               className="h-8 px-4 rounded-lg border border-cly-border bg-white text-cly-text-2 text-xs font-medium hover:bg-cly-muted transition-all inline-flex items-center gap-2 shadow-sm"
@@ -385,10 +385,10 @@ export default function ContentPage() {
         </div>
 
         {/* Filters & Actions */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
           <div className="flex items-center gap-2 flex-1 flex-wrap">
             {/* Search */}
-            <div className="relative w-64">
+            <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-cly-text-3" size={16} />
               <input
                 type="text"
@@ -399,19 +399,21 @@ export default function ContentPage() {
               />
             </div>
 
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="h-8 px-3 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
-            />
-
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="h-8 px-3 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
-            />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="h-8 px-3 flex-1 sm:flex-none rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
+              />
+              <span className="text-xs text-cly-text-3">-</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="h-8 px-3 flex-1 sm:flex-none rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
+              />
+            </div>
 
             <select
               value={accountFilter}
@@ -448,25 +450,25 @@ export default function ContentPage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-start xl:self-auto w-full xl:w-auto mt-2 xl:mt-0">
             <button 
               onClick={handleAddRow}
               disabled={isAddingRow}
-              className={`h-8 px-4 rounded-lg text-white text-xs font-semibold transition-all inline-flex items-center gap-2 shadow-sm ${isAddingRow ? 'bg-cly-brand/70 cursor-not-allowed' : 'bg-cly-brand hover:bg-cly-brand-hover'}`}
+              className={`h-8 px-4 rounded-lg text-white text-xs font-semibold transition-all inline-flex flex-1 xl:flex-none items-center justify-center gap-2 shadow-sm ${isAddingRow ? 'bg-cly-brand/70 cursor-not-allowed' : 'bg-cly-brand hover:bg-cly-brand-hover'}`}
             >
               {isAddingRow ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
               {isAddingRow ? 'Menambahkan...' : 'Tambah Konten'}
             </button>
             <button 
               onClick={toggleBulkSelectMode}
-              className={`h-8 w-8 rounded-lg border border-cly-border ${bulkSelectMode ? 'bg-cly-brand text-white' : 'bg-white text-cly-text-2'} hover:bg-cly-muted transition-all inline-flex items-center justify-center shadow-sm`}
+              className={`h-8 w-8 rounded-lg border border-cly-border shrink-0 ${bulkSelectMode ? 'bg-cly-brand text-white' : 'bg-white text-cly-text-2'} hover:bg-cly-muted transition-all inline-flex items-center justify-center shadow-sm`}
             >
               <Check size={16} />
             </button>
             {bulkSelectMode && selectedPosts.size > 0 && (
               <button 
                 onClick={handleBulkDelete}
-                className="h-8 px-4 rounded-lg bg-gradient-to-br from-[#FFB5A0] to-[#FF9680] text-white text-xs font-semibold hover:shadow-md transition-all inline-flex items-center gap-2"
+                className="h-8 px-4 rounded-lg bg-gradient-to-br from-[#FFB5A0] to-[#FF9680] shrink-0 text-white text-xs font-semibold hover:shadow-md transition-all inline-flex items-center justify-center gap-2"
               >
                 <Trash2 size={16} />
                 Hapus ({selectedPosts.size})

@@ -255,49 +255,49 @@ export default function SettingsPage() {
       <div className="flex flex-col gap-[18px] p-[18px] settings-typography">
         
         {/* Tab Switcher */}
-        <div className="flex items-center gap-1 bg-gradient-to-br from-cly-muted to-white p-1 border border-cly-border rounded-xl w-fit shadow-sm">
+        <div className="flex items-center gap-1 bg-gradient-to-br from-cly-muted to-white p-1 border border-cly-border rounded-xl w-full sm:w-fit shadow-sm overflow-x-auto">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
+            className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all ${
               activeTab === 'profile'
                 ? 'bg-white text-cly-text shadow-sm'
                 : 'bg-transparent text-cly-text-2 hover:text-cly-text'
             }`}
           >
-            <UserIcon className="size-4" />
+            <UserIcon className="size-4 shrink-0" />
             Profile
           </button>
           <button
             onClick={() => setActiveTab('platforms')}
-            className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
+            className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all ${
               activeTab === 'platforms'
                 ? 'bg-white text-cly-text shadow-sm'
                 : 'bg-transparent text-cly-text-2 hover:text-cly-text'
             }`}
           >
-            <LayoutGridIcon className="size-4" />
+            <LayoutGridIcon className="size-4 shrink-0" />
             Platforms
           </button>
           <button
             onClick={() => setActiveTab('appearance')}
-            className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
+            className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all ${
               activeTab === 'appearance'
                 ? 'bg-white text-cly-text shadow-sm'
                 : 'bg-transparent text-cly-text-2 hover:text-cly-text'
             }`}
           >
-            <PaletteIcon className="size-4" />
+            <PaletteIcon className="size-4 shrink-0" />
             Appearance
           </button>
           <button
             onClick={() => setActiveTab('notifications')}
-            className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
+            className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all ${
               activeTab === 'notifications'
                 ? 'bg-white text-cly-text shadow-sm'
                 : 'bg-transparent text-cly-text-2 hover:text-cly-text'
             }`}
           >
-            <BellIcon className="size-4" />
+            <BellIcon className="size-4 shrink-0" />
             Notifications
           </button>
         </div>

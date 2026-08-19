@@ -242,48 +242,48 @@ export default function AnalyticsPage() {
       `}</style>
       <div className="flex flex-col gap-[18px] analytics-typography">
         {/* Filter Buttons */}
-        <div className="flex justify-end gap-2 flex-wrap">
-          {/* Date From */}
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="h-8 px-3 border border-cly-border rounded-lg bg-white text-cly-text-2 text-xs font-medium outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
-            placeholder="Dari"
-          />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-3 sm:gap-2">
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="h-8 px-3 flex-1 sm:flex-none border border-cly-border rounded-lg bg-white text-cly-text-2 text-xs font-medium outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
+              placeholder="Dari"
+            />
+            <span className="text-xs text-cly-text-3">-</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="h-8 px-3 flex-1 sm:flex-none border border-cly-border rounded-lg bg-white text-cly-text-2 text-xs font-medium outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
+              placeholder="Sampai"
+            />
+          </div>
           
-          {/* Date To */}
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="h-8 px-3 border border-cly-border rounded-lg bg-white text-cly-text-2 text-xs font-medium outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
-            placeholder="Sampai"
-          />
-          
-          {/* Account Filter */}
-          <select 
-            value={selectedAccount}
-            onChange={(e) => setSelectedAccount(e.target.value)}
-            className="h-8 px-3 border border-cly-border rounded-lg bg-white text-cly-text-2 text-xs font-medium outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer"
-          >
-            <option value="all">Semua Akun</option>
-            {accounts.map(a => (
-              <option key={a.id} value={a.name}>{a.name}</option>
-            ))}
-          </select>
-          
-          {/* Platform Filter */}
-          <select 
-            value={selectedPlatform}
-            onChange={(e) => setSelectedPlatform(e.target.value)}
-            className="h-8 px-3 border border-cly-border rounded-lg bg-white text-cly-text-2 text-xs font-medium outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer"
-          >
-            <option value="all">All platforms</option>
-            {platforms.map(p => (
-              <option key={p.id} value={p.platform_id}>{p.name}</option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2">
+            <select 
+              value={selectedAccount}
+              onChange={(e) => setSelectedAccount(e.target.value)}
+              className="h-8 px-3 flex-1 sm:flex-none border border-cly-border rounded-lg bg-white text-cly-text-2 text-xs font-medium outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer"
+            >
+              <option value="all">Semua Akun</option>
+              {accounts.map(a => (
+                <option key={a.id} value={a.name}>{a.name}</option>
+              ))}
+            </select>
+            
+            <select 
+              value={selectedPlatform}
+              onChange={(e) => setSelectedPlatform(e.target.value)}
+              className="h-8 px-3 flex-1 sm:flex-none border border-cly-border rounded-lg bg-white text-cly-text-2 text-xs font-medium outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer"
+            >
+              <option value="all">All platforms</option>
+              {platforms.map(p => (
+                <option key={p.id} value={p.platform_id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Two Column: Trend Chart + Pillar Score */}
@@ -333,7 +333,7 @@ export default function AnalyticsPage() {
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
-                <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
+                <ComposedChart data={chartData} margin={{ top: 8, right: 24, left: -24, bottom: 0 }}>
                   <CartesianGrid 
                     strokeDasharray="3 3" 
                     stroke={resolvedTheme === 'dark' ? '#3F3F46' : '#E8ECEF'} 
