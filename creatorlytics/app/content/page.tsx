@@ -364,33 +364,33 @@ export default function ContentPage() {
             <h1 className="text-2xl font-bold text-cly-text mb-1">Konten Performance</h1>
             <p className="text-sm text-cly-text-3">Pantau performa kontenmu dan temukan insight terbaik.</p>
           </div>
-          <div className="grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
+          <div className="grid grid-cols-3 md:flex md:flex-wrap items-center gap-2 w-full md:w-auto">
             <button 
               onClick={handleExport}
-              className="h-8 rounded-lg border border-cly-border bg-white text-cly-text-2 text-xs font-medium hover:bg-cly-muted transition-all flex items-center justify-center gap-1.5 shadow-sm px-1 sm:px-4 w-full"
+              className="h-8 rounded-lg border border-cly-border bg-white text-cly-text-2 text-xs font-medium hover:bg-cly-muted transition-all flex items-center justify-center gap-1.5 shadow-sm px-1 md:px-4 w-full md:w-auto"
             >
               <FileDown size={14} className="shrink-0" />
-              <span className="truncate">Export</span>
+              <span className="truncate md:inline">Export</span>
             </button>
-            <div className="flex items-center justify-center w-full">
+            <div className="flex items-center justify-center w-full md:w-auto">
               <CSVImport onImport={handleImport} />
             </div>
             <a
               href="/template-konten.csv"
               download
-              className="h-8 rounded-lg bg-cly-brand text-white text-xs font-semibold hover:bg-cly-brand-hover transition-all flex items-center justify-center gap-1.5 shadow-sm px-1 sm:px-4 w-full"
+              className="h-8 rounded-lg bg-cly-brand text-white text-xs font-semibold hover:bg-cly-brand-hover transition-all flex items-center justify-center gap-1.5 shadow-sm px-1 md:px-4 w-full md:w-auto"
             >
               <FileText size={14} className="shrink-0" />
-              <span className="truncate">Template</span>
+              <span className="truncate md:inline">Template</span>
             </a>
           </div>
         </div>
 
         {/* Filters & Actions */}
-        <div className="flex flex-col gap-3 bg-white dark:bg-cly-surface p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+        <div className="flex flex-col gap-3 bg-white dark:bg-cly-surface p-3 md:p-4 rounded-xl md:rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           {/* Top Row: Search & Actions */}
-          <div className="flex flex-col sm:flex-row justify-between gap-3">
-            <div className="relative w-full sm:max-w-xs">
+          <div className="flex flex-col md:flex-row justify-between gap-3">
+            <div className="relative w-full md:max-w-xs flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-cly-text-3" size={16} />
               <input
                 type="text"
@@ -405,7 +405,7 @@ export default function ContentPage() {
               <button 
                 onClick={handleAddRow}
                 disabled={isAddingRow}
-                className={`h-8 px-4 flex-1 sm:flex-none rounded-lg text-white text-xs font-semibold transition-all inline-flex items-center justify-center gap-2 shadow-sm ${isAddingRow ? 'bg-cly-brand/70 cursor-not-allowed' : 'bg-cly-brand hover:bg-cly-brand-hover'}`}
+                className={`h-8 px-4 flex-1 md:flex-none rounded-lg text-white text-xs font-semibold transition-all inline-flex items-center justify-center gap-2 shadow-sm ${isAddingRow ? 'bg-cly-brand/70 cursor-not-allowed' : 'bg-cly-brand hover:bg-cly-brand-hover'}`}
               >
                 {isAddingRow ? <Loader2 size={16} className="animate-spin shrink-0" /> : <Plus size={16} className="shrink-0" />}
                 <span className="truncate">{isAddingRow ? 'Menambahkan...' : 'Tambah Konten'}</span>
@@ -429,23 +429,23 @@ export default function ContentPage() {
           </div>
 
           {/* Bottom Row: Filter Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 md:flex md:flex-wrap md:items-center gap-2">
             <input
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="w-full h-8 px-2 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
+              className="w-full md:w-auto h-8 px-2 md:px-3 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
             />
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="w-full h-8 px-2 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
+              className="w-full md:w-auto h-8 px-2 md:px-3 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
             />
             <select
               value={accountFilter}
               onChange={(e) => setAccountFilter(e.target.value)}
-              className="w-full h-8 px-2 pr-6 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer truncate"
+              className="w-full md:w-auto md:min-w-[120px] h-8 px-2 md:px-3 pr-6 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer truncate"
             >
               <option value="all">Semua Akun</option>
               {accounts.map(a => (
@@ -455,7 +455,7 @@ export default function ContentPage() {
             <select
               value={platformFilter}
               onChange={(e) => setPlatformFilter(e.target.value)}
-              className="w-full h-8 px-2 pr-6 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer truncate"
+              className="w-full md:w-auto md:min-w-[130px] h-8 px-2 md:px-3 pr-6 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer truncate"
             >
               <option value="all">Semua Platform</option>
               {platforms.map(p => (
@@ -465,7 +465,7 @@ export default function ContentPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="w-full h-8 px-2 pr-6 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer truncate col-span-2 md:col-span-1"
+              className="w-full md:w-auto md:min-w-[140px] h-8 px-2 md:px-3 pr-6 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer truncate col-span-2 md:col-span-1"
             >
               <option value="latest">Latest First</option>
               <option value="oldest">Oldest First</option>
