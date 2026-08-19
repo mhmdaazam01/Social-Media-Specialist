@@ -1,4 +1,5 @@
 import * as React from "react";
+import DOMPurify from "isomorphic-dompurify";
 import { 
   Bold, 
   Italic, 
@@ -12,9 +13,17 @@ interface RichTextEditorProps {
   onValueChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  readOnly?: boolean;
 }
 
-export function RichTextEditor({ value, onValueChange, placeholder, className }: RichTextEditorProps) {
+// Allowed HTML tags for the rich text editor - no scripts, no event handlers
+const PURIFY_CONFIG = {
+  ALLOWED_TAGS: ['b', 'i', 'u', 'ul', 'ol', 'li', 'p', 'br', 'span', 'strong', 'em'],
+  ALLOWED_ATTR: [] as string[],
+  KEEP_CONTENT: true,
+};
+
+export function RichTextEditor({ value, onValueChange, placeholder, className, readOnly }: RichTextEditorProps) {
   const editorRef = React.useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = React.useState(false);
   const lastValue = React.useRef(value);
@@ -33,7 +42,8 @@ export function RichTextEditor({ value, onValueChange, placeholder, className }:
       // This prevents React's asynchronous state updates from causing a race condition
       // that resets the cursor position (causing "reverse typing").
       if (document.activeElement !== editorRef.current) {
-        editorRef.current.innerHTML = value;
+        // ✅ Sanitize before writing to DOM to prevent XSS
+        editorRef.current.innerHTML = DOMPurify.sanitize(value, PURIFY_CONFIG);
         lastValue.current = value;
       }
     }
@@ -41,8 +51,10 @@ export function RichTextEditor({ value, onValueChange, placeholder, className }:
 
   const handleInput = React.useCallback((e: React.FormEvent<HTMLDivElement>) => {
     const html = e.currentTarget.innerHTML;
-    lastValue.current = html;
-    onValueChangeRef.current(html);
+    // ✅ Sanitize output before passing to parent - prevents stored XSS
+    const clean = DOMPurify.sanitize(html, PURIFY_CONFIG);
+    lastValue.current = clean;
+    onValueChangeRef.current(clean);
   }, []); // Empty dependency array = never changes
 
   const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -57,18 +69,23 @@ export function RichTextEditor({ value, onValueChange, placeholder, className }:
     document.execCommand(command, false);
     if (editorRef.current) {
       const html = editorRef.current.innerHTML;
-      lastValue.current = html;
-      onValueChangeRef.current(html);
+      // ✅ Sanitize after execCommand as well
+      const clean = DOMPurify.sanitize(html, PURIFY_CONFIG);
+      lastValue.current = clean;
+      onValueChangeRef.current(clean);
       editorRef.current.focus();
     }
   };
 
   // We only run this useMemo ONCE on mount (deps will never change).
-  const [initialValue] = React.useState(value);
+  const [initialValue] = React.useState(
+    // ✅ Sanitize initial value on mount to prevent stored XSS from DB
+    DOMPurify.sanitize(value, PURIFY_CONFIG)
+  );
   const editorElement = React.useMemo(() => (
     <div
       ref={editorRef}
-      contentEditable
+      contentEditable={!readOnly}
       suppressContentEditableWarning
       onInput={handleInput}
       onKeyDown={handleKeyDown}
@@ -86,8 +103,9 @@ export function RichTextEditor({ value, onValueChange, placeholder, className }:
     } ${className || ""}`}>
       
       {/* Toolbar */}
-      <div className="flex items-center gap-1 border-b border-input px-2 py-1.5 bg-muted/30">
-        <Type className="size-3.5 text-muted-foreground mr-1" />
+      {!readOnly && (
+        <div className="flex items-center gap-1 border-b border-input px-2 py-1.5 bg-muted/30">
+          <Type className="size-3.5 text-muted-foreground mr-1" />
         <div className="h-4 w-px bg-border mx-1" />
         
         <button
@@ -124,8 +142,9 @@ export function RichTextEditor({ value, onValueChange, placeholder, className }:
           className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-sm transition-colors"
         >
           <ListOrdered className="size-3.5" />
-        </button>
-      </div>
+          </button>
+        </div>
+      )}
 
       {/* Editor Content */}
       <div className="relative flex-1 min-h-[120px]">

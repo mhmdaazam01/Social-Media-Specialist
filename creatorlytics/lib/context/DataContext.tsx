@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/hooks/useUser';
+import { useCollaboration } from '@/lib/context/CollaborationContext';
 import type { Post, Goal, Platform, Pillar, ContentIdea, CalendarEvent, Account } from '@/types';
 import { toast } from 'sonner';
 
@@ -67,6 +68,7 @@ const DataContext = createContext<DataContextType | null>(null);
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
+  const { activeWorkspaceId } = useCollaboration();
   const supabase = createClient();
 
   const [posts, setPosts] = useState<Post[]>([]);
@@ -88,20 +90,24 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [hasFetched, setHasFetched] = useState(false);
 
   const fetchAll = useCallback(async () => {
-    if (!user) return;
+    if (!user || !activeWorkspaceId) return;
+
+    setPostsLoading(true); setGoalsLoading(true); setPlatformsLoading(true);
+    setPillarsLoading(true); setIdeasLoading(true); setEventsLoading(true);
+    setAccountsLoading(true);
 
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     const oneYearAgoStr = oneYearAgo.toISOString().split('T')[0];
 
     const [postsRes, goalsRes, platformsRes, pillarsRes, ideasRes, eventsRes, accountsRes] = await Promise.all([
-      supabase.from('posts').select('*').eq('user_id', user.id).gte('date', oneYearAgoStr).order('date', { ascending: false }),
-      supabase.from('goals').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('platforms').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
-      supabase.from('pillars').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
-      supabase.from('content_ideas').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('calendar_events').select('*').eq('user_id', user.id).order('scheduled_date', { ascending: true }),
-      supabase.from('accounts').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
+      supabase.from('posts').select('*').eq('user_id', activeWorkspaceId).gte('date', oneYearAgoStr).order('date', { ascending: false }),
+      supabase.from('goals').select('*').eq('user_id', activeWorkspaceId).order('created_at', { ascending: false }),
+      supabase.from('platforms').select('*').eq('user_id', activeWorkspaceId).order('created_at', { ascending: true }),
+      supabase.from('pillars').select('*').eq('user_id', activeWorkspaceId).order('created_at', { ascending: true }),
+      supabase.from('content_ideas').select('*').eq('user_id', activeWorkspaceId).order('created_at', { ascending: false }),
+      supabase.from('calendar_events').select('*').eq('user_id', activeWorkspaceId).order('scheduled_date', { ascending: true }),
+      supabase.from('accounts').select('*').eq('user_id', activeWorkspaceId).order('created_at', { ascending: true }),
     ]);
 
     if (!postsRes.error && postsRes.data) setPosts(postsRes.data);
@@ -121,15 +127,21 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setAccountsLoading(false);
 
     setHasFetched(true);
-  }, [supabase, user]);
+  }, [supabase, user, activeWorkspaceId]);
 
   useEffect(() => {
-    if (user && !hasFetched) {
-      queueMicrotask(() => {
-        fetchAll();
-      });
+    let cancelled = false;
+
+    if (user && activeWorkspaceId) {
+      // Wrap fetchAll to respect the cancelled flag
+      const load = async () => {
+        if (cancelled) return;
+        await fetchAll();
+      };
+      load();
     } else if (!user) {
-      queueMicrotask(() => {
+      if (!cancelled) {
+        setHasFetched(false);
         setPosts([]); setPostsLoading(false);
         setGoals([]); setGoalsLoading(false);
         setPlatforms([]); setPlatformsLoading(false);
@@ -137,41 +149,49 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         setIdeas([]); setIdeasLoading(false);
         setEvents([]); setEventsLoading(false);
         setAccounts([]); setAccountsLoading(false);
-      });
+      }
     }
-  }, [user, hasFetched, fetchAll]);
+
+    // Cleanup: prevents stale data from a previous workspace
+    // from overwriting data for the newly switched workspace
+    return () => {
+      cancelled = true;
+    };
+  }, [user, activeWorkspaceId, fetchAll]);
 
   // Posts CRUD
   const createPost = useCallback(async (post: Omit<Post, 'id' | 'created_at'>) => {
-    if (!user) return null;
-    const { data, error } = await supabase.from('posts').insert([{ ...post, user_id: user.id }]).select().single();
+    if (!user || !activeWorkspaceId) return null;
+    const { data, error } = await supabase.from('posts').insert([{ ...post, user_id: activeWorkspaceId }]).select().single();
     if (!error && data) { setPosts(prev => [data, ...prev]); return data; }
+    toast.error('Gagal menambahkan post');
     return null;
-  }, [user, supabase]);
+  }, [user, activeWorkspaceId, supabase]);
 
   const updatePost = useCallback(async (id: string, updates: Partial<Post>) => {
-    if (!user) return;
-    const { error } = await supabase.from('posts').update(updates).eq('id', id).eq('user_id', user.id);
+    if (!user || !activeWorkspaceId) return;
+    const { error } = await supabase.from('posts').update(updates).eq('id', id).eq('user_id', activeWorkspaceId);
     if (error) {
       toast.error(`Gagal menyimpan data: ${error.message}`);
     } else {
       setPosts(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
     }
-  }, [supabase, user]);
+  }, [supabase, user, activeWorkspaceId]);
 
   const deletePost = useCallback(async (id: string) => {
-    if (!user) return;
-    const { error } = await supabase.from('posts').delete().eq('id', id).eq('user_id', user.id);
+    if (!user || !activeWorkspaceId) return;
+    const { error } = await supabase.from('posts').delete().eq('id', id).eq('user_id', activeWorkspaceId);
     if (!error) setPosts(prev => prev.filter(p => p.id !== id));
-  }, [supabase, user]);
+    else toast.error('Gagal menghapus post');
+  }, [supabase, user, activeWorkspaceId]);
 
   const importPosts = useCallback(async (newPosts: Omit<Post, 'id' | 'created_at'>[]) => {
-    if (!user) return 0;
-    const postsWithUser = newPosts.map(p => ({ ...p, user_id: user.id }));
+    if (!user || !activeWorkspaceId) return 0;
+    const postsWithUser = newPosts.map(p => ({ ...p, user_id: activeWorkspaceId }));
     const { data, error } = await supabase.from('posts').insert(postsWithUser).select();
     if (!error && data) { setPosts(prev => [...prev, ...data]); return data.length; }
     return 0;
-  }, [user, supabase]);
+  }, [user, activeWorkspaceId, supabase]);
 
   const getPost = useCallback((id: string) => posts.find(p => p.id === id), [posts]);
 
@@ -185,9 +205,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   // Goals CRUD
   const createGoal = useCallback(async (goal: Omit<Goal, 'id' | 'created_at'>) => {
-    if (!user) return null;
-    const { data, error } = await supabase.from('goals').insert([{ ...goal, user_id: user.id }]).select().single();
+    if (!user || !activeWorkspaceId) return null;
+    const { data, error } = await supabase.from('goals').insert([{ ...goal, user_id: activeWorkspaceId }]).select().single();
     if (error) {
+      toast.error('Gagal menambahkan goal');
       return null;
     }
     if (data) { 
@@ -195,132 +216,139 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       return data; 
     }
     return null;
-  }, [user, supabase]);
+  }, [user, activeWorkspaceId, supabase]);
 
   const updateGoal = useCallback(async (id: string, updates: Partial<Goal>) => {
-    if (!user) return;
-    const { error } = await supabase.from('goals').update(updates).eq('id', id).eq('user_id', user.id);
+    if (!user || !activeWorkspaceId) return;
+    const { error } = await supabase.from('goals').update(updates).eq('id', id).eq('user_id', activeWorkspaceId);
     if (error) {
+      toast.error('Gagal memperbarui goal');
       return;
     }
     setGoals(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g));
-  }, [supabase, user]);
+  }, [supabase, user, activeWorkspaceId]);
 
   const deleteGoal = useCallback(async (id: string) => {
-    if (!user) return;
-    const { error } = await supabase.from('goals').delete().eq('id', id).eq('user_id', user.id);
+    if (!user || !activeWorkspaceId) return;
+    const { error } = await supabase.from('goals').delete().eq('id', id).eq('user_id', activeWorkspaceId);
     if (!error) setGoals(prev => prev.filter(g => g.id !== id));
-  }, [supabase, user]);
+    else toast.error('Gagal menghapus goal');
+  }, [supabase, user, activeWorkspaceId]);
 
   // Platforms CRUD
   const addPlatform = useCallback(async (platform: Omit<Platform, 'id'>) => {
-    if (!user) return null;
-    const { data, error } = await supabase.from('platforms').insert([{ ...platform, user_id: user.id }]).select().single();
+    if (!user || !activeWorkspaceId) return null;
+    const { data, error } = await supabase.from('platforms').insert([{ ...platform, user_id: activeWorkspaceId }]).select().single();
     if (!error && data) { setPlatforms(prev => [...prev, data]); return data; }
+    toast.error('Gagal menambahkan platform');
     return null;
-  }, [user, supabase]);
+  }, [user, activeWorkspaceId, supabase]);
 
   const updatePlatform = useCallback(async (id: string, updates: Partial<Platform>) => {
-    if (!user) return;
-    const { error } = await supabase.from('platforms').update(updates).eq('id', id).eq('user_id', user.id);
+    if (!user || !activeWorkspaceId) return;
+    const { error } = await supabase.from('platforms').update(updates).eq('id', id).eq('user_id', activeWorkspaceId);
     if (!error) setPlatforms(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
-  }, [supabase, user]);
+    else toast.error('Gagal memperbarui platform');
+  }, [supabase, user, activeWorkspaceId]);
 
   const removePlatform = useCallback(async (id: string) => {
-    if (!user) return;
-    const { error } = await supabase.from('platforms').delete().eq('id', id).eq('user_id', user.id);
+    if (!user || !activeWorkspaceId) return;
+    const { error } = await supabase.from('platforms').delete().eq('id', id).eq('user_id', activeWorkspaceId);
     if (!error) setPlatforms(prev => prev.filter(p => p.id !== id));
-  }, [supabase, user]);
+    else toast.error('Gagal menghapus platform');
+  }, [supabase, user, activeWorkspaceId]);
 
   // Pillars CRUD
   const addPillar = useCallback(async (pillar: Omit<Pillar, 'id'>) => {
-    if (!user) return null;
-    const { data, error } = await supabase.from('pillars').insert([{ ...pillar, user_id: user.id }]).select().single();
+    if (!user || !activeWorkspaceId) return null;
+    const { data, error } = await supabase.from('pillars').insert([{ ...pillar, user_id: activeWorkspaceId }]).select().single();
     if (!error && data) { setPillars(prev => [...prev, data]); return data; }
     toast.error('Gagal menambahkan pilar');
     return null;
-  }, [user, supabase]);
+  }, [user, activeWorkspaceId, supabase]);
 
   const updatePillar = useCallback(async (id: string, updates: Partial<Pillar>) => {
-    if (!user) return;
-    const { error } = await supabase.from('pillars').update(updates).eq('id', id).eq('user_id', user.id);
+    if (!user || !activeWorkspaceId) return;
+    const { error } = await supabase.from('pillars').update(updates).eq('id', id).eq('user_id', activeWorkspaceId);
     if (!error) setPillars(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
-  }, [supabase, user]);
+    else toast.error('Gagal memperbarui pilar');
+  }, [supabase, user, activeWorkspaceId]);
 
   const removePillar = useCallback(async (id: string) => {
-    if (!user) return;
-    const { error } = await supabase.from('pillars').delete().eq('id', id).eq('user_id', user.id);
+    if (!user || !activeWorkspaceId) return;
+    const { error } = await supabase.from('pillars').delete().eq('id', id).eq('user_id', activeWorkspaceId);
     if (!error) setPillars(prev => prev.filter(p => p.id !== id));
     else toast.error('Gagal menghapus pilar');
-  }, [supabase, user]);
+  }, [supabase, user, activeWorkspaceId]);
 
   // Ideas CRUD
   const createIdea = useCallback(async (idea: Omit<ContentIdea, 'id' | 'created_at'>) => {
-    if (!user) return null;
-    const { data, error } = await supabase.from('content_ideas').insert([{ ...idea, user_id: user.id }]).select().single();
+    if (!user || !activeWorkspaceId) return null;
+    const { data, error } = await supabase.from('content_ideas').insert([{ ...idea, user_id: activeWorkspaceId }]).select().single();
     if (!error && data) { setIdeas(prev => [data, ...prev]); return data; }
     toast.error('Gagal menambahkan ide');
     return null;
-  }, [user, supabase]);
+  }, [user, activeWorkspaceId, supabase]);
 
   const updateIdea = useCallback(async (id: string, updates: Partial<ContentIdea>) => {
-    if (!user) return;
-    const { error } = await supabase.from('content_ideas').update(updates).eq('id', id).eq('user_id', user.id);
+    if (!user || !activeWorkspaceId) return;
+    const { error } = await supabase.from('content_ideas').update(updates).eq('id', id).eq('user_id', activeWorkspaceId);
     if (!error) setIdeas(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i));
     else toast.error('Gagal memperbarui ide');
-  }, [supabase, user]);
+  }, [user, activeWorkspaceId, supabase]);
 
   const deleteIdea = useCallback(async (id: string) => {
-    if (!user) return;
-    const { error } = await supabase.from('content_ideas').delete().eq('id', id).eq('user_id', user.id);
+    if (!user || !activeWorkspaceId) return;
+    const { error } = await supabase.from('content_ideas').delete().eq('id', id).eq('user_id', activeWorkspaceId);
     if (!error) setIdeas(prev => prev.filter(i => i.id !== id));
     else toast.error('Gagal menghapus ide');
-  }, [supabase, user]);
+  }, [user, activeWorkspaceId, supabase]);
 
   // Events CRUD
   const createEvent = useCallback(async (event: Omit<CalendarEvent, 'id' | 'created_at'>) => {
-    if (!user) return null;
-    const { data, error } = await supabase.from('calendar_events').insert([{ ...event, user_id: user.id }]).select().single();
+    if (!user || !activeWorkspaceId) return null;
+    const { data, error } = await supabase.from('calendar_events').insert([{ ...event, user_id: activeWorkspaceId }]).select().single();
     if (!error && data) { setEvents(prev => [...prev, data]); return data; }
     toast.error('Gagal menambahkan event');
     return null;
-  }, [user, supabase]);
+  }, [user, activeWorkspaceId, supabase]);
 
   const updateEvent = useCallback(async (id: string, updates: Partial<CalendarEvent>) => {
-    if (!user) return;
-    const { error } = await supabase.from('calendar_events').update(updates).eq('id', id).eq('user_id', user.id);
+    if (!user || !activeWorkspaceId) return;
+    const { error } = await supabase.from('calendar_events').update(updates).eq('id', id).eq('user_id', activeWorkspaceId);
     if (!error) setEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
     else toast.error('Gagal memperbarui event');
-  }, [supabase, user]);
+  }, [user, activeWorkspaceId, supabase]);
 
   const deleteEvent = useCallback(async (id: string) => {
-    if (!user) return;
-    const { error } = await supabase.from('calendar_events').delete().eq('id', id).eq('user_id', user.id);
+    if (!user || !activeWorkspaceId) return;
+    const { error } = await supabase.from('calendar_events').delete().eq('id', id).eq('user_id', activeWorkspaceId);
     if (!error) setEvents(prev => prev.filter(e => e.id !== id));
     else toast.error('Gagal menghapus event');
-  }, [supabase, user]);
+  }, [user, activeWorkspaceId, supabase]);
 
   // Accounts CRUD
   const addAccount = useCallback(async (name: string) => {
-    if (!user) return null;
-    const { data, error } = await supabase.from('accounts').insert([{ name, user_id: user.id }]).select().single();
+    if (!user || !activeWorkspaceId) return null;
+    const { data, error } = await supabase.from('accounts').insert([{ name, user_id: activeWorkspaceId }]).select().single();
     if (!error && data) { setAccounts(prev => [...prev, data]); return data; }
     toast.error('Gagal menambahkan akun');
     return null;
-  }, [user, supabase]);
+  }, [user, activeWorkspaceId, supabase]);
 
   const updateAccount = useCallback(async (id: string, updates: Partial<Account>) => {
-    if (!user) return;
-    const { error } = await supabase.from('accounts').update(updates).eq('id', id).eq('user_id', user.id);
+    if (!user || !activeWorkspaceId) return;
+    const { error } = await supabase.from('accounts').update(updates).eq('id', id).eq('user_id', activeWorkspaceId);
     if (!error) setAccounts(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
-  }, [supabase, user]);
+    else toast.error('Gagal memperbarui akun');
+  }, [supabase, user, activeWorkspaceId]);
 
   const removeAccount = useCallback(async (id: string) => {
-    if (!user) return;
-    const { error } = await supabase.from('accounts').delete().eq('id', id).eq('user_id', user.id);
+    if (!user || !activeWorkspaceId) return;
+    const { error } = await supabase.from('accounts').delete().eq('id', id).eq('user_id', activeWorkspaceId);
     if (!error) setAccounts(prev => prev.filter(a => a.id !== id));
     else toast.error('Gagal menghapus akun');
-  }, [supabase, user]);
+  }, [supabase, user, activeWorkspaceId]);
 
   const factoryReset = useCallback(async () => {
     if (!user) return;

@@ -4,15 +4,17 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, BarChart3, FileText, Target, FileSpreadsheet,
-  ClipboardList, Calendar, Users, Settings, LogOut,
+  ClipboardList, Calendar, Users, Settings, LogOut, Sparkles, Moon, Sun,
 } from 'lucide-react';
 import { NAV_ITEMS, APP_NAME } from '@/lib/constants';
 import { useUser } from '@/lib/hooks/useUser';
+import { useTheme } from '@/lib/context/ThemeContext';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { WorkspaceSwitcher } from '@/components/collaboration/WorkspaceSwitcher';
 
 const iconMap: Record<string, React.ReactNode> = {
   LayoutDashboard: <LayoutDashboard size={20} />,
@@ -26,60 +28,105 @@ const iconMap: Record<string, React.ReactNode> = {
   Settings: <Settings size={20} />,
 };
 
-export function Sidebar() {
+interface SidebarProps {
+  mobile?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ mobile = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { profile, signOut } = useUser();
+  const { resolvedTheme, setTheme } = useTheme();
   const displayName = profile?.display_name || profile?.email?.split('@')[0] || 'User';
   const initial = displayName.charAt(0).toUpperCase();
 
+  const toggleTheme = () => {
+    // Cycle through: light -> dark -> light
+    if (resolvedTheme === 'light') {
+      setTheme('dark');
+    } else {
+      setTheme('light');
+    }
+  };
+
   return (
-    <aside className="hidden lg:flex lg:flex-col w-64 h-screen border-r border-cly-border bg-cly-rail fixed left-0 top-0 z-30">
-      <div className="p-5 border-b border-cly-border">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-cly-brand flex items-center justify-center text-white font-bold text-sm">
-            C
+    <aside className={mobile
+      ? "flex flex-col w-full h-full bg-cly-surface"
+      : "hidden lg:flex lg:flex-col w-[280px] h-screen bg-cly-surface fixed left-0 top-0 z-30 border-r border-cly-border"
+    }>
+      
+      {/* Logo & Brand */}
+      <div className="p-6 pb-4 flex items-center justify-between">
+        <Link href="/dashboard" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cly-brand to-cly-brand-2 flex items-center justify-center text-white shadow-md group-hover:shadow-lg transition-shadow">
+            <Sparkles size={20} strokeWidth={2.5} />
           </div>
-          <span className="font-bold text-lg text-cly-text">{APP_NAME}</span>
+          <span className="font-bold text-xl text-cly-text tracking-tight">{APP_NAME}</span>
         </Link>
+        
+        {/* Theme Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          className="w-9 h-9 rounded-xl bg-gradient-to-br from-cly-muted to-cly-surface border border-cly-border flex items-center justify-center text-cly-text-2 hover:text-cly-brand hover:shadow-md transition-all active:scale-95"
+          aria-label="Toggle theme"
+        >
+          {resolvedTheme === 'dark' ? (
+            <Sun size={18} strokeWidth={2.5} />
+          ) : (
+            <Moon size={18} strokeWidth={2.5} />
+          )}
+        </button>
       </div>
 
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+      <WorkspaceSwitcher />
+
+      <div className="h-px bg-gradient-to-r from-transparent via-cly-border to-transparent mx-4 my-2" />
+
+      {/* Navigation */}
+      <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
         {NAV_ITEMS.map(item => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={onClose}
               className={cn(
-                'flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-semibold transition-all duration-200 active:scale-[0.98] cursor-pointer',
+                'flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] font-medium transition-all duration-200 active:scale-[0.97]',
                 isActive
-                  ? 'bg-cly-brand-tint text-cly-brand border-l-2 border-cly-brand'
+                  ? 'bg-gradient-to-r from-cly-brand/10 to-cly-brand-tint text-cly-brand shadow-sm'
                   : 'text-cly-text-2 hover:bg-cly-muted hover:text-cly-text'
               )}
             >
-              {iconMap[item.icon]}
+              <span className={cn(
+                "transition-transform",
+                isActive && "scale-110"
+              )}>
+                {iconMap[item.icon]}
+              </span>
               {item.label}
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-3 border-t border-cly-border">
+      {/* User Profile */}
+      <div className="p-4 pt-2">
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex w-full items-center gap-3 px-3 py-3 rounded-lg bg-cly-muted hover:bg-cly-muted-2 transition-all duration-200 active:scale-[0.98] cursor-pointer outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring">
-            <Avatar className="h-8 w-8">
+          <DropdownMenuTrigger className="flex w-full items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-br from-cly-muted to-cly-surface border border-cly-border hover:shadow-md transition-all duration-200 active:scale-[0.98] outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-cly-brand">
+            <Avatar className="h-10 w-10 ring-2 ring-cly-border shadow-sm">
               <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
-              <AvatarFallback className="bg-cly-brand-tint text-cly-brand text-xs font-bold">
+              <AvatarFallback className="bg-gradient-to-br from-cly-brand to-cly-brand-2 text-white text-sm font-bold">
                 {initial}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-medium truncate text-cly-text">{displayName}</p>
+              <p className="text-[15px] font-semibold truncate text-cly-text">{displayName}</p>
               <p className="text-xs text-cly-text-3 truncate">{profile?.email}</p>
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={signOut} className="text-red-600 cursor-pointer">
+          <DropdownMenuContent align="end" className="w-56 rounded-xl">
+            <DropdownMenuItem onClick={signOut} className="text-red-500 cursor-pointer rounded-lg">
               <LogOut size={16} className="mr-2" />
               Keluar
             </DropdownMenuItem>
@@ -87,9 +134,10 @@ export function Sidebar() {
         </DropdownMenu>
       </div>
 
-      <div className="flex gap-4 p-3 text-[10px] text-cly-text-muted justify-center border-t border-cly-border bg-cly-rail">
-        <Link href="/legal/privacy" className="hover:text-cly-text transition-colors">Privacy Policy</Link>
-        <Link href="/legal/terms" className="hover:text-cly-text transition-colors">Terms of Service</Link>
+      {/* Footer Links */}
+      <div className="flex gap-4 px-4 py-3 text-[11px] text-cly-text-3 justify-center border-t border-cly-border bg-gradient-to-b from-transparent to-cly-muted/30">
+        <Link href="/legal/privacy" className="hover:text-cly-brand transition-colors font-medium">Privacy</Link>
+        <Link href="/legal/terms" className="hover:text-cly-brand transition-colors font-medium">Terms</Link>
       </div>
     </aside>
   );

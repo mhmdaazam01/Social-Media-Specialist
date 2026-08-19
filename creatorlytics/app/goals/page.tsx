@@ -71,32 +71,55 @@ export default function GoalsPage() {
 
   return (
     <AppShell title="Goals">
-          <div className="flex-1 p-[18px] lg:p-6 overflow-y-auto">
+      <style jsx global>{`
+        .goals-typography h1,
+        .goals-typography h2,
+        .goals-typography h3,
+        .goals-typography div[class*="font-bold"][class*="text-xl"],
+        .goals-typography div[class*="font-bold"][class*="text-sm"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 700 !important;
+        }
+        .goals-typography button[class*="font-semibold"],
+        .goals-typography button[class*="font-bold"],
+        .goals-typography [class*="font-black"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 700 !important;
+        }
+        .goals-typography p,
+        .goals-typography span:not([class*="font-bold"]):not([class*="font-black"]),
+        .goals-typography div[class*="text-xs"]:not([class*="font-bold"]),
+        .goals-typography div[class*="text-sm"]:not([class*="font-bold"]):not([class*="font-semibold"]) {
+          font-family: var(--font-dm-sans) !important;
+          font-weight: 400 !important;
+        }
+      `}</style>
+          <div className="flex-1 p-[18px] lg:p-6 overflow-y-auto goals-typography">
             {loading ? (
-              <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-3.5 h-48 animate-pulse" />
+                  <div key={i} className="bg-gradient-to-br from-cly-muted to-white rounded-2xl p-4 h-48 animate-pulse shadow-[0_2px_8px_rgba(0,0,0,0.06)]" />
                 ))}
               </div>
             ) : items.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-cly-surface border border-cly-border rounded-[10px] shadow-cly">
-                <div className="w-16 h-16 rounded-full bg-cly-brand-tint text-cly-brand flex items-center justify-center mb-4">
+              <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cly-brand-tint to-white text-cly-brand flex items-center justify-center mb-4">
                   <Target size={32} />
                 </div>
                 <h3 className="text-xl font-bold text-cly-text mb-2">Belum ada Goal 🎯</h3>
-                <p className="text-cly-text-2 mb-6 max-w-sm">
+                <p className="text-cly-text-2 mb-6 max-w-sm text-sm">
                   Tetapkan target reach, engagement, atau follower growth untuk bulan ini agar performa konten lebih terarah.
                 </p>
                 <button
                   onClick={handleAdd}
-                  className="h-10 px-6 rounded-lg bg-cly-brand text-white font-semibold flex items-center gap-2 hover:bg-cly-brand-hover transition-colors shadow-cly"
+                  className="h-10 px-6 rounded-xl bg-cly-brand text-white font-semibold flex items-center gap-2 hover:bg-cly-brand-hover transition-all shadow-sm hover:shadow-md"
                 >
                   <Plus size={18} />
                   Buat Goal Pertama
                 </button>
               </div>
             ) : (
-              <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {items.map(({ goal, progress, actual }) => (
                 <GoalCard
                   key={goal.id}
@@ -112,16 +135,16 @@ export default function GoalsPage() {
 
             {/* AI Forecast Card */}
             {topGoal && topGoal.progress > 0 && (
-              <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px] mt-6">
+              <div className="bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.06)] p-5 mt-6">
                 <div className="flex items-start gap-3">
-                  <div className="w-[34px] h-[34px] rounded-lg bg-cly-brand-tint text-cly-brand grid place-items-center shrink-0">
-                    <Sparkles size={16} />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#C5B9E8] to-[#A899D8] text-white grid place-items-center shrink-0">
+                    <Sparkles size={18} />
                   </div>
                   <div className="flex-1">
-                    <div className="text-cly-sm font-bold text-cly-text-2 mb-1">
+                    <div className="text-sm font-bold text-cly-text mb-1.5">
                       ✦ AI Forecast
                     </div>
-                    <div className="text-cly-base text-cly-text-2 leading-relaxed">
+                    <div className="text-sm text-cly-text-2 leading-relaxed">
                       {topGoal.progress >= 100 ? (
                         <>
                           Selamat! Target{' '}
@@ -160,7 +183,7 @@ export default function GoalsPage() {
             {/* Floating Add Button */}
             <button
               onClick={handleAdd}
-              className="fixed bottom-20 right-6 lg:bottom-6 lg:right-6 z-40 inline-flex items-center justify-center gap-2 h-[44px] px-4 rounded-[10px] bg-cly-brand border border-cly-brand text-white text-cly-base font-bold shadow-cly-hover hover:shadow-cly transition-all hover:scale-105 active:scale-95"
+              className="fixed bottom-20 right-6 lg:bottom-6 lg:right-6 z-40 inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl bg-gradient-to-br from-cly-brand to-cly-brand-2 text-white text-sm font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
             >
               <Plus size={20} />
               Goal Baru

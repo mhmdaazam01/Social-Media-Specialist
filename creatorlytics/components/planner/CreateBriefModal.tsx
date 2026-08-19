@@ -444,9 +444,9 @@ export function CreateBriefModal({ open, onOpenChange, editIdea }: CreateBriefMo
           </SectionBlock>
 
           {/* ── Preset Brief Bar */}
-          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3.5 space-y-2.5">
+          <div className="rounded-xl border border-cly-brand/30 bg-gradient-to-br from-cly-brand/10 to-white p-3.5 space-y-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-cly-brand">
                 <Sparkles className="size-4" />
                 <span>Preset Brief (Audience, Tone & Format)</span>
               </div>
@@ -454,7 +454,7 @@ export function CreateBriefModal({ open, onOpenChange, editIdea }: CreateBriefMo
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs gap-1 border-primary/30 text-primary hover:bg-primary/10"
+                className="h-7 text-xs gap-1 border-cly-brand/30 text-cly-brand hover:bg-cly-brand/10 font-semibold"
                 onClick={handleSaveAsPreset}
                 title="Simpan Target Audience, Tone, & Format saat ini sebagai Preset baru"
               >
@@ -609,9 +609,9 @@ function SectionBlock({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-3 rounded-xl border bg-card/60 p-4">
-      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-        <span className="text-muted-foreground">{icon}</span>
+    <div className="space-y-3 rounded-xl border border-cly-border bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+      <div className="flex items-center gap-2 text-sm font-bold text-cly-text">
+        <span className="text-cly-text-2">{icon}</span>
         {title}
       </div>
       {children}

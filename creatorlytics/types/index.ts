@@ -1,4 +1,4 @@
-export type Theme = 'dark' | 'light';
+export type Theme = 'light' | 'dark' | 'auto';
 export type ErMode = 'impression' | 'reach' | 'followers';
 export type PostStatus = 'idea' | 'brief';
 export type Priority = 'low' | 'med' | 'high';
@@ -108,5 +108,50 @@ export interface Settings {
   display_name: string;
   niche: string;
   er_mode: ErMode;
-  theme: Theme;
+  theme: 'light' | 'dark' | 'auto';
+  language: 'id' | 'en';
+  date_format: 'DD/MM/YYYY' | 'MM/DD/YYYY';
+  number_format: '1,000' | '1.000';
+  notif_goal: boolean;
+  notif_reminder: boolean;
+  notif_report: boolean;
+  notif_collab: boolean;
+  notif_digest: boolean;
+}
+
+// ── Collaboration ─────────────────────────────────────────────
+export type CollabRole = 'owner' | 'editor' | 'viewer';
+export type CollabStatus = 'pending' | 'active';
+export type CollabTargetType = 'planner' | 'calendar' | 'all';
+
+export interface PlannerShare {
+  id: string;
+  owner_id: string;
+  share_token: string;
+  target_type: CollabTargetType;
+  default_role: 'viewer' | 'editor';
+  public_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlannerCollaborator {
+  id: string;
+  owner_id: string;
+  collaborator_email: string;
+  collaborator_user_id: string | null;
+  role: 'viewer' | 'editor';
+  status: CollabStatus;
+  created_at: string;
+}
+
+
+/** Context value describing the current user's role in a workspace */
+export interface WorkspaceAccess {
+  /** UUID of the owner of this workspace */
+  ownerId: string;
+  /** Display name of the owner (from profiles table) */
+  ownerName: string;
+  /** Current user's role */
+  role: CollabRole;
 }

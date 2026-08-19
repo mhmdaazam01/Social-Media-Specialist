@@ -1,27 +1,26 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, DM_Sans, DM_Mono, Inter } from "next/font/google";
+import { Inter, Space_Grotesk, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers/Providers";
 
-const bricolage = Bricolage_Grotesque({
-  variable: "--font-bricolage",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
 });
 
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
   subsets: ["latin"],
-});
-
-const dmMono = DM_Mono({
-  variable: "--font-dm-mono",
   weight: ["400", "500"],
-  subsets: ["latin"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -38,9 +37,9 @@ export default function RootLayout({
     <html
       lang="id"
       suppressHydrationWarning
-      className={`${bricolage.variable} ${dmSans.variable} ${dmMono.variable} ${inter.variable} h-full antialiased`}
+      className={`${inter.variable} ${spaceGrotesk.variable} ${dmSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full">
+      <body className={`min-h-full ${inter.className}`}>
         <Providers>{children}</Providers>
       </body>
     </html>

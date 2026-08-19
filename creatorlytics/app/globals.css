@@ -6,9 +6,11 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --font-mono: 'SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', monospace;
+  --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --font-space-grotesk: var(--font-space-grotesk);
+  --font-dm-sans: var(--font-dm-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -75,6 +77,15 @@
   --color-cly-purple: var(--cly-purple);
   --color-cly-purple-tint: var(--cly-purple-tint);
   
+  /* Chart colors */
+  --color-chart-mint-light: #A8E6CF;
+  --color-chart-mint-dark: #5FD0B2;
+  --color-chart-blue: #8EC5FC;
+  --color-chart-purple: #C5B9E8;
+  --color-chart-amber: #FFE5B4;
+  --color-chart-coral: #FFB5A0;
+  --color-chart-grid: #E8ECEF;
+  
   --color-platform-tiktok: var(--platform-tiktok);
   --color-platform-tiktok-tint: var(--platform-tiktok-tint);
   --color-platform-instagram: var(--platform-instagram);
@@ -86,16 +97,21 @@
   
   --font-size-cly-micro: 10px;
   --font-size-cly-xs: 11px;
-  --font-size-cly-sm: 12px;
-  --font-size-cly-base: 13px;
-  --font-size-cly-md: 14px;
+  --font-size-cly-sm: 13px;
+  --font-size-cly-base: 14px;
+  --font-size-cly-md: 15px;
   --font-size-cly-lg: 16px;
   --font-size-cly-xl: 18px;
   --font-size-cly-2xl: 22px;
-  --font-size-cly-display: 27px;
+  --font-size-cly-display: 28px;
   
-  --shadow-cly: 0 1px 2px rgba(29,33,27,0.05), 0 10px 24px rgba(29,33,27,0.04);
-  --shadow-cly-hover: 0 1px 2px rgba(29,33,27,0.06), 0 16px 34px rgba(29,33,27,0.08);
+  --shadow-cly: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-cly-hover: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+  
+  --radius-soft: 16px;
+  --radius-card: 12px;
+  --radius-button: 10px;
 
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(16px); }
@@ -150,32 +166,32 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* Creatorlytics Base Values */
-  --cly-bg: #F6F7F4;
-  --cly-rail: #FDFDFB;
+  /* Creatorlytics Base Values - Fresh Soft Pastel Design */
+  --cly-bg: #FAFBFC;
+  --cly-rail: #FFFFFF;
   --cly-surface: #FFFFFF;
-  --cly-muted: #F0F2ED;
-  --cly-muted-2: #E5E8E0;
-  --cly-border: #E0E3DA;
-  --cly-border-strong: #C9CFC1;
-  --cly-text: #1D211B;
-  --cly-text-2: #60675B;
-  --cly-text-3: #8A9283;
-  --cly-text-muted: #8A9283;
-  --cly-brand: #2F6F45;
-  --cly-brand-2: #175A7A;
-  --cly-brand-tint: #E6F2EA;
-  --cly-brand-hover: #5DBF80;
-  --cly-blue: #2563A7;
-  --cly-blue-tint: #E7EFF8;
-  --cly-amber: #A15C07;
-  --cly-amber-tint: #F7EDDC;
-  --cly-green: #197B3A;
-  --cly-green-tint: #E3F3E7;
-  --cly-red: #B93B32;
-  --cly-red-tint: #F8E7E5;
-  --cly-purple: #7C4D9D;
-  --cly-purple-tint: #F0E7F6;
+  --cly-muted: #F5F6F8;
+  --cly-muted-2: #EDF0F3;
+  --cly-border: #E8ECEF;
+  --cly-border-strong: #D1D8DD;
+  --cly-text: #1A1D23;
+  --cly-text-2: #4A5568;
+  --cly-text-3: #A0AEC0;
+  --cly-text-muted: #A0AEC0;
+  --cly-brand: #6ECDB0;
+  --cly-brand-2: #5BB89A;
+  --cly-brand-tint: #E6F7F2;
+  --cly-brand-hover: #5BB89A;
+  --cly-blue: #8EC5FC;
+  --cly-blue-tint: #EEF6FF;
+  --cly-amber: #FFE5B4;
+  --cly-amber-tint: #FFF8ED;
+  --cly-green: #A8E6CF;
+  --cly-green-tint: #F0FAF5;
+  --cly-red: #FFB5A0;
+  --cly-red-tint: #FFF0ED;
+  --cly-purple: #C5B9E8;
+  --cly-purple-tint: #F5F3FC;
   
   --platform-tiktok: #13747C;
   --platform-tiktok-tint: #E1F1F2;
@@ -189,31 +205,40 @@
 
 /* ─── Creatorlytics Dark Mode ─────────────────────────────────────── */
 .dark {
-  --cly-bg: #0C1210;
-  --cly-rail: #101510;
-  --cly-surface: #161D17;
-  --cly-muted: #1C2420;
-  --cly-muted-2: #212B23;
-  --cly-border: #2A3A2C;
-  --cly-border-strong: #374D3A;
-  --cly-text: #E3EDE4;
-  --cly-text-2: #96A899;
-  --cly-text-3: #637066;
-  --cly-text-muted: #637066;
-  --cly-brand: #4DB870;
+  --cly-bg: #0A0A0B;
+  --cly-rail: #111113;
+  --cly-surface: #18181B;
+  --cly-muted: #27272A;
+  --cly-muted-2: #3F3F46;
+  --cly-border: #3F3F46;
+  --cly-border-strong: #52525B;
+  --cly-text: #FAFAFA;
+  --cly-text-2: #A1A1AA;
+  --cly-text-3: #71717A;
+  --cly-text-muted: #52525B;
+  --cly-brand: #6ECDB0;
   --cly-brand-2: #2A9BBD;
-  --cly-brand-tint: #112B1B;
+  --cly-brand-tint: #18282B;
   --cly-brand-hover: #5ECF82;
-  --cly-blue: #4A90D9;
-  --cly-blue-tint: #0C1E33;
-  --cly-amber: #D4900A;
-  --cly-amber-tint: #1E1506;
-  --cly-green: #3DB35A;
-  --cly-green-tint: #0C2016;
-  --cly-red: #E0564C;
-  --cly-red-tint: #250E0C;
-  --cly-purple: #A070C8;
-  --cly-purple-tint: #1C1028;
+  --cly-blue: #60A5FA;
+  --cly-blue-tint: #1E293B;
+  --cly-amber: #FCD34D;
+  --cly-amber-tint: #27241A;
+  --cly-green: #4ADE80;
+  --cly-green-tint: #1A2E20;
+  --cly-red: #F87171;
+  --cly-red-tint: #2D1A1A;
+  --cly-purple: #C084FC;
+  --cly-purple-tint: #271A35;
+
+  /* Chart colors for dark mode */
+  --color-chart-mint-light: #A1A1AA;
+  --color-chart-mint-dark: #71717A;
+  --color-chart-blue: #76ACE8;
+  --color-chart-purple: #B7A5E8;
+  --color-chart-amber: #FFD99C;
+  --color-chart-coral: #FFA590;
+  --color-chart-grid: #3F3F46;
 
   --platform-tiktok: #2DA8B0;
   --platform-tiktok-tint: #0A1E20;
@@ -263,12 +288,72 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-cly-bg text-cly-text;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   }
   html {
-    @apply font-sans;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  }
+  button, input, select, textarea {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  }
+  
+  /* Dark mode overrides for hardcoded colors */
+  .dark .bg-white {
+    background-color: var(--cly-surface) !important;
+  }
+  .dark .text-cly-text {
+    color: var(--cly-text) !important;
+  }
+  .dark .text-cly-text-2 {
+    color: var(--cly-text-2) !important;
+  }
+  .dark .text-cly-text-3 {
+    color: var(--cly-text-3) !important;
+  }
+  .dark .border-cly-border {
+    border-color: var(--cly-border) !important;
+  }
+  .dark .from-cly-muted {
+    --tw-gradient-from: var(--cly-muted) var(--tw-gradient-from-position) !important;
+  }
+  .dark .to-white {
+    --tw-gradient-to: var(--cly-surface) var(--tw-gradient-to-position) !important;
+  }
+  .dark .from-white {
+    --tw-gradient-from: var(--cly-surface) var(--tw-gradient-from-position) !important;
+  }
+  .dark .ring-white {
+    --tw-ring-color: var(--cly-border) !important;
+  }
+  .dark .text-white {
+    /* Keep white text in dark mode for contrast on colored backgrounds */
+  }
+  
+  /* Card shadows in dark mode - softer */
+  .dark .shadow-\[0_2px_8px_rgba\(0\,0\,0\,0\.06\)\] {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+  }
+  .dark .shadow-\[0_4px_16px_rgba\(0\,0\,0\,0\.1\)\] {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
+  }
+  .dark .shadow-sm {
+    --tw-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
+    --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color) !important;
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow) !important;
+  }
+  .dark .shadow-md {
+    --tw-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3) !important;
+    --tw-shadow-colored: 0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color) !important;
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow) !important;
+  }
+  .dark .shadow-lg {
+    --tw-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3) !important;
+    --tw-shadow-colored: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color) !important;
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow) !important;
   }
 }
 
@@ -318,4 +403,68 @@
   --cly-red-tint: #F8E7E5 !important;
   --cly-purple: #7C4D9D !important;
   --cly-purple-tint: #F0E7F6 !important;
+}
+
+/* ─── Force Inter Font Everywhere ─────────────────────────────────────── */
+* {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+}
+
+/* Better font rendering for Inter */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Smooth scrolling for touch devices */
+.-webkit-overflow-scrolling-touch {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for webkit browsers */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 3px;
+}
+
+.dark .overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #4B5563;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* ─── Mobile Sidebar in Sheet ─────────────────────────────────────── */
+.mobile-sidebar-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.mobile-sidebar-wrapper aside {
+  display: flex !important;
+  position: static !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  max-width: 100% !important;
+  left: auto !important;
+  top: auto !important;
+  z-index: auto !important;
+}
+
+/* Ensure SheetContent for sidebar has proper width */
+[data-slot="sheet-content"][data-side="left"] {
+  width: 280px !important;
+  max-width: 280px !important;
 }

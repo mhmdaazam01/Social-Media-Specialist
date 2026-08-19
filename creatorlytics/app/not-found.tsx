@@ -2,27 +2,12 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Providers } from '@/components/providers/Providers';
 import Script from 'next/script';
-import { Bricolage_Grotesque, DM_Sans, DM_Mono, Inter } from 'next/font/google';
-
-const bricolage = Bricolage_Grotesque({
-  variable: '--font-bricolage',
-  subsets: ['latin'],
-});
-
-const dmSans = DM_Sans({
-  variable: '--font-dm-sans',
-  subsets: ['latin'],
-});
-
-const dmMono = DM_Mono({
-  variable: '--font-dm-mono',
-  weight: ['400', '500'],
-  subsets: ['latin'],
-});
+import { Inter } from 'next/font/google';
 
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],
+  display: 'swap',
 });
 
 export default function NotFound() {
@@ -30,9 +15,9 @@ export default function NotFound() {
     <html
       lang="id"
       suppressHydrationWarning
-      className={`${bricolage.variable} ${dmSans.variable} ${dmMono.variable} ${inter.variable} h-full antialiased`}
+      className={`${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full">
+      <body className={`min-h-full ${inter.className}`}>
         {/* Reads theme cookie BEFORE paint to eliminate flash */}
         <Script
           id="theme-init-not-found"

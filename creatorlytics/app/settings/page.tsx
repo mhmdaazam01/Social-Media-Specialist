@@ -5,18 +5,20 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { AppShell } from '@/components/layout/AppShell';
 import { useUser } from '@/lib/hooks/useUser';
+import { useTheme } from '@/lib/context/ThemeContext';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { useAccounts } from '@/lib/hooks/useAccounts';
 import { usePillars } from '@/lib/hooks/usePillars';
 import { useData } from '@/lib/context/DataContext';
-import { Trash2Icon, PlusIcon, UserIcon, LayoutGridIcon, BellIcon, AlertTriangleIcon, PencilIcon } from 'lucide-react';
+import { Trash2Icon, PlusIcon, UserIcon, LayoutGridIcon, BellIcon, AlertTriangleIcon, PencilIcon, PaletteIcon } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
-type Tab = 'profile' | 'platforms' | 'notifications';
+type Tab = 'profile' | 'platforms' | 'appearance' | 'notifications';
 
 export default function SettingsPage() {
   const router = useRouter();
   const { profile, refreshProfile } = useUser();
+  const { theme: currentTheme, setTheme: setThemeContext } = useTheme();
   const { platforms, addPlatform, removePlatform, updatePlatform } = usePlatforms();
   const { accounts, addAccount, removeAccount, updateAccount } = useAccounts();
   const { pillars, addPillar, removePillar, updatePillar } = usePillars();
@@ -38,6 +40,13 @@ export default function SettingsPage() {
   const [notifGoal, setNotifGoal] = useState(true);
   const [notifReminder, setNotifReminder] = useState(true);
   const [notifReport, setNotifReport] = useState(false);
+  const [notifCollab, setNotifCollab] = useState(true);
+  const [notifDigest, setNotifDigest] = useState(false);
+
+  // Appearance settings
+  const [language, setLanguage] = useState<'id' | 'en'>('id');
+  const [dateFormat, setDateFormat] = useState<'DD/MM/YYYY' | 'MM/DD/YYYY'>('DD/MM/YYYY');
+  const [numberFormat, setNumberFormat] = useState<'1,000' | '1.000'>('1.000');
 
   // Load notification prefs from profile (Supabase)
   useEffect(() => {
@@ -47,6 +56,13 @@ export default function SettingsPage() {
     if (p.notif_goal !== undefined && p.notif_goal !== null) setNotifGoal(p.notif_goal as boolean);
     if (p.notif_reminder !== undefined && p.notif_reminder !== null) setNotifReminder(p.notif_reminder as boolean);
     if (p.notif_report !== undefined && p.notif_report !== null) setNotifReport(p.notif_report as boolean);
+    if (p.notif_collab !== undefined && p.notif_collab !== null) setNotifCollab(p.notif_collab as boolean);
+    if (p.notif_digest !== undefined && p.notif_digest !== null) setNotifDigest(p.notif_digest as boolean);
+    
+    // Load appearance prefs (theme is handled by ThemeContext)
+    if (p.language !== undefined && p.language !== null) setLanguage(p.language as 'id' | 'en');
+    if (p.date_format !== undefined && p.date_format !== null) setDateFormat(p.date_format as 'DD/MM/YYYY' | 'MM/DD/YYYY');
+    if (p.number_format !== undefined && p.number_format !== null) setNumberFormat(p.number_format as '1,000' | '1.000');
   }, [profile]);
 
   async function updateNotifPref(field: string, value: boolean) {
@@ -55,9 +71,35 @@ export default function SettingsPage() {
     await refreshProfile();
   }
 
+  async function updateAppearancePref(field: string, value: string) {
+    if (!profile) return;
+    await supabase.from('profiles').update({ [field]: value }).eq('id', profile.id);
+    await refreshProfile();
+    toast.success('Pengaturan berhasil disimpan');
+  }
+
   const handleNotifGoal = async () => { const next = !notifGoal; setNotifGoal(next); await updateNotifPref('notif_goal', next); };
   const handleNotifReminder = async () => { const next = !notifReminder; setNotifReminder(next); await updateNotifPref('notif_reminder', next); };
   const handleNotifReport = async () => { const next = !notifReport; setNotifReport(next); await updateNotifPref('notif_report', next); };
+  const handleNotifCollab = async () => { const next = !notifCollab; setNotifCollab(next); await updateNotifPref('notif_collab', next); };
+  const handleNotifDigest = async () => { const next = !notifDigest; setNotifDigest(next); await updateNotifPref('notif_digest', next); };
+
+  const handleThemeChange = async (newTheme: 'light' | 'dark' | 'auto') => { 
+    await setThemeContext(newTheme);
+    toast.success('Tema berhasil disimpan');
+  };
+  const handleLanguageChange = async (newLang: 'id' | 'en') => { 
+    setLanguage(newLang); 
+    await updateAppearancePref('language', newLang);
+  };
+  const handleDateFormatChange = async (format: 'DD/MM/YYYY' | 'MM/DD/YYYY') => { 
+    setDateFormat(format); 
+    await updateAppearancePref('date_format', format);
+  };
+  const handleNumberFormatChange = async (format: '1,000' | '1.000') => { 
+    setNumberFormat(format); 
+    await updateAppearancePref('number_format', format);
+  };
 
   async function handleErModeChange(mode: 'impression' | 'reach' | 'followers') {
     if (!profile) return;
@@ -187,16 +229,39 @@ export default function SettingsPage() {
 
   return (
     <AppShell title="Settings">
-      <div className="flex flex-col gap-[18px] p-[18px]">
+      <style jsx global>{`
+        .settings-typography h1,
+        .settings-typography h2,
+        .settings-typography h3,
+        .settings-typography div[class*="font-bold"][class*="text-"],
+        .settings-typography button[class*="font-bold"],
+        .settings-typography button[class*="font-semibold"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 700 !important;
+        }
+        .settings-typography label[class*="font-medium"],
+        .settings-typography span[class*="uppercase"][class*="tracking"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 600 !important;
+        }
+        .settings-typography p,
+        .settings-typography span:not([class*="font-bold"]):not([class*="font-semibold"]):not([class*="font-medium"]):not([class*="uppercase"]),
+        .settings-typography div[class*="text-xs"]:not([class*="font-bold"]):not([class*="font-semibold"]),
+        .settings-typography li {
+          font-family: var(--font-dm-sans) !important;
+          font-weight: 400 !important;
+        }
+      `}</style>
+      <div className="flex flex-col gap-[18px] p-[18px] settings-typography">
         
         {/* Tab Switcher */}
-        <div className="flex items-center gap-1 rounded-[10px] bg-cly-muted p-1">
+        <div className="flex items-center gap-1 bg-gradient-to-br from-cly-muted to-white p-1 border border-cly-border rounded-xl w-fit shadow-sm">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-cly-sm font-medium transition-all ${
+            className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
               activeTab === 'profile'
-                ? 'bg-cly-surface text-cly-text shadow-cly'
-                : 'text-cly-text-muted hover:text-cly-text'
+                ? 'bg-white text-cly-text shadow-sm'
+                : 'bg-transparent text-cly-text-2 hover:text-cly-text'
             }`}
           >
             <UserIcon className="size-4" />
@@ -204,21 +269,32 @@ export default function SettingsPage() {
           </button>
           <button
             onClick={() => setActiveTab('platforms')}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-cly-sm font-medium transition-all ${
+            className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
               activeTab === 'platforms'
-                ? 'bg-cly-surface text-cly-text shadow-cly'
-                : 'text-cly-text-muted hover:text-cly-text'
+                ? 'bg-white text-cly-text shadow-sm'
+                : 'bg-transparent text-cly-text-2 hover:text-cly-text'
             }`}
           >
             <LayoutGridIcon className="size-4" />
             Platforms
           </button>
           <button
+            onClick={() => setActiveTab('appearance')}
+            className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
+              activeTab === 'appearance'
+                ? 'bg-white text-cly-text shadow-sm'
+                : 'bg-transparent text-cly-text-2 hover:text-cly-text'
+            }`}
+          >
+            <PaletteIcon className="size-4" />
+            Appearance
+          </button>
+          <button
             onClick={() => setActiveTab('notifications')}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2 text-cly-sm font-medium transition-all ${
+            className={`flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all ${
               activeTab === 'notifications'
-                ? 'bg-cly-surface text-cly-text shadow-cly'
-                : 'text-cly-text-muted hover:text-cly-text'
+                ? 'bg-white text-cly-text shadow-sm'
+                : 'bg-transparent text-cly-text-2 hover:text-cly-text'
             }`}
           >
             <BellIcon className="size-4" />
@@ -230,22 +306,22 @@ export default function SettingsPage() {
         {activeTab === 'profile' && (
           <div className="flex flex-col gap-[18px]">
             {/* ER Mode Selector */}
-            <div className="rounded-[10px] bg-cly-surface p-[18px] shadow-cly">
-              <h3 className="mb-2 text-cly-base font-semibold text-cly-text">Engagement Rate Mode</h3>
-              <p className="mb-4 text-cly-xs text-cly-text-muted">Pilih basis perhitungan ER di seluruh dashboard</p>
+            <div className="rounded-2xl bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <h3 className="mb-2 text-base font-bold text-cly-text">Engagement Rate Mode</h3>
+              <p className="mb-4 text-xs text-cly-text-2">Pilih basis perhitungan ER di seluruh dashboard</p>
               <div className="flex flex-col gap-2">
                 {(['impression', 'reach'] as const).map((mode) => (
                   <button
                     key={mode}
                     onClick={() => handleErModeChange(mode)}
-                    className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-all ${
+                    className={`flex items-center gap-3 rounded-xl border p-3.5 text-left transition-all ${
                       profile?.er_mode === mode
-                        ? 'border-cly-brand bg-cly-brand/5'
-                        : 'border-cly-border bg-cly-surface hover:border-cly-border-hover'
+                        ? 'border-cly-brand bg-gradient-to-br from-cly-brand/10 to-white shadow-sm'
+                        : 'border-cly-border bg-white hover:border-cly-brand/50 hover:shadow-sm'
                     }`}
                   >
                     <div
-                      className={`size-4 rounded-full border-2 transition-all ${
+                      className={`size-5 rounded-full border-2 transition-all ${
                         profile?.er_mode === mode
                           ? 'border-cly-brand bg-cly-brand'
                           : 'border-cly-border'
@@ -258,8 +334,8 @@ export default function SettingsPage() {
                       )}
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-cly-sm font-medium capitalize text-cly-text">{mode}</span>
-                      <span className="text-cly-xs text-cly-text-muted">
+                      <span className="text-sm font-bold capitalize text-cly-text">{mode}</span>
+                      <span className="text-xs text-cly-text-2">
                         {mode === 'impression' && 'ER = (Engagement / Impression) × 100'}
                         {mode === 'reach' && 'ER = (Engagement / Reach) × 100'}
                       </span>
@@ -270,24 +346,24 @@ export default function SettingsPage() {
             </div>
 
             {/* Zona Berbahaya */}
-            <div className="rounded-[10px] border border-red-500/20 bg-red-500/5 p-[18px]">
-              <h3 className="mb-2 flex items-center gap-2 text-cly-base font-semibold text-red-600">
-                <AlertTriangleIcon className="size-4" />
+            <div className="rounded-2xl border-2 border-[#FFB5A0] bg-gradient-to-br from-[#FFB5A0]/10 to-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-[#B93B32]">
+                <AlertTriangleIcon className="size-5" />
                 Zona Berbahaya
               </h3>
-              <p className="mb-4 text-cly-xs text-red-600/80">
+              <p className="mb-4 text-xs text-[#B93B32]/80">
                 Menghapus seluruh data (posts, platforms, pillars, dsb) milik Anda dari database. Tindakan ini permanen.
               </p>
               <div className="mt-4 flex gap-3">
                 <button
                   onClick={handleFactoryReset}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-cly-sm font-medium text-white transition-all hover:bg-red-700 active:scale-95"
+                  className="rounded-lg bg-gradient-to-br from-[#FFB5A0] to-[#FF9680] px-4 py-2 text-xs font-bold text-white transition-all hover:shadow-lg active:scale-95 shadow-md"
                 >
                   Hapus Seluruh Data (Factory Reset)
                 </button>
                 <button
                   onClick={handleDeleteAccount}
-                  className="rounded-lg bg-red-900 px-4 py-2 text-cly-sm font-medium text-white transition-all hover:bg-red-950 active:scale-95"
+                  className="rounded-lg bg-gradient-to-br from-[#B93B32] to-[#992B23] px-4 py-2 text-xs font-bold text-white transition-all hover:shadow-lg active:scale-95 shadow-md"
                 >
                   Hapus Akun Saya
                 </button>
@@ -300,26 +376,26 @@ export default function SettingsPage() {
         {activeTab === 'platforms' && (
           <div className="flex flex-col gap-[18px]">
             {/* Platforms */}
-            <div className="rounded-[10px] bg-cly-surface p-[18px] shadow-cly">
-              <h3 className="mb-4 text-cly-base font-semibold text-cly-text">Platform</h3>
+            <div className="rounded-2xl bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <h3 className="mb-4 text-base font-bold text-cly-text">Platform</h3>
               {platforms.length === 0 ? (
-                <p className="mb-4 text-cly-sm text-cly-text-muted">Belum ada platform.</p>
+                <p className="mb-4 text-sm text-cly-text-2">Belum ada platform.</p>
               ) : (
                 <div className="mb-4 flex flex-col gap-2">
                   {platforms.map(p => (
-                    <div key={p.id} className="flex items-center justify-between rounded-lg border border-cly-border bg-cly-muted px-3 py-2.5">
-                      <span className="text-cly-sm text-cly-text">{p.name}</span>
+                    <div key={p.id} className="flex items-center justify-between rounded-xl border border-cly-border bg-gradient-to-br from-cly-muted to-white px-3.5 py-3 shadow-sm">
+                      <span className="text-sm font-semibold text-cly-text">{p.name}</span>
                       <div className="flex gap-1">
                         <button
                           onClick={() => handleEditPlatform(p.id)}
-                          className="rounded-md p-1.5 text-cly-text-muted transition-colors hover:bg-cly-muted-2 hover:text-cly-brand"
+                          className="rounded-lg p-2 text-cly-text-2 transition-all hover:bg-gradient-to-br hover:from-[#8EC5FC] hover:to-[#6BA3E8] hover:text-white"
                           aria-label={`Edit ${p.name}`}
                         >
                           <PencilIcon className="size-4" />
                         </button>
                         <button
                           onClick={() => removePlatform(p.id)}
-                          className="rounded-md p-1.5 text-cly-text-muted transition-colors hover:bg-cly-muted-2 hover:text-red-600"
+                          className="rounded-lg p-2 text-cly-text-2 transition-all hover:bg-gradient-to-br hover:from-[#FFB5A0] hover:to-[#FF9680] hover:text-white"
                           aria-label={`Hapus ${p.name}`}
                         >
                           <Trash2Icon className="size-4" />
@@ -335,12 +411,12 @@ export default function SettingsPage() {
                   value={platformName}
                   onChange={e => setPlatformName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddPlatform()}
-                  className="h-[34px] flex-1 rounded-lg border border-cly-border bg-cly-surface px-2.5 text-cly-sm text-cly-text outline-none transition-colors focus:border-cly-brand"
+                  className="h-9 flex-1 rounded-lg border border-cly-border bg-white px-3 text-sm text-cly-text outline-none transition-all focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20"
                   placeholder="Nama platform (misal: Instagram)"
                 />
                 <button
                   onClick={handleAddPlatform}
-                  className="flex items-center gap-1.5 rounded-lg border border-cly-border bg-cly-surface px-3 py-2 text-cly-sm font-medium text-cly-text transition-all hover:border-cly-brand hover:bg-cly-brand hover:text-white active:scale-95"
+                  className="flex items-center gap-1.5 rounded-lg bg-gradient-to-br from-cly-brand to-cly-brand-2 px-4 py-2 text-xs font-bold text-white transition-all hover:shadow-lg active:scale-95 shadow-md"
                 >
                   {editingPlatformId ? <PencilIcon className="size-4" /> : <PlusIcon className="size-4" />}
                   {editingPlatformId ? 'Simpan' : 'Tambah'}
@@ -349,26 +425,26 @@ export default function SettingsPage() {
             </div>
 
             {/* Accounts */}
-            <div className="rounded-[10px] bg-cly-surface p-[18px] shadow-cly">
-              <h3 className="mb-4 text-cly-base font-semibold text-cly-text">Akun</h3>
+            <div className="rounded-2xl bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <h3 className="mb-4 text-base font-bold text-cly-text">Akun</h3>
               {accounts.length === 0 ? (
-                <p className="mb-4 text-cly-sm text-cly-text-muted">Belum ada akun.</p>
+                <p className="mb-4 text-sm text-cly-text-2">Belum ada akun.</p>
               ) : (
                 <div className="mb-4 flex flex-col gap-2">
                   {accounts.map(a => (
-                    <div key={a.id} className="flex items-center justify-between rounded-lg border border-cly-border bg-cly-muted px-3 py-2.5">
-                      <span className="text-cly-sm text-cly-text">{a.name}</span>
+                    <div key={a.id} className="flex items-center justify-between rounded-xl border border-cly-border bg-gradient-to-br from-cly-muted to-white px-3.5 py-3 shadow-sm">
+                      <span className="text-sm font-semibold text-cly-text">{a.name}</span>
                       <div className="flex gap-1">
                         <button
                           onClick={() => handleEditAccount(a.id)}
-                          className="rounded-md p-1.5 text-cly-text-muted transition-colors hover:bg-cly-muted-2 hover:text-cly-brand"
+                          className="rounded-lg p-2 text-cly-text-2 transition-all hover:bg-gradient-to-br hover:from-[#8EC5FC] hover:to-[#6BA3E8] hover:text-white"
                           aria-label={`Edit ${a.name}`}
                         >
                           <PencilIcon className="size-4" />
                         </button>
                         <button
                           onClick={() => removeAccount(a.id)}
-                          className="rounded-md p-1.5 text-cly-text-muted transition-colors hover:bg-cly-muted-2 hover:text-red-600"
+                          className="rounded-lg p-2 text-cly-text-2 transition-all hover:bg-gradient-to-br hover:from-[#FFB5A0] hover:to-[#FF9680] hover:text-white"
                           aria-label={`Hapus ${a.name}`}
                         >
                           <Trash2Icon className="size-4" />
@@ -384,12 +460,12 @@ export default function SettingsPage() {
                   value={accountName}
                   onChange={e => setAccountName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddAccount()}
-                  className="h-[34px] flex-1 rounded-lg border border-cly-border bg-cly-surface px-2.5 text-cly-sm text-cly-text outline-none transition-colors focus:border-cly-brand"
+                  className="h-9 flex-1 rounded-lg border border-cly-border bg-white px-3 text-sm text-cly-text outline-none transition-all focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20"
                   placeholder="Nama akun baru"
                 />
                 <button
                   onClick={handleAddAccount}
-                  className="flex items-center gap-1.5 rounded-lg border border-cly-border bg-cly-surface px-3 py-2 text-cly-sm font-medium text-cly-text transition-all hover:border-cly-brand hover:bg-cly-brand hover:text-white active:scale-95"
+                  className="flex items-center gap-1.5 rounded-lg bg-gradient-to-br from-cly-brand to-cly-brand-2 px-4 py-2 text-xs font-bold text-white transition-all hover:shadow-lg active:scale-95 shadow-md"
                 >
                   {editingAccountId ? <PencilIcon className="size-4" /> : <PlusIcon className="size-4" />}
                   {editingAccountId ? 'Simpan' : 'Tambah'}
@@ -398,29 +474,29 @@ export default function SettingsPage() {
             </div>
 
             {/* Content Pillars */}
-            <div className="rounded-[10px] bg-cly-surface p-[18px] shadow-cly">
-              <h3 className="mb-4 text-cly-base font-semibold text-cly-text">Pilar Konten</h3>
+            <div className="rounded-2xl bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <h3 className="mb-4 text-base font-bold text-cly-text">Pilar Konten</h3>
               {pillars.length === 0 ? (
-                <p className="mb-4 text-cly-sm text-cly-text-muted">Belum ada pilar konten.</p>
+                <p className="mb-4 text-sm text-cly-text-2">Belum ada pilar konten.</p>
               ) : (
                 <div className="mb-4 flex flex-col gap-2">
                   {pillars.map(p => (
-                    <div key={p.id} className="flex items-center justify-between rounded-lg border border-cly-border bg-cly-muted px-3 py-2.5">
+                    <div key={p.id} className="flex items-center justify-between rounded-xl border border-cly-border bg-gradient-to-br from-cly-muted to-white px-3.5 py-3 shadow-sm">
                       <div className="flex items-center gap-2.5">
                         <span className="size-3 rounded-full" style={{ backgroundColor: p.color }} />
-                        <span className="text-cly-sm text-cly-text">{p.label}</span>
+                        <span className="text-sm font-semibold text-cly-text">{p.label}</span>
                       </div>
                       <div className="flex gap-1">
                         <button
                           onClick={() => handleEditPillar(p.id)}
-                          className="rounded-md p-1.5 text-cly-text-muted transition-colors hover:bg-cly-muted-2 hover:text-cly-brand"
+                          className="rounded-lg p-2 text-cly-text-2 transition-all hover:bg-gradient-to-br hover:from-[#8EC5FC] hover:to-[#6BA3E8] hover:text-white"
                           aria-label={`Edit ${p.label}`}
                         >
                           <PencilIcon className="size-4" />
                         </button>
                         <button
                           onClick={() => removePillar(p.id)}
-                          className="rounded-md p-1.5 text-cly-text-muted transition-colors hover:bg-cly-muted-2 hover:text-red-600"
+                          className="rounded-lg p-2 text-cly-text-2 transition-all hover:bg-gradient-to-br hover:from-[#FFB5A0] hover:to-[#FF9680] hover:text-white"
                           aria-label={`Hapus ${p.label}`}
                         >
                           <Trash2Icon className="size-4" />
@@ -436,12 +512,12 @@ export default function SettingsPage() {
                   value={pillarLabel}
                   onChange={e => setPillarLabel(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddPillar()}
-                  className="h-[34px] flex-1 rounded-lg border border-cly-border bg-cly-surface px-2.5 text-cly-sm text-cly-text outline-none transition-colors focus:border-cly-brand"
+                  className="h-9 flex-1 rounded-lg border border-cly-border bg-white px-3 text-sm text-cly-text outline-none transition-all focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20"
                   placeholder="Label pilar (misal: Edukasi)"
                 />
                 <button
                   onClick={handleAddPillar}
-                  className="flex items-center gap-1.5 rounded-lg border border-cly-border bg-cly-surface px-3 py-2 text-cly-sm font-medium text-cly-text transition-all hover:border-cly-brand hover:bg-cly-brand hover:text-white active:scale-95"
+                  className="flex items-center gap-1.5 rounded-lg bg-gradient-to-br from-cly-brand to-cly-brand-2 px-4 py-2 text-xs font-bold text-white transition-all hover:shadow-lg active:scale-95 shadow-md"
                 >
                   {editingPillarId ? <PencilIcon className="size-4" /> : <PlusIcon className="size-4" />}
                   {editingPillarId ? 'Simpan' : 'Tambah'}
@@ -451,22 +527,196 @@ export default function SettingsPage() {
           </div>
         )}
 
+        {/* APPEARANCE TAB */}
+        {activeTab === 'appearance' && (
+          <div className="flex flex-col gap-[18px]">
+            {/* Theme Mode */}
+            <div className="rounded-2xl bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <h3 className="mb-2 text-base font-bold text-cly-text">Theme Mode</h3>
+              <p className="mb-4 text-xs text-cly-text-2">Pilih tema tampilan aplikasi</p>
+              <div className="flex flex-col gap-2">
+                {(['light', 'dark', 'auto'] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => handleThemeChange(mode)}
+                    className={`flex items-center gap-3 rounded-xl border p-3.5 text-left transition-all ${
+                      currentTheme === mode
+                        ? 'border-cly-brand bg-gradient-to-br from-cly-brand/10 to-white shadow-sm'
+                        : 'border-cly-border bg-white hover:border-cly-brand/50 hover:shadow-sm'
+                    }`}
+                  >
+                    <div
+                      className={`size-5 rounded-full border-2 transition-all ${
+                        currentTheme === mode
+                          ? 'border-cly-brand bg-cly-brand'
+                          : 'border-cly-border'
+                      }`}
+                    >
+                      {currentTheme === mode && (
+                        <div className="size-full rounded-full bg-white p-0.5">
+                          <div className="size-full rounded-full bg-cly-brand" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold capitalize text-cly-text">
+                        {mode === 'light' ? 'Light' : mode === 'dark' ? 'Dark' : 'Auto (System)'}
+                      </span>
+                      <span className="text-xs text-cly-text-2">
+                        {mode === 'light' && 'Tampilan terang untuk siang hari'}
+                        {mode === 'dark' && 'Tampilan gelap untuk malam hari'}
+                        {mode === 'auto' && 'Ikuti pengaturan sistem'}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Language */}
+            <div className="rounded-2xl bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <h3 className="mb-2 text-base font-bold text-cly-text">Language</h3>
+              <p className="mb-4 text-xs text-cly-text-2">Pilih bahasa tampilan aplikasi</p>
+              <div className="flex flex-col gap-2">
+                {(['id', 'en'] as const).map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => handleLanguageChange(lang)}
+                    className={`flex items-center gap-3 rounded-xl border p-3.5 text-left transition-all ${
+                      language === lang
+                        ? 'border-cly-brand bg-gradient-to-br from-cly-brand/10 to-white shadow-sm'
+                        : 'border-cly-border bg-white hover:border-cly-brand/50 hover:shadow-sm'
+                    }`}
+                  >
+                    <div
+                      className={`size-5 rounded-full border-2 transition-all ${
+                        language === lang
+                          ? 'border-cly-brand bg-cly-brand'
+                          : 'border-cly-border'
+                      }`}
+                    >
+                      {language === lang && (
+                        <div className="size-full rounded-full bg-white p-0.5">
+                          <div className="size-full rounded-full bg-cly-brand" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-cly-text">
+                        {lang === 'id' ? 'Bahasa Indonesia' : 'English'}
+                      </span>
+                      <span className="text-xs text-cly-text-2">
+                        {lang === 'id' && 'Tampilan dalam Bahasa Indonesia'}
+                        {lang === 'en' && 'Display in English'}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Date & Number Formats */}
+            <div className="rounded-2xl bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <h3 className="mb-2 text-base font-bold text-cly-text">Date & Number Formats</h3>
+              <p className="mb-4 text-xs text-cly-text-2">Atur format tampilan tanggal dan angka</p>
+              
+              {/* Date Format */}
+              <div className="mb-4">
+                <label className="mb-2 block text-xs font-semibold text-cly-text">Format Tanggal</label>
+                <div className="flex flex-col gap-2">
+                  {(['DD/MM/YYYY', 'MM/DD/YYYY'] as const).map((format) => (
+                    <button
+                      key={format}
+                      onClick={() => handleDateFormatChange(format)}
+                      className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
+                        dateFormat === format
+                          ? 'border-cly-brand bg-gradient-to-br from-cly-brand/10 to-white shadow-sm'
+                          : 'border-cly-border bg-white hover:border-cly-brand/50 hover:shadow-sm'
+                      }`}
+                    >
+                      <div
+                        className={`size-4 rounded-full border-2 transition-all ${
+                          dateFormat === format
+                            ? 'border-cly-brand bg-cly-brand'
+                            : 'border-cly-border'
+                        }`}
+                      >
+                        {dateFormat === format && (
+                          <div className="size-full rounded-full bg-white p-0.5">
+                            <div className="size-full rounded-full bg-cly-brand" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-cly-text">{format}</span>
+                        <span className="text-xs text-cly-text-2">
+                          {format === 'DD/MM/YYYY' && 'Contoh: 15/08/2026'}
+                          {format === 'MM/DD/YYYY' && 'Contoh: 08/15/2026'}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Number Format */}
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-cly-text">Format Angka</label>
+                <div className="flex flex-col gap-2">
+                  {(['1,000', '1.000'] as const).map((format) => (
+                    <button
+                      key={format}
+                      onClick={() => handleNumberFormatChange(format)}
+                      className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
+                        numberFormat === format
+                          ? 'border-cly-brand bg-gradient-to-br from-cly-brand/10 to-white shadow-sm'
+                          : 'border-cly-border bg-white hover:border-cly-brand/50 hover:shadow-sm'
+                      }`}
+                    >
+                      <div
+                        className={`size-4 rounded-full border-2 transition-all ${
+                          numberFormat === format
+                            ? 'border-cly-brand bg-cly-brand'
+                            : 'border-cly-border'
+                        }`}
+                      >
+                        {numberFormat === format && (
+                          <div className="size-full rounded-full bg-white p-0.5">
+                            <div className="size-full rounded-full bg-cly-brand" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-cly-text">{format}</span>
+                        <span className="text-xs text-cly-text-2">
+                          {format === '1,000' && 'Contoh: 1,000,000'}
+                          {format === '1.000' && 'Contoh: 1.000.000'}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* NOTIFICATIONS TAB */}
         {activeTab === 'notifications' && (
-          <div className="rounded-[10px] bg-cly-surface p-[18px] shadow-cly">
-            <h3 className="mb-2 text-cly-base font-semibold text-cly-text">Preferensi Notifikasi</h3>
-            <p className="mb-4 text-cly-xs text-cly-text-muted">Atur notifikasi yang ingin kamu terima</p>
-            <div className="flex flex-col gap-3.5">
+          <div className="rounded-2xl bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+            <h3 className="mb-2 text-base font-bold text-cly-text">Preferensi Notifikasi</h3>
+            <p className="mb-4 text-xs text-cly-text-2">Atur notifikasi yang ingin kamu terima</p>
+            <div className="flex flex-col gap-3">
               {/* Goal Updates */}
-              <div className="flex items-center justify-between rounded-lg border border-cly-border p-3">
+              <div className="flex items-center justify-between rounded-xl border border-cly-border p-3.5 hover:border-cly-brand/50 transition-all">
                 <div className="flex flex-col">
-                  <span className="text-cly-sm font-medium text-cly-text">Goal Updates</span>
-                  <span className="text-cly-xs text-cly-text-muted">Notifikasi saat goal hampir tercapai atau butuh perhatian</span>
+                  <span className="text-sm font-semibold text-cly-text">Goal Updates</span>
+                  <span className="text-xs text-cly-text-2">Notifikasi saat goal hampir tercapai atau butuh perhatian</span>
                 </div>
                 <button
                   onClick={handleNotifGoal}
                   className={`relative h-6 w-11 rounded-full transition-colors ${
-                    notifGoal ? 'bg-cly-brand' : 'bg-cly-muted-2'
+                    notifGoal ? 'bg-gradient-to-br from-cly-brand to-cly-brand-2' : 'bg-cly-muted'
                   }`}
                 >
                   <span
@@ -478,15 +728,15 @@ export default function SettingsPage() {
               </div>
 
               {/* Content Reminders */}
-              <div className="flex items-center justify-between rounded-lg border border-cly-border p-3">
+              <div className="flex items-center justify-between rounded-xl border border-cly-border p-3.5 hover:border-cly-brand/50 transition-all">
                 <div className="flex flex-col">
-                  <span className="text-cly-sm font-medium text-cly-text">Content Reminders</span>
-                  <span className="text-cly-xs text-cly-text-muted">Ingatkan konten yang perlu diposting hari ini</span>
+                  <span className="text-sm font-semibold text-cly-text">Content Reminders</span>
+                  <span className="text-xs text-cly-text-2">Ingatkan konten yang perlu diposting hari ini</span>
                 </div>
                 <button
                   onClick={handleNotifReminder}
                   className={`relative h-6 w-11 rounded-full transition-colors ${
-                    notifReminder ? 'bg-cly-brand' : 'bg-cly-muted-2'
+                    notifReminder ? 'bg-gradient-to-br from-cly-brand to-cly-brand-2' : 'bg-cly-muted'
                   }`}
                 >
                   <span
@@ -498,20 +748,60 @@ export default function SettingsPage() {
               </div>
 
               {/* Monthly Reports */}
-              <div className="flex items-center justify-between rounded-lg border border-cly-border p-3">
+              <div className="flex items-center justify-between rounded-xl border border-cly-border p-3.5 hover:border-cly-brand/50 transition-all">
                 <div className="flex flex-col">
-                  <span className="text-cly-sm font-medium text-cly-text">Monthly Reports</span>
-                  <span className="text-cly-xs text-cly-text-muted">Kirim laporan bulanan otomatis ke email</span>
+                  <span className="text-sm font-semibold text-cly-text">Monthly Reports</span>
+                  <span className="text-xs text-cly-text-2">Kirim laporan bulanan otomatis ke email</span>
                 </div>
                 <button
                   onClick={handleNotifReport}
                   className={`relative h-6 w-11 rounded-full transition-colors ${
-                    notifReport ? 'bg-cly-brand' : 'bg-cly-muted-2'
+                    notifReport ? 'bg-gradient-to-br from-cly-brand to-cly-brand-2' : 'bg-cly-muted'
                   }`}
                 >
                   <span
                     className={`absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-transform ${
                       notifReport ? 'translate-x-5' : 'translate-x-0.5'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Collaboration Notifications */}
+              <div className="flex items-center justify-between rounded-xl border border-cly-border p-3.5 hover:border-cly-brand/50 transition-all">
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-cly-text">Collaboration Notifications</span>
+                  <span className="text-xs text-cly-text-2">Notifikasi saat ada yang membagikan workspace dengan Anda</span>
+                </div>
+                <button
+                  onClick={handleNotifCollab}
+                  className={`relative h-6 w-11 rounded-full transition-colors ${
+                    notifCollab ? 'bg-gradient-to-br from-cly-brand to-cly-brand-2' : 'bg-cly-muted'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-transform ${
+                      notifCollab ? 'translate-x-5' : 'translate-x-0.5'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Daily Digest */}
+              <div className="flex items-center justify-between rounded-xl border border-cly-border p-3.5 hover:border-cly-brand/50 transition-all">
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-cly-text">Daily Digest</span>
+                  <span className="text-xs text-cly-text-2">Ringkasan harian performa kemarin dikirim setiap pagi</span>
+                </div>
+                <button
+                  onClick={handleNotifDigest}
+                  className={`relative h-6 w-11 rounded-full transition-colors ${
+                    notifDigest ? 'bg-gradient-to-br from-cly-brand to-cly-brand-2' : 'bg-cly-muted'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-transform ${
+                      notifDigest ? 'translate-x-5' : 'translate-x-0.5'
                     }`}
                   />
                 </button>

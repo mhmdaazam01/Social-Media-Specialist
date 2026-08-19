@@ -20,6 +20,7 @@ interface IdeaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editIdea?: ContentIdea | null;
+  readOnly?: boolean;
 }
 
 interface FormFields {
@@ -42,7 +43,7 @@ const emptyForm: FormFields = {
   ref_links: [''],
 };
 
-export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
+export function IdeaModal({ open, onOpenChange, editIdea, readOnly }: IdeaModalProps) {
   const { createIdea, updateIdea } = useIdeas();
   const { platforms } = usePlatforms();
   const { pillars } = usePillars();
@@ -145,6 +146,7 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
               value={form.title}
               onChange={e => update('title', e.target.value)}
               placeholder="Contoh: Review Produk X"
+              readOnly={readOnly}
             />
           </div>
 
@@ -160,6 +162,16 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
                 <Plus className="size-3" />
                 Tambah Link
               </button>
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={addRefLink}
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Plus className="size-3" />
+                  Tambah Link
+                </button>
+              )}
             </div>
             <div className="flex flex-col gap-2">
               {form.ref_links.map((link, index) => (
@@ -168,8 +180,9 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
                     value={link}
                     onChange={e => handleRefLinkChange(index, e.target.value)}
                     placeholder="https://..."
+                    readOnly={readOnly}
                   />
-                  {form.ref_links.length > 1 && (
+                  {!readOnly && form.ref_links.length > 1 && (
                     <Button
                       type="button"
                       variant="ghost"
@@ -184,7 +197,6 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
             </div>
           </div>
 
-          {/* Deskripsi */}
           <div className="grid gap-2">
             <Label htmlFor="idea-description">Deskripsi</Label>
             <RichTextEditor
@@ -192,14 +204,14 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
               onValueChange={v => update('description', v)}
               placeholder="Deskripsi singkat ide konten..."
               className="min-h-[120px] text-sm bg-background"
+              readOnly={readOnly}
             />
           </div>
 
-          {/* Platform + Pilar */}
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-2">
               <Label>Platform</Label>
-              <Select value={form.platform} onValueChange={v => update('platform', v ?? '')}>
+              <Select value={form.platform} onValueChange={v => update('platform', v ?? '')} disabled={readOnly}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih platform">
                     {platformLabel}
@@ -218,7 +230,7 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
             </div>
             <div className="grid gap-2">
               <Label>Pilar</Label>
-              <Select value={form.pillar} onValueChange={v => update('pillar', v ?? '')}>
+              <Select value={form.pillar} onValueChange={v => update('pillar', v ?? '')} disabled={readOnly}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Pilih pilar">
                     {form.pillar
@@ -238,10 +250,9 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
             </div>
           </div>
 
-          {/* Format */}
           <div className="grid gap-2">
             <Label>Format</Label>
-            <Select value={form.format} onValueChange={v => update('format', v ?? '')}>
+            <Select value={form.format} onValueChange={v => update('format', v ?? '')} disabled={readOnly}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Pilih format" />
               </SelectTrigger>
@@ -254,10 +265,9 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
             </Select>
           </div>
 
-          {/* Prioritas */}
           <div className="grid gap-2">
             <Label>Prioritas</Label>
-            <Select value={form.priority} onValueChange={v => v && update('priority', v as FormFields['priority'])}>
+            <Select value={form.priority} onValueChange={v => v && update('priority', v as FormFields['priority'])} disabled={readOnly}>
               <SelectTrigger className="w-full">
                 <SelectValue>
                   {form.priority === 'low' ? 'Rendah' : form.priority === 'med' ? 'Sedang' : 'Tinggi'}
@@ -272,14 +282,16 @@ export function IdeaModal({ open, onOpenChange, editIdea }: IdeaModalProps) {
           </div>
         </div>
 
-        <DialogFooter showCloseButton>
-          <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            Batal
-          </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Menyimpan...' : editIdea ? 'Simpan Perubahan' : 'Tambah Ide'}
-          </Button>
-        </DialogFooter>
+        {!readOnly && (
+          <DialogFooter>
+            <Button variant="outline" onClick={() => handleOpenChange(false)}>
+              Batal
+            </Button>
+            <Button onClick={handleSubmit} disabled={loading}>
+              {loading ? 'Menyimpan...' : editIdea ? 'Simpan Perubahan' : 'Tambah Ide'}
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

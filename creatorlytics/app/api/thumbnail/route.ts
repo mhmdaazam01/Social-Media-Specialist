@@ -8,6 +8,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'URL is required' }, { status: 400 });
   }
 
+  // Prevent DOS from extremely long URLs
+  if (url.length > 2000) {
+    return NextResponse.json({ error: 'URL too long' }, { status: 400 });
+  }
+
   try {
     let thumbnailUrl = null;
 

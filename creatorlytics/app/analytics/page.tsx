@@ -8,6 +8,7 @@ import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { usePillars } from '@/lib/hooks/usePillars';
 import { useAccounts } from '@/lib/hooks/useAccounts';
 import { useUser } from '@/lib/hooks/useUser';
+import { useTheme } from '@/lib/context/ThemeContext';
 import { useGoals } from '@/lib/hooks/useGoals';
 import {
   aggregateByPlatform, isPostInMonth,
@@ -24,6 +25,7 @@ export default function AnalyticsPage() {
   const { platforms } = usePlatforms();
   const { accounts } = useAccounts();
   const { profile } = useUser();
+  const { resolvedTheme } = useTheme();
   const { goals, loading: goalsLoading } = useGoals();
   const erMode = profile?.er_mode || 'impression';
 
@@ -145,7 +147,7 @@ export default function AnalyticsPage() {
       pillarMap[p.pillar].engagement += (p.like || 0) + (p.comment || 0) + (p.save || 0) + (p.share || 0);
     });
     
-    const COLORS = ['#2F6F45', '#2563A7', '#A15C07', '#B93B32', '#7C4D9D', '#13747C'];
+    const COLORS = ['#A8E6CF', '#8EC5FC', '#FFB5A0', '#C5B9E8', '#FFE5B4', '#6ECDB0'];
     
     return Object.entries(pillarMap)
       .slice(0, 6)
@@ -203,7 +205,42 @@ export default function AnalyticsPage() {
 
   return (
     <AppShell title="Analytics">
-      <div className="flex flex-col gap-[18px]">
+      <style jsx global>{`
+        .analytics-typography h1,
+        .analytics-typography h2,
+        .analytics-typography h3,
+        .analytics-typography div[class*="text-base"][class*="font-bold"][class*="tracking-tight"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 700 !important;
+        }
+        .analytics-typography [class*="uppercase"][class*="tracking"],
+        .analytics-typography th[class*="uppercase"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 600 !important;
+        }
+        .analytics-typography button[class*="font-semibold"],
+        .analytics-typography [class*="font-bold"]:not([class*="text-xs"]):not([class*="text-sm"]) {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 600 !important;
+        }
+        .analytics-typography div[class*="font-bold"][class*="text-xs"],
+        .analytics-typography div[class*="font-bold"][class*="text-sm"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 600 !important;
+        }
+        .analytics-typography td[class*="font-bold"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 700 !important;
+        }
+        .analytics-typography p:not([class*="font-bold"]):not([class*="font-black"]):not([class*="font-semibold"]),
+        .analytics-typography div[class*="leading-relaxed"],
+        .analytics-typography span:not([class*="font-bold"]):not([class*="font-semibold"]),
+        .analytics-typography .recharts-text {
+          font-family: var(--font-dm-sans) !important;
+          font-weight: 400 !important;
+        }
+      `}</style>
+      <div className="flex flex-col gap-[18px] analytics-typography">
         {/* Filter Buttons */}
         <div className="flex justify-end gap-2 flex-wrap">
           {/* Date From */}
@@ -211,7 +248,7 @@ export default function AnalyticsPage() {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="h-[34px] px-[13px] rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 text-cly-sm font-semibold hover:bg-cly-muted transition-colors outline-none"
+            className="h-8 px-3 border border-cly-border rounded-lg bg-white text-cly-text-2 text-xs font-medium outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
             placeholder="Dari"
           />
           
@@ -220,7 +257,7 @@ export default function AnalyticsPage() {
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="h-[34px] px-[13px] rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 text-cly-sm font-semibold hover:bg-cly-muted transition-colors outline-none"
+            className="h-8 px-3 border border-cly-border rounded-lg bg-white text-cly-text-2 text-xs font-medium outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
             placeholder="Sampai"
           />
           
@@ -228,7 +265,7 @@ export default function AnalyticsPage() {
           <select 
             value={selectedAccount}
             onChange={(e) => setSelectedAccount(e.target.value)}
-            className="h-[34px] px-[13px] rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 text-cly-sm font-semibold hover:bg-cly-muted transition-colors outline-none cursor-pointer"
+            className="h-8 px-3 border border-cly-border rounded-lg bg-white text-cly-text-2 text-xs font-medium outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer"
           >
             <option value="all">Semua Akun</option>
             {accounts.map(a => (
@@ -240,7 +277,7 @@ export default function AnalyticsPage() {
           <select 
             value={selectedPlatform}
             onChange={(e) => setSelectedPlatform(e.target.value)}
-            className="h-[34px] px-[13px] rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 text-cly-sm font-semibold hover:bg-cly-muted transition-colors outline-none cursor-pointer"
+            className="h-8 px-3 border border-cly-border rounded-lg bg-white text-cly-text-2 text-xs font-medium outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer"
           >
             <option value="all">All platforms</option>
             {platforms.map(p => (
@@ -250,9 +287,9 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Two Column: Trend Chart + Pillar Score */}
-        <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.2fr)_390px]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_390px]">
           {/* Trend Chart Card */}
-          <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
+          <div className="bg-white rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
             <div className="flex items-start justify-between gap-3 mb-4">
               <SectionTitle
                 title="Tren Performa"
@@ -262,23 +299,23 @@ export default function AnalyticsPage() {
               {/* Chart controls */}
               <div className="flex items-center gap-2">
                 {/* View toggle */}
-                <div className="flex border border-cly-border rounded overflow-hidden">
+                <div className="flex border border-cly-border rounded-lg overflow-hidden">
                   <button
                     onClick={() => setChartView('daily')}
-                    className={`h-[30px] px-3 text-cly-xs font-semibold transition-colors ${
+                    className={`h-8 px-4 text-xs font-semibold transition-all ${
                       chartView === 'daily' 
                         ? 'bg-cly-brand text-white' 
-                        : 'bg-cly-surface text-cly-text-2 hover:bg-cly-muted'
+                        : 'bg-white text-cly-text-2 hover:bg-cly-muted'
                     }`}
                   >
                     Harian
                   </button>
                   <button
                     onClick={() => setChartView('monthly')}
-                    className={`h-[30px] px-3 text-cly-xs font-semibold border-l border-cly-border transition-colors ${
+                    className={`h-8 px-4 text-xs font-semibold border-l border-cly-border transition-all ${
                       chartView === 'monthly' 
                         ? 'bg-cly-brand text-white' 
-                        : 'bg-cly-surface text-cly-text-2 hover:bg-cly-muted'
+                        : 'bg-white text-cly-text-2 hover:bg-cly-muted'
                     }`}
                   >
                     Bulanan
@@ -288,44 +325,104 @@ export default function AnalyticsPage() {
             </div>
             
             {loading ? (
-              <div className="w-full h-80 bg-cly-border/20 rounded animate-pulse" />
+              <div className="w-full h-80 bg-gradient-to-br from-cly-muted to-white dark:to-cly-surface rounded-xl animate-pulse" />
             ) : chartData.length === 0 ? (
-              <div className="h-[280px] bg-cly-muted rounded-lg flex items-center justify-center">
-                <p className="text-cly-sm text-cly-text-3">Belum ada data — tambahkan post untuk melihat tren.</p>
+              <div className="h-[280px] bg-gradient-to-br from-cly-muted to-white dark:to-cly-surface rounded-xl flex flex-col items-center justify-center text-center p-4">
+                <p className="text-sm font-semibold text-cly-text-2 mb-1">Belum ada data</p>
+                <p className="text-sm text-cly-text-3">Tambahkan post untuk melihat tren.</p>
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
-                <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} axisLine={false} tickLine={false} />
-                  <YAxis yAxisId="left" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => fmt(v)} axisLine={false} tickLine={false} />
-                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => `${v}%`} axisLine={false} tickLine={false} />
+                <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
+                  <CartesianGrid 
+                    strokeDasharray="3 3" 
+                    stroke={resolvedTheme === 'dark' ? '#3F3F46' : '#E8ECEF'} 
+                    strokeOpacity={0.5} 
+                    vertical={false} 
+                  />
+                  <XAxis 
+                    dataKey="label" 
+                    tick={{ fontSize: 12, fill: resolvedTheme === 'dark' ? '#A1A1AA' : '#A0AEC0', fontWeight: 500 }} 
+                    axisLine={false} 
+                    tickLine={false}
+                    dy={8}
+                  />
+                  <YAxis 
+                    yAxisId="left" 
+                    tick={{ fontSize: 12, fill: resolvedTheme === 'dark' ? '#A1A1AA' : '#A0AEC0', fontWeight: 500 }} 
+                    tickFormatter={v => fmt(v)} 
+                    axisLine={false} 
+                    tickLine={false} 
+                  />
+                  <YAxis 
+                    yAxisId="right" 
+                    orientation="right" 
+                    tick={{ fontSize: 12, fill: resolvedTheme === 'dark' ? '#A1A1AA' : '#A0AEC0', fontWeight: 500 }} 
+                    tickFormatter={v => `${v}%`} 
+                    axisLine={false} 
+                    tickLine={false} 
+                  />
                   <Tooltip
-                    contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
+                    contentStyle={{ 
+                      background: resolvedTheme === 'dark' ? '#18181B' : '#FFFFFF', 
+                      border: `1px solid ${resolvedTheme === 'dark' ? '#3F3F46' : '#E8ECEF'}`, 
+                      borderRadius: 12, 
+                      fontSize: 13,
+                      fontWeight: 500,
+                      padding: '8px 12px',
+                      boxShadow: resolvedTheme === 'dark' ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.08)',
+                      color: resolvedTheme === 'dark' ? '#FAFAFA' : '#1A1D23'
+                    }}
                     formatter={(v, name) => {
                       if (name === 'er') return [`${v}%`, 'ER'];
                       return [fmt(Number(v)), name === 'impression' ? 'Impression' : 'Reach'];
                     }}
+                    labelStyle={{ fontWeight: 600, marginBottom: 4, color: resolvedTheme === 'dark' ? '#FAFAFA' : '#4A5568' }}
                   />
-                  <Line yAxisId="left" type="monotone" dataKey="impression" stroke="var(--color-cly-green)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-green)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
-                  <Line yAxisId="left" type="monotone" dataKey="reach" stroke="var(--color-cly-brand)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-brand)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
-                  <Line yAxisId="right" type="monotone" dataKey="er" stroke="var(--color-cly-amber)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-amber)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                  <Line 
+                    yAxisId="left" 
+                    type="monotone" 
+                    dataKey="impression" 
+                    stroke={resolvedTheme === 'dark' ? '#FAFAFA' : '#A8E6CF'} 
+                    strokeWidth={3} 
+                    dot={{ r: 5, fill: resolvedTheme === 'dark' ? '#FAFAFA' : '#A8E6CF', strokeWidth: 2, stroke: resolvedTheme === 'dark' ? '#18181B' : '#fff' }} 
+                    activeDot={{ r: 7, strokeWidth: 3 }} 
+                  />
+                  <Line 
+                    yAxisId="left" 
+                    type="monotone" 
+                    dataKey="reach" 
+                    stroke={resolvedTheme === 'dark' ? '#A1A1AA' : '#8EC5FC'} 
+                    strokeWidth={3} 
+                    dot={{ r: 5, fill: resolvedTheme === 'dark' ? '#A1A1AA' : '#8EC5FC', strokeWidth: 2, stroke: resolvedTheme === 'dark' ? '#18181B' : '#fff' }} 
+                    activeDot={{ r: 7, strokeWidth: 3 }} 
+                  />
+                  <Line 
+                    yAxisId="right" 
+                    type="monotone" 
+                    dataKey="er" 
+                    stroke={resolvedTheme === 'dark' ? '#71717A' : '#FFB5A0'} 
+                    strokeWidth={3} 
+                    dot={{ r: 5, fill: resolvedTheme === 'dark' ? '#71717A' : '#FFB5A0', strokeWidth: 2, stroke: resolvedTheme === 'dark' ? '#18181B' : '#fff' }} 
+                    activeDot={{ r: 7, strokeWidth: 3 }} 
+                  />
                 </ComposedChart>
               </ResponsiveContainer>
             )}
           </div>
 
           {/* Pillar Score Card */}
-          <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
+          <div className="bg-white rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
             <SectionTitle
               title="Performa Pilar"
               note="Impression & Reach per pilar"
             />
             {loading ? (
-              <div className="w-full h-56 bg-cly-border/20 rounded animate-pulse" />
+              <div className="w-full h-56 bg-gradient-to-br from-cly-muted to-white dark:to-cly-surface rounded-xl animate-pulse" />
             ) : pillarData.length === 0 ? (
-              <div className="h-[280px] bg-cly-muted rounded-lg flex items-center justify-center">
-                <p className="text-cly-sm text-cly-text-3">Belum ada data pilar.</p>
+              <div className="h-[280px] bg-gradient-to-br from-cly-muted to-white dark:to-cly-surface rounded-xl flex flex-col items-center justify-center text-center p-4">
+                <p className="text-sm font-semibold text-cly-text-2 mb-1">Belum ada data pilar</p>
+                <p className="text-sm text-cly-text-3">Tambahkan pilar ke post Anda.</p>
               </div>
             ) : (
               <>
@@ -336,10 +433,14 @@ export default function AnalyticsPage() {
                     layout="vertical" 
                     margin={{ top: 5, right: 20, left: 5, bottom: 5 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" horizontal={false} />
+                    <CartesianGrid 
+                      strokeDasharray="3 3" 
+                      stroke={resolvedTheme === 'dark' ? '#3F3F46' : '#E8ECEF'} 
+                      horizontal={false} 
+                    />
                     <XAxis 
                       type="number" 
-                      tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} 
+                      tick={{ fontSize: 12, fill: resolvedTheme === 'dark' ? '#A1A1AA' : '#A0AEC0', fontWeight: 500 }} 
                       axisLine={false} 
                       tickLine={false}
                       tickFormatter={(v) => fmt(v)}
@@ -347,33 +448,46 @@ export default function AnalyticsPage() {
                     <YAxis 
                       type="category" 
                       dataKey="name" 
-                      tick={{ fontSize: 11, fill: 'var(--color-cly-text-2)' }} 
+                      tick={{ fontSize: 12, fill: resolvedTheme === 'dark' ? '#FAFAFA' : '#4A5568', fontWeight: 500 }} 
                       axisLine={false} 
                       tickLine={false}
                       width={100}
                     />
                     <Tooltip
-                      contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
+                      contentStyle={{ 
+                        background: resolvedTheme === 'dark' ? '#18181B' : '#FFFFFF', 
+                        border: `1px solid ${resolvedTheme === 'dark' ? '#3F3F46' : '#E8ECEF'}`, 
+                        borderRadius: 12, 
+                        fontSize: 13,
+                        fontWeight: 500,
+                        padding: '8px 12px',
+                        boxShadow: resolvedTheme === 'dark' ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.08)',
+                        color: resolvedTheme === 'dark' ? '#FAFAFA' : '#1A1D23'
+                      }}
                       formatter={(v, name) => [fmt(Number(v)), name === 'impression' ? 'Impression' : 'Reach']}
                     />
-                    <Bar dataKey="impression" fill="var(--color-cly-green)" radius={[0, 4, 4, 0]} />
-                    <Bar dataKey="reach" fill="var(--color-cly-brand)" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="impression" fill={resolvedTheme === 'dark' ? '#FAFAFA' : '#A8E6CF'} radius={[0, 8, 8, 0]} />
+                    <Bar dataKey="reach" fill={resolvedTheme === 'dark' ? '#A1A1AA' : '#8EC5FC'} radius={[0, 8, 8, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
                 
                 {/* ER Chart */}
                 <div className="mt-4">
-                  <p className="text-cly-xs font-semibold text-cly-text-2 mb-2">Engagement Rate (%)</p>
+                  <p className="text-xs font-semibold text-cly-text-2 mb-2">Engagement Rate (%)</p>
                   <ResponsiveContainer width="100%" height={120}>
                     <BarChart 
                       data={pillarData} 
                       layout="vertical" 
                       margin={{ top: 5, right: 20, left: 5, bottom: 5 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" horizontal={false} />
+                      <CartesianGrid 
+                        strokeDasharray="3 3" 
+                        stroke={resolvedTheme === 'dark' ? '#2A3A2C' : '#E8ECEF'} 
+                        horizontal={false} 
+                      />
                       <XAxis 
                         type="number" 
-                        tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} 
+                        tick={{ fontSize: 12, fill: resolvedTheme === 'dark' ? '#96A899' : '#A0AEC0', fontWeight: 500 }} 
                         axisLine={false} 
                         tickLine={false}
                         tickFormatter={(v) => `${v}%`}
@@ -381,16 +495,25 @@ export default function AnalyticsPage() {
                       <YAxis 
                         type="category" 
                         dataKey="name" 
-                        tick={{ fontSize: 11, fill: 'var(--color-cly-text-2)' }} 
+                        tick={{ fontSize: 12, fill: resolvedTheme === 'dark' ? '#E3EDE4' : '#4A5568', fontWeight: 500 }} 
                         axisLine={false} 
                         tickLine={false}
                         width={100}
                       />
                       <Tooltip
-                        contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
+                        contentStyle={{ 
+                          background: resolvedTheme === 'dark' ? '#161D17' : '#FFFFFF', 
+                          border: `1px solid ${resolvedTheme === 'dark' ? '#2A3A2C' : '#E8ECEF'}`, 
+                          borderRadius: 12, 
+                          fontSize: 13,
+                          fontWeight: 500,
+                          padding: '8px 12px',
+                          boxShadow: resolvedTheme === 'dark' ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.08)',
+                          color: resolvedTheme === 'dark' ? '#E3EDE4' : '#1A1D23'
+                        }}
                         formatter={(v) => [`${v}%`, 'ER']}
                       />
-                      <Bar dataKey="er" fill="var(--color-cly-amber)" radius={[0, 4, 4, 0]} />
+                      <Bar dataKey="er" fill={resolvedTheme === 'dark' ? '#71717A' : '#FFB5A0'} radius={[0, 8, 8, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -406,7 +529,7 @@ export default function AnalyticsPage() {
             note="Three takeaways from the trend above, before you dig into the platform table."
           />
           
-          <div className="grid gap-3.5 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-3">
             <InsightCard
               icon={TrendingUp}
               title="Saran AI"
@@ -444,35 +567,33 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Platform Breakdown Table */}
-        <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[10px_18px]">
-          <div className="pt-2.5">
-            <SectionTitle
-              title="Rincian per platform"
-              note="Data komprehensif performa platform"
-            />
-          </div>
+        <div className="bg-white rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+          <SectionTitle
+            title="Rincian per platform"
+            note="Data komprehensif performa platform"
+          />
           
-          <div className="overflow-x-auto overflow-y-hidden pb-2 -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="overflow-x-auto overflow-y-hidden -mx-2 px-2">
             <table className="w-full text-left border-collapse min-w-[500px]">
               <thead>
                 <tr className="border-b border-cly-border">
-                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50">Platform</th>
-                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-center">Reach</th>
-                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-center">Impression</th>
-                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-center">Engagement</th>
-                  <th className="py-2.5 px-3 text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider bg-cly-rail/50 text-center">ER</th>
+                  <th className="py-3 px-3 text-xs font-semibold text-cly-text-3 uppercase tracking-wider">Platform</th>
+                  <th className="py-3 px-3 text-xs font-semibold text-cly-text-3 uppercase tracking-wider text-center">Reach</th>
+                  <th className="py-3 px-3 text-xs font-semibold text-cly-text-3 uppercase tracking-wider text-center">Impression</th>
+                  <th className="py-3 px-3 text-xs font-semibold text-cly-text-3 uppercase tracking-wider text-center">Engagement</th>
+                  <th className="py-3 px-3 text-xs font-semibold text-cly-text-3 uppercase tracking-wider text-center">ER</th>
                 </tr>
               </thead>
-              <tbody className="text-cly-sm">
+              <tbody className="text-sm">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-cly-text-muted animate-pulse">
+                    <td colSpan={5} className="py-8 text-center text-cly-text-3 animate-pulse">
                       Memuat data platform...
                     </td>
                   </tr>
                 ) : byPlatform.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-cly-text-muted">
+                    <td colSpan={5} className="py-8 text-center text-cly-text-3">
                       Belum ada data analitik.
                     </td>
                   </tr>
@@ -505,10 +626,10 @@ export default function AnalyticsPage() {
                         <td className="py-3">
                           <PlatformBadge platform={platformName(p.platform)} />
                         </td>
-                        <td className="py-3 text-center text-cly-text-2">{fmt(p.totalReach)}</td>
-                        <td className="py-3 text-center text-cly-text-2">{fmt(totalImpression)}</td>
-                        <td className="py-3 text-center text-cly-text-2">{fmt(totalEngagement)}</td>
-                        <td className="py-3 text-center text-cly-text font-black">
+                        <td className="py-3 text-center text-cly-text-2 font-medium">{fmt(p.totalReach)}</td>
+                        <td className="py-3 text-center text-cly-text-2 font-medium">{fmt(totalImpression)}</td>
+                        <td className="py-3 text-center text-cly-text-2 font-medium">{fmt(totalEngagement)}</td>
+                        <td className="py-3 text-center text-cly-text font-bold">
                           {fmtPercent(er)}
                         </td>
                       </tr>
@@ -521,7 +642,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Goals Progress */}
-        <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
+        <div className="bg-white rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
           <SectionTitle 
             title="Goals Progress" 
             note={selectedAccount === 'all' ? 'Semua Akun' : accounts.find(a => a.name === selectedAccount)?.name || selectedAccount}
@@ -529,15 +650,15 @@ export default function AnalyticsPage() {
           {goalsLoading ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[1, 2, 3].map(i => (
-                <div key={i} className="border border-cly-border rounded-lg p-4 h-[120px] animate-pulse" />
+                <div key={i} className="bg-gradient-to-br from-cly-muted to-white rounded-xl p-4 h-[120px] animate-pulse" />
               ))}
             </div>
           ) : goals.filter(g => selectedAccount === 'all' || !g.account || g.account === 'all' || g.account === selectedAccount).length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-12 h-12 rounded-full bg-cly-muted text-cly-text-3 flex items-center justify-center mb-3">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-cly-muted to-white text-cly-text-3 flex items-center justify-center mb-3">
                 <Target size={24} />
               </div>
-              <p className="text-cly-sm text-cly-text-3">Belum ada goal untuk filter ini.</p>
+              <p className="text-sm text-cly-text-3">Belum ada goal untuk filter ini.</p>
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -579,23 +700,44 @@ export default function AnalyticsPage() {
                   
                   const progress = goal.target > 0 ? Math.min((actual / goal.target) * 100, 100) : 0;
                   
+                  // Format month name
+                  const monthName = new Date(goal.year, goal.month - 1).toLocaleDateString('id-ID', { 
+                    month: 'long',
+                    year: 'numeric'
+                  });
+                  
                   return (
-                    <div key={goal.id} className="border border-cly-border rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <span className="text-cly-sm font-semibold text-cly-text">{goal.label}</span>
-                        <span className="text-cly-xs text-cly-text-3 uppercase font-black">
-                          {goal.platform === 'all' ? 'All' : platformName(goal.platform)}
+                    <div key={goal.id} className="bg-white border border-cly-border rounded-xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)] transition-all">
+                      {/* Header: Metric + Platform */}
+                      <div className="flex items-start justify-between mb-3">
+                        <span className="text-base font-bold text-cly-text capitalize">{goal.metric}</span>
+                        <span className="text-xs text-cly-text-3 uppercase font-semibold">
+                          {goal.platform === 'all' ? 'ALL' : platformName(goal.platform)}
                         </span>
                       </div>
+                      
+                      {/* Target */}
+                      <div className="mb-1">
+                        <span className="text-xl font-bold text-cly-text">{fmt(goal.target)}</span>
+                      </div>
+                      
+                      {/* Month */}
+                      <div className="mb-3">
+                        <span className="text-xs text-cly-text-3 font-medium">{monthName}</span>
+                      </div>
+                      
+                      {/* Account (if applicable) */}
                       {goal.account && goal.account !== 'all' && (
-                        <div className="text-cly-xs text-cly-text-3 mb-2">
+                        <div className="text-xs text-cly-text-3 mb-2 font-medium">
                           Akun: {goal.account}
                         </div>
                       )}
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-cly-xs">
-                          <span className="text-cly-text-3">Progress</span>
-                          <span className="font-black text-cly-text">{fmt(actual)} / {fmt(goal.target)}</span>
+                      
+                      {/* Progress */}
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-cly-text-3 font-medium">Progress</span>
+                          <span className="text-sm font-bold text-cly-text">{fmt(actual)} / {fmt(goal.target)}</span>
                         </div>
                         <div className="h-2 bg-cly-muted rounded-full overflow-hidden">
                           <div 
@@ -603,7 +745,7 @@ export default function AnalyticsPage() {
                             style={{ width: `${progress}%` }}
                           />
                         </div>
-                        <div className="text-right text-cly-xs font-black text-cly-brand">{fmtPercent(progress)}</div>
+                        <div className="text-right text-xs font-bold text-cly-brand">{fmtPercent(progress)}</div>
                       </div>
                     </div>
                   );

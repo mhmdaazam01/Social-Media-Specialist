@@ -9,6 +9,9 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useEvents } from '@/lib/hooks/useEvents';
 import { today } from '@/lib/utils/formatting';
 import { PlatformBadge } from '@/components/cly';
+import { ShareButton } from '@/components/collaboration/ShareButton';
+import { useUser } from '@/lib/hooks/useUser';
+import { useCollaboration } from '@/lib/context/CollaborationContext';
 import type { CalendarEvent } from '@/types';
 
 export default function CalendarPage() {
@@ -24,6 +27,12 @@ export default function CalendarPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const { events, deleteEvent } = useEvents();
+  const { user } = useUser();
+  const { activeWorkspaceId, getRoleInWorkspace } = useCollaboration();
+
+  const isOwnWorkspace = !activeWorkspaceId || activeWorkspaceId === user?.id;
+  const roleInActiveWorkspace = isOwnWorkspace ? 'owner' : getRoleInWorkspace(activeWorkspaceId ?? '');
+  const isViewer = !isOwnWorkspace && roleInActiveWorkspace === 'viewer';
 
   const monthName = new Date(year, month - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
@@ -77,6 +86,7 @@ export default function CalendarPage() {
   }, [events, year, month]);
 
   function handleDateClick(dateStr: string) {
+    if (isViewer) return;
     setSelectedDate(dateStr);
     setEditEvent(null);
     setModalOpen(true);
@@ -142,28 +152,55 @@ export default function CalendarPage() {
 
   return (
     <AppShell title="Calendar">
-      <div className="flex flex-col gap-[18px] p-[18px]">
+      <style jsx global>{`
+        .calendar-typography h1,
+        .calendar-typography h2,
+        .calendar-typography h3,
+        .calendar-typography button[class*="font-bold"],
+        .calendar-typography span[class*="font-semibold"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 700 !important;
+        }
+        .calendar-typography button[class*="font-medium"],
+        .calendar-typography span[class*="font-medium"],
+        .calendar-typography [class*="uppercase"][class*="tracking"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 600 !important;
+        }
+        .calendar-typography p,
+        .calendar-typography span:not([class*="font-bold"]):not([class*="font-semibold"]):not([class*="font-medium"]),
+        .calendar-typography div[class*="text-xs"]:not([class*="font-bold"]):not([class*="font-semibold"]) {
+          font-family: var(--font-dm-sans) !important;
+          font-weight: 400 !important;
+        }
+      `}</style>
+      <div className="flex flex-col gap-[18px] p-[18px] calendar-typography">
         
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-cly-lg font-semibold text-cly-text">Kalender Konten</h2>
-          <button
-            onClick={handleAdd}
-            className="flex items-center gap-1.5 rounded-lg bg-cly-brand px-4 py-2 text-cly-sm font-medium text-white transition-all hover:bg-cly-brand-hover active:scale-95"
-          >
-            <PlusIcon className="size-4" />
-            Event Baru
-          </button>
+          <h2 className="text-lg font-bold text-cly-text">Kalender Konten</h2>
+          <div className="flex items-center gap-2">
+            {!isViewer && <ShareButton targetType="calendar" />}
+            {!isViewer && (
+              <button
+                onClick={handleAdd}
+                className="flex items-center gap-1.5 rounded-lg bg-gradient-to-br from-cly-brand to-cly-brand-2 px-4 py-2 text-xs font-bold text-white transition-all hover:shadow-lg active:scale-95 shadow-md"
+              >
+                <PlusIcon className="size-4" />
+                Event Baru
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Two-column layout: Calendar + Agenda */}
         <div className="grid grid-cols-1 gap-[18px] lg:grid-cols-[2fr_1fr]">
           
           {/* Calendar Grid */}
-          <div className="rounded-[10px] bg-cly-surface p-[18px] shadow-cly">
+          <div className="rounded-2xl bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
             {/* Month navigation */}
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-cly-base font-semibold capitalize text-cly-text">{monthName}</h3>
+              <h3 className="text-base font-bold capitalize text-cly-text">{monthName}</h3>
               <div className="flex gap-1">
                 <button
                   onClick={() => {
@@ -174,7 +211,7 @@ export default function CalendarPage() {
                       setMonth(m => m - 1);
                     }
                   }}
-                  className="rounded-lg border border-cly-border p-1.5 text-cly-text-muted transition-colors hover:border-cly-brand hover:text-cly-brand"
+                  className="rounded-lg border border-cly-border bg-white p-1.5 text-cly-text-3 transition-all hover:border-cly-brand hover:text-cly-brand hover:shadow-sm"
                 >
                   <ChevronLeftIcon className="size-4" />
                 </button>
@@ -187,7 +224,7 @@ export default function CalendarPage() {
                       setMonth(m => m + 1);
                     }
                   }}
-                  className="rounded-lg border border-cly-border p-1.5 text-cly-text-muted transition-colors hover:border-cly-brand hover:text-cly-brand"
+                  className="rounded-lg border border-cly-border bg-white p-1.5 text-cly-text-3 transition-all hover:border-cly-brand hover:text-cly-brand hover:shadow-sm"
                 >
                   <ChevronRightIcon className="size-4" />
                 </button>
@@ -197,7 +234,7 @@ export default function CalendarPage() {
             {/* Day headers */}
             <div className="mb-2 grid grid-cols-7 gap-1">
               {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(day => (
-                <div key={day} className="py-2 text-center text-cly-xs font-medium text-cly-text-muted">
+                <div key={day} className="py-2 text-center text-xs font-semibold text-cly-text-3">
                   {day}
                 </div>
               ))}
@@ -212,10 +249,10 @@ export default function CalendarPage() {
                 return (
                   <div
                     key={i}
-                    className={`min-h-[80px] rounded-lg border p-2 transition-all ${
+                    className={`min-h-[80px] rounded-xl border p-2 transition-all ${
                       day.date
-                        ? 'cursor-pointer border-cly-border bg-cly-surface hover:border-cly-brand hover:shadow-cly'
-                        : 'border-transparent bg-cly-muted'
+                        ? 'cursor-pointer border-cly-border bg-white hover:border-cly-brand hover:shadow-sm'
+                        : 'border-transparent bg-gradient-to-br from-cly-muted to-white'
                     }`}
                     onClick={() => day.dateStr && handleDateClick(day.dateStr)}
                   >
@@ -223,14 +260,14 @@ export default function CalendarPage() {
                       <>
                         <div className="mb-1 flex items-center justify-between">
                           <span
-                            className={`text-cly-sm font-medium ${
+                            className={`text-sm font-semibold ${
                               isToday ? 'text-cly-brand' : 'text-cly-text'
                             }`}
                           >
                             {day.date}
                           </span>
                           {hasConflict && (
-                            <span className="size-2 rounded-full bg-red-500" title="Multiple events" />
+                            <span className="size-2 rounded-full bg-gradient-to-br from-[#FFB5A0] to-[#FF9680]" title="Multiple events" />
                           )}
                         </div>
                         <div className="flex flex-col gap-0.5">
@@ -241,13 +278,13 @@ export default function CalendarPage() {
                                 e.stopPropagation();
                                 handleEventClick(evt);
                               }}
-                              className="truncate rounded bg-cly-brand/10 px-1.5 py-0.5 text-left text-cly-xs text-cly-brand hover:bg-cly-brand/20"
+                              className="truncate rounded-lg bg-gradient-to-br from-cly-brand-tint to-white px-1.5 py-0.5 text-left text-xs text-cly-brand hover:from-cly-brand/10 hover:to-cly-brand/5 transition-all font-medium"
                             >
                               {evt.title}
                             </button>
                           ))}
                           {day.events.length > 2 && (
-                            <span className="px-1.5 text-cly-xs text-cly-text-muted">
+                            <span className="px-1.5 text-xs text-cly-text-3 font-medium">
                               +{day.events.length - 2} more
                             </span>
                           )}
@@ -261,17 +298,17 @@ export default function CalendarPage() {
           </div>
 
           {/* Agenda Sidebar */}
-          <div className="rounded-[10px] bg-cly-surface shadow-cly flex flex-col" style={{ maxHeight: 'calc(100vh - 120px)' }}>
+          <div className="rounded-2xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] flex flex-col" style={{ maxHeight: 'calc(100vh - 120px)' }}>
             {/* Sidebar header with select mode controls */}
-            <div className="px-[18px] pt-[18px] pb-3 shrink-0 flex items-center justify-between">
-              <h3 className="text-cly-base font-semibold text-cly-text">Semua Event</h3>
+            <div className="px-6 pt-6 pb-3 shrink-0 flex items-center justify-between">
+              <h3 className="text-base font-bold text-cly-text">Semua Event</h3>
               {agenda.length > 0 && (
                 <div className="flex items-center gap-1.5">
                   {selectMode ? (
                     <>
                       <button
                         onClick={toggleSelectAll}
-                        className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-cly-text-muted hover:bg-cly-muted transition-colors"
+                        className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-cly-text-2 hover:bg-cly-muted transition-all"
                         title={selectedIds.size === agenda.length ? 'Batal pilih semua' : 'Pilih semua'}
                       >
                         {selectedIds.size === agenda.length ? <CheckSquare className="size-3.5" /> : <Square className="size-3.5" />}
@@ -280,7 +317,7 @@ export default function CalendarPage() {
                       {selectedIds.size > 0 && (
                         <button
                           onClick={() => setBulkDeleteOpen(true)}
-                          className="flex items-center gap-1 rounded-md bg-red-500 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-red-600 transition-colors"
+                          className="flex items-center gap-1 rounded-lg bg-gradient-to-br from-[#FFB5A0] to-[#FF9680] px-2.5 py-1 text-xs font-semibold text-white hover:shadow-md transition-all"
                         >
                           <Trash2 className="size-3" />
                           Hapus ({selectedIds.size})
@@ -288,7 +325,7 @@ export default function CalendarPage() {
                       )}
                       <button
                         onClick={exitSelectMode}
-                        className="rounded-md px-2 py-1 text-[11px] font-medium text-cly-text-muted hover:bg-cly-muted transition-colors"
+                        className="rounded-lg px-2 py-1 text-xs font-medium text-cly-text-2 hover:bg-cly-muted transition-all"
                       >
                         Batal
                       </button>
@@ -296,7 +333,7 @@ export default function CalendarPage() {
                   ) : (
                     <button
                       onClick={() => setSelectMode(true)}
-                      className="flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-cly-text-muted hover:bg-cly-muted transition-colors"
+                      className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-cly-text-2 hover:bg-cly-muted transition-all"
                     >
                       <CheckSquare className="size-3.5" />
                       Pilih
@@ -305,9 +342,9 @@ export default function CalendarPage() {
                 </div>
               )}
             </div>
-            <div className="overflow-y-auto px-[18px] pb-[18px] flex-1">
+            <div className="overflow-y-auto px-6 pb-6 flex-1">
             {agenda.length === 0 ? (
-              <p className="text-cly-sm text-cly-text-muted">Tidak ada event yang dijadwalkan</p>
+              <p className="text-sm text-cly-text-3">Tidak ada event yang dijadwalkan</p>
             ) : (() => {
               const todayStr = today();
               const upcomingItems = agenda.filter(e => e.scheduled_date >= todayStr);
@@ -318,15 +355,15 @@ export default function CalendarPage() {
                 const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
                 const isChecked = selectedIds.has(evt.id);
                 const cardClass = variant === 'upcoming'
-                  ? `flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition-all hover:shadow-cly ${
+                  ? `flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all hover:shadow-sm ${
                       isChecked && selectMode
-                        ? 'border-red-400 bg-red-50 dark:bg-red-950/20'
-                        : 'border-cly-brand/20 bg-cly-brand-tint hover:border-cly-brand'
+                        ? 'border-[#FFB5A0] bg-gradient-to-br from-[#FFB5A0]/10 to-[#FF9680]/5'
+                        : 'border-cly-brand/20 bg-gradient-to-br from-cly-brand-tint to-white hover:border-cly-brand'
                     }`
-                  : `flex items-center gap-2 rounded-lg border px-3 py-2 text-left transition-all hover:shadow-cly ${
+                  : `flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all hover:shadow-sm ${
                       isChecked && selectMode
-                        ? 'border-red-400 bg-red-50 dark:bg-red-950/20'
-                        : 'border-cly-border bg-cly-muted-2 hover:border-cly-brand'
+                        ? 'border-[#FFB5A0] bg-gradient-to-br from-[#FFB5A0]/10 to-[#FF9680]/5'
+                        : 'border-cly-border bg-gradient-to-br from-cly-muted-2 to-white hover:border-cly-brand'
                     }`;
 
                 return (
@@ -338,13 +375,13 @@ export default function CalendarPage() {
                     {selectMode && (
                       <span className="shrink-0">
                         {isChecked
-                          ? <CheckSquare className="size-4 text-red-500" />
-                          : <Square className="size-4 text-cly-text-muted" />}
+                          ? <CheckSquare className="size-4 text-[#FFB5A0]" />
+                          : <Square className="size-4 text-cly-text-3" />}
                       </span>
                     )}
                     <div className="flex-1 min-w-0">
-                      <span className={`text-cly-xs font-${variant === 'upcoming' ? 'semibold' : 'medium'} ${variant === 'upcoming' ? 'text-cly-text' : 'text-cly-text-2'} truncate block`}>{evt.title}</span>
-                      <span className={`text-[10px] ${variant === 'upcoming' ? 'text-cly-brand' : 'text-cly-text-muted'}`}>{dateStr}{evt.scheduled_time ? ` · ${evt.scheduled_time}` : ''}</span>
+                      <span className={`text-xs font-${variant === 'upcoming' ? 'semibold' : 'medium'} ${variant === 'upcoming' ? 'text-cly-text' : 'text-cly-text-2'} truncate block`}>{evt.title}</span>
+                      <span className={`text-[10px] font-medium ${variant === 'upcoming' ? 'text-cly-brand' : 'text-cly-text-3'}`}>{dateStr}{evt.scheduled_time ? ` · ${evt.scheduled_time}` : ''}</span>
                     </div>
                     {!selectMode && <PlatformBadge platform={evt.platform} />}
                   </button>
@@ -391,6 +428,7 @@ export default function CalendarPage() {
             setDeleteDialogOpen(true);
             setModalOpen(false);
           }}
+          readOnly={isViewer}
         />
 
         <ConfirmDialog

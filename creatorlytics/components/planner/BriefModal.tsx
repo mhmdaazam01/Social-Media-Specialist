@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import DOMPurify from 'isomorphic-dompurify';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +24,7 @@ interface BriefModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   idea: ContentIdea | null;
+  readOnly?: boolean;
 }
 
 const EMPTY_BRIEF: ContentBrief = {
@@ -67,7 +69,7 @@ interface EditForm {
   ref_links: string[];
 }
 
-export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
+export function BriefModal({ open, onOpenChange, idea, readOnly }: BriefModalProps) {
   const { createIdea, updateIdea } = useIdeas();
 
   async function handleDuplicateInModal() {
@@ -237,7 +239,7 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
               </div>
             </div>
 
-            {mode === 'view' && (
+            {mode === 'view' && !readOnly && (
               <div className="flex items-center gap-1.5 shrink-0">
                 <Button
                   type="button"
@@ -512,9 +514,9 @@ export function BriefModal({ open, onOpenChange, idea }: BriefModalProps) {
 
 function ViewSection({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border bg-card/60 p-4 space-y-2.5">
-      <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-        <span className="text-muted-foreground">{icon}</span> {title}
+    <div className="rounded-xl border border-cly-border bg-white p-4 space-y-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+      <p className="flex items-center gap-1.5 text-[11px] font-bold text-cly-text-2 uppercase tracking-wider">
+        <span className="text-cly-text-3">{icon}</span> {title}
       </p>
       {children}
     </div>
@@ -528,7 +530,11 @@ function ViewRow({ label, value, multiline }: { label: string; value: string; mu
         <span className="text-[11px] text-muted-foreground">{label}</span>
         <div 
           className="text-sm leading-relaxed max-w-none [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2 [&_li]:mb-1 [&_b]:font-bold [&_i]:italic"
-          dangerouslySetInnerHTML={{ __html: value }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(value, {
+            ALLOWED_TAGS: ['b', 'i', 'u', 'ul', 'ol', 'li', 'p', 'br', 'span', 'strong', 'em'],
+            ALLOWED_ATTR: [],
+            KEEP_CONTENT: true,
+          }) }}
         />
       </div>
     );
@@ -543,9 +549,9 @@ function ViewRow({ label, value, multiline }: { label: string; value: string; mu
 
 function SectionBlock({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-3 rounded-xl border bg-card/60 p-4">
-      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-        <span className="text-muted-foreground">{icon}</span>
+    <div className="space-y-3 rounded-xl border border-cly-border bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+      <div className="flex items-center gap-2 text-sm font-bold text-cly-text">
+        <span className="text-cly-text-2">{icon}</span>
         {title}
       </div>
       {children}

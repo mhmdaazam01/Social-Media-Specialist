@@ -6,11 +6,12 @@ import { MetricCard, InsightCard, SectionTitle, Badge } from '@/components/cly';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { useGoals } from '@/lib/hooks/useGoals';
 import { useUser } from '@/lib/hooks/useUser';
+import { useTheme } from '@/lib/context/ThemeContext';
 import { calcTotalER, fmt, isPostInMonth } from '@/lib/utils/analytics';
 import { getValidHref } from '@/lib/utils/link';
 import {
   Eye, TrendingUp, BookOpen, Target,
-  ArrowUpRight, AlertTriangle, CheckCircle2,
+  ArrowUpRight, AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -18,6 +19,7 @@ import {
 
 export default function DashboardPage() {
   const { posts, loading: postsLoading } = usePosts();
+  const { resolvedTheme } = useTheme();
   const { goals, loading: goalsLoading } = useGoals();
   const { profile } = useUser();
   const erMode = profile?.er_mode || 'impression';
@@ -27,6 +29,9 @@ export default function DashboardPage() {
   const [chartView, setChartView] = useState<'daily' | 'monthly'>('daily');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  
+  // Goal carousel
+  const [currentGoalIndex, setCurrentGoalIndex] = useState(0);
 
   const now = useMemo(() => new Date(), []);
   const thisMonth = now.getMonth() + 1;
@@ -34,7 +39,9 @@ export default function DashboardPage() {
 
   const metrics = useMemo(() => {
     const totalPosts = posts.length;
-    const totalReach = posts.reduce((s, p) => s + p.reach, 0);
+    const totalReach = posts.reduce((s, p) => s + (p.reach || 0), 0);
+    const totalImpression = posts.reduce((s, p) => s + (p.impression || 0), 0);
+    const totalEngagement = posts.reduce((s, p) => s + (p.like || 0) + (p.comment || 0) + (p.share || 0) + (p.save || 0), 0);
     const avgER = posts.length > 0 ? calcTotalER(posts, erMode) : 0;
 
     // Posts this month
@@ -83,7 +90,7 @@ export default function DashboardPage() {
       ? Math.round((onTrackGoals.length / activeGoals.length) * 100)
       : null;
 
-    return { totalPosts, totalReach, avgER, activePosts, reachDelta, goalConfidence };
+    return { totalPosts, totalReach, totalImpression, totalEngagement, avgER, activePosts, reachDelta, goalConfidence };
   }, [posts, goals, erMode, thisMonth, thisYear, now]);
 
   // Chart data — last 6 months or filtered by date range
@@ -181,26 +188,169 @@ export default function DashboardPage() {
   }, [posts]);
 
 
-  const { totalReach, avgER, activePosts, reachDelta, goalConfidence } = metrics;
+  const { totalPosts, totalReach, totalImpression, totalEngagement, avgER, activePosts, reachDelta, goalConfidence } = metrics;
 
   return (
     <AppShell title="Dashboard">
-      <div className="flex flex-col gap-[18px]">
+      <style jsx global>{`
+        /* ═══════════════════════════════════════════════════════════════
+           Dashboard Typography System - Space Grotesk + DM Sans
+           ═══════════════════════════════════════════════════════════════ */
+        
+        /* ─────────────────────────────────────────────────────────────
+           PRIMARY FONT: Space Grotesk
+           Used for: Headlines, KPI numbers, labels, navigation
+           ───────────────────────────────────────────────────────────── */
+        
+        /* Page Title "Dashboard" at top */
+        .dashboard-typography h1 {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 700 !important;
+        }
+        
+        /* Section headings (Performance Snapshot, Top 3 Content, Goal Progress) */
+        .dashboard-typography h2,
+        .dashboard-typography h3,
+        .dashboard-typography div[class*="text-base"][class*="font-bold"][class*="tracking-tight"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 700 !important;
+        }
+        
+        /* Section subtitles in SectionTitle component */
+        .dashboard-typography div[class*="text-sm"][class*="text-cly-text-3"][class*="leading-relaxed"] {
+          font-family: var(--font-dm-sans) !important;
+          font-weight: 400 !important;
+        }
+        
+        /* KPI Card: Uppercase labels (TOTAL POSTS, TOTAL IMPRESSION, etc.) */
+        .dashboard-typography [class*="uppercase"][class*="tracking"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 600 !important;
+        }
+        
+        /* KPI Card: Large numbers (main metric values) */
+        .dashboard-typography [class*="text-2xl"],
+        .dashboard-typography [class*="text-3xl"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 700 !important;
+        }
+        
+        /* Top Content: Post titles (font-bold text-cly-text) */
+        .dashboard-typography a[class*="font-bold"][class*="text-cly-text"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 600 !important;
+        }
+        
+        /* Top Content: Post position numbers (1, 2, 3) */
+        .dashboard-typography [class*="font-black"][class*="text-cly-text-3"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 700 !important;
+        }
+        
+        /* Top Content: Impression numbers (font-black text-cly-brand) */
+        .dashboard-typography [class*="font-black"][class*="text-cly-brand"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 700 !important;
+        }
+        
+        /* Goal Progress: Percentage numbers in circle */
+        .dashboard-typography [class*="text-xl"][class*="font-black"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 700 !important;
+        }
+        
+        /* Goal Progress: Goal metric text (e.g., "1.2K / 5K Posts") */
+        .dashboard-typography [class*="font-semibold"]:not([class*="text-xs"]):not([class*="text-sm"]) {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 600 !important;
+        }
+        
+        /* Chart controls: Button text (Harian, Bulanan) */
+        .dashboard-typography button[class*="font-semibold"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 600 !important;
+        }
+        
+        /* ─────────────────────────────────────────────────────────────
+           SECONDARY FONT: DM Sans
+           Used for: Body text, descriptions, subtitles, small labels
+           ───────────────────────────────────────────────────────────── */
+        
+        /* KPI Card: Caption text (e.g., "On track", "No goals") */
+        .dashboard-typography div[class*="text-xs"][class*="opacity-75"] {
+          font-family: var(--font-dm-sans) !important;
+          font-weight: 400 !important;
+        }
+        
+        /* Insight cards: Titles (font-bold) */
+        .dashboard-typography div[class*="font-bold"][class*="text-xs"],
+        .dashboard-typography div[class*="font-bold"][class*="text-sm"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 600 !important;
+        }
+        
+        /* Insight cards: Body text descriptions */
+        .dashboard-typography div[class*="leading-relaxed"] {
+          font-family: var(--font-dm-sans) !important;
+          font-weight: 400 !important;
+        }
+        
+        .dashboard-typography p:not([class*="font-bold"]):not([class*="font-black"]):not([class*="font-semibold"]) {
+          font-family: var(--font-dm-sans) !important;
+          font-weight: 400 !important;
+        }
+        
+        /* Top Content: Platform/account text (instagram | @username) */
+        .dashboard-typography p[class*="capitalize"][class*="text-cly-text-3"] {
+          font-family: var(--font-dm-sans) !important;
+          font-weight: 400 !important;
+        }
+        
+        /* Goal Progress: Month badge text (e.g., "Agustus 2026") */
+        .dashboard-typography span[class*="text-xs"][class*="uppercase"][class*="tracking-wider"] {
+          font-family: var(--font-dm-sans) !important;
+          font-weight: 500 !important;
+        }
+        
+        /* Goal Progress: Platform/metric subtitle */
+        .dashboard-typography p[class*="text-sm"][class*="text-cly-text-2"] {
+          font-family: var(--font-dm-sans) !important;
+          font-weight: 400 !important;
+        }
+        
+        /* Chart: Axis labels and tooltips - handled by Recharts */
+        .dashboard-typography .recharts-text {
+          font-family: var(--font-dm-sans) !important;
+          font-weight: 400 !important;
+        }
+        
+        /* Empty state messages */
+        .dashboard-typography div[class*="text-center"] p {
+          font-family: var(--font-dm-sans) !important;
+          font-weight: 400 !important;
+        }
+      `}</style>
+      <div className="flex flex-col gap-3 sm:gap-4 lg:gap-[18px] dashboard-typography">
 
-        {/* Status strip */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2 text-cly-sm text-cly-text-2">
-            <span className="w-[7px] h-[7px] rounded-full bg-cly-green" />
-            Data Terkini
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge tone="neutral">{now.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}</Badge>
-            <Badge tone="blue">All platforms</Badge>
-          </div>
-        </div>
+        {/* Spacer */}
+        <div className="h-4 sm:h-6 lg:h-8" />
 
         {/* KPI Grid */}
-        <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-2.5 sm:gap-3 md:gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <MetricCard
+            label="Total Posts"
+            value={fmt(totalPosts)}
+            icon={BookOpen}
+            tone="purple"
+            loading={loading}
+          />
+          <MetricCard
+            label="Total Impression"
+            value={fmt(totalImpression)}
+            icon={Eye}
+            tone="amber"
+            loading={loading}
+          />
           <MetricCard
             label="Total Reach"
             value={fmt(totalReach)}
@@ -208,82 +358,81 @@ export default function DashboardPage() {
             deltaLabel="%"
             icon={Eye}
             tone="green"
-            caption="Dari semua postingan"
             loading={loading}
           />
           <MetricCard
-            label="Rata-rata ER"
-            value={`${avgER.toFixed(1)}%`}
+            label="Total Engagement"
+            value={fmt(totalEngagement)}
             icon={TrendingUp}
             tone="blue"
-            caption={`Mode: ${erMode}`}
             loading={loading}
           />
           <MetricCard
-            label="Post bulan ini"
-            value={activePosts.toString()}
-            icon={BookOpen}
-            tone="amber"
+            label="Average ER"
+            value={`${avgER.toFixed(1)}%`}
+            icon={TrendingUp}
+            tone="coral"
             loading={loading}
           />
           <MetricCard
-            label="Goal tercapai"
+            label="Goal Progress"
             value={goalConfidence !== null ? `${goalConfidence}%` : 'N/A'}
             icon={Target}
             tone="green"
-            caption={goalConfidence !== null ? "On track bulan ini" : "Belum ada goal"}
+            caption={goalConfidence !== null ? "On track" : "No goals"}
             loading={loading}
           />
         </div>
 
         {/* Main Grid */}
-        <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.35fr)_360px]">
+        {/* Main Grid */}
+        <div className="grid gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1.35fr)_360px]">
 
           {/* Reach trend chart */}
-          <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
-            <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="bg-white dark:bg-cly-surface rounded-xl sm:rounded-2xl p-4 sm:p-5 lg:p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-3 mb-4">
               <SectionTitle
-                title="Tren Performa"
+                title="Performance Snapshot"
                 note={chartView === 'monthly' ? 'Impression & Reach per bulan' : 'Impression & Reach per hari'}
               />
               
               {/* Chart controls */}
-              <div className="flex items-center gap-2">
-                {/* Date filters */}
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                {/* Date filters - Hidden on mobile, shown on tablet+ */}
                 <input
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="h-[30px] px-2 border border-cly-border rounded bg-cly-surface text-cly-text-2 text-cly-xs font-semibold outline-none focus:border-cly-brand transition-colors"
+                  className="hidden sm:block h-8 px-3 border border-cly-border rounded-lg bg-white dark:bg-cly-surface text-cly-text-2 text-xs font-medium outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
                   placeholder="Dari"
                 />
-                <span className="text-cly-xs text-cly-text-3">-</span>
+                <span className="hidden sm:inline text-xs text-cly-text-3">-</span>
                 <input
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="h-[30px] px-2 border border-cly-border rounded bg-cly-surface text-cly-text-2 text-cly-xs font-semibold outline-none focus:border-cly-brand transition-colors"
+                  className="hidden sm:block h-8 px-3 border border-cly-border rounded-lg bg-white dark:bg-cly-surface text-cly-text-2 text-xs font-medium outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
                   placeholder="Sampai"
                 />
                 
                 {/* View toggle */}
-                <div className="flex border border-cly-border rounded overflow-hidden">
+                <div className="flex border border-cly-border rounded-lg overflow-hidden">
                   <button
                     onClick={() => setChartView('daily')}
-                    className={`h-[30px] px-3 text-cly-xs font-semibold transition-colors ${
+                    className={`h-8 px-3 sm:px-4 text-xs font-semibold transition-all ${
                       chartView === 'daily' 
                         ? 'bg-cly-brand text-white' 
-                        : 'bg-cly-surface text-cly-text-2 hover:bg-cly-muted'
+                        : 'bg-white dark:bg-cly-surface text-cly-text-2 hover:bg-cly-muted'
                     }`}
                   >
                     Harian
                   </button>
                   <button
                     onClick={() => setChartView('monthly')}
-                    className={`h-[30px] px-3 text-cly-xs font-semibold border-l border-cly-border transition-colors ${
+                    className={`h-8 px-3 sm:px-4 text-xs font-semibold border-l border-cly-border transition-all ${
                       chartView === 'monthly' 
                         ? 'bg-cly-brand text-white' 
-                        : 'bg-cly-surface text-cly-text-2 hover:bg-cly-muted'
+                        : 'bg-white dark:bg-cly-surface text-cly-text-2 hover:bg-cly-muted'
                     }`}
                   >
                     Bulanan
@@ -293,70 +442,128 @@ export default function DashboardPage() {
             </div>
             
             {chartData.length === 0 ? (
-              <div className="h-[250px] bg-cly-muted rounded-lg flex items-center justify-center">
-                <p className="text-cly-sm text-cly-text-3">Belum ada data — tambahkan post untuk melihat tren.</p>
+              <div className="h-[200px] sm:h-[250px] bg-gradient-to-br from-cly-muted to-white dark:to-cly-surface rounded-xl flex flex-col items-center justify-center text-center p-4">
+                <p className="text-sm font-semibold text-cly-text-2 mb-1">No performance data yet.</p>
+                <p className="text-sm text-cly-text-3">Publish or sync content to start seeing insights.</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-cly-border)" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: 'var(--color-cly-text-3)' }} tickFormatter={v => fmt(v)} axisLine={false} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{ background: 'var(--color-cly-surface)', border: '1px solid var(--color-cly-border)', borderRadius: 8, fontSize: 12 }}
-                    formatter={(v, name) => [fmt(Number(v)), name === 'reach' ? 'Reach' : 'Impression']}
+              <ResponsiveContainer width="100%" height={typeof window !== 'undefined' && window.innerWidth < 640 ? 220 : 280}>
+                <LineChart data={chartData} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorImpression" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={resolvedTheme === 'dark' ? '#FAFAFA' : '#A8E6CF'} stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor={resolvedTheme === 'dark' ? '#FAFAFA' : '#A8E6CF'} stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorReach" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={resolvedTheme === 'dark' ? '#71717A' : '#6ECDB0'} stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor={resolvedTheme === 'dark' ? '#71717A' : '#6ECDB0'} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid 
+                    strokeDasharray="3 3" 
+                    stroke={resolvedTheme === 'dark' ? '#3F3F46' : '#E8ECEF'} 
+                    strokeOpacity={0.5} 
+                    vertical={false} 
                   />
-                  <Line type="monotone" dataKey="impression" stroke="var(--color-cly-green)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-green)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
-                  <Line type="monotone" dataKey="reach" stroke="var(--color-cly-brand)" strokeWidth={2} dot={{ r: 4, fill: "var(--color-cly-brand)", strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                  <XAxis 
+                    dataKey="label" 
+                    tick={{ fontSize: 12, fill: resolvedTheme === 'dark' ? '#A1A1AA' : '#A0AEC0', fontWeight: 500 }} 
+                    axisLine={false} 
+                    tickLine={false} 
+                    dy={8}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: resolvedTheme === 'dark' ? '#A1A1AA' : '#A0AEC0', fontWeight: 500 }} 
+                    tickFormatter={v => fmt(v)} 
+                    axisLine={false} 
+                    tickLine={false} 
+                  />
+                  <Tooltip
+                    contentStyle={{ 
+                      background: resolvedTheme === 'dark' ? '#18181B' : '#FFFFFF', 
+                      border: `1px solid ${resolvedTheme === 'dark' ? '#3F3F46' : '#E8ECEF'}`, 
+                      borderRadius: 12, 
+                      fontSize: 13,
+                      fontWeight: 500,
+                      padding: '8px 12px',
+                      boxShadow: resolvedTheme === 'dark' ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.08)',
+                      color: resolvedTheme === 'dark' ? '#FAFAFA' : '#1A1D23'
+                    }}
+                    formatter={(v, name) => [fmt(Number(v)), name === 'reach' ? 'Reach' : 'Impression']}
+                    labelStyle={{ fontWeight: 600, marginBottom: 4, color: resolvedTheme === 'dark' ? '#FAFAFA' : '#4A5568' }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="impression" 
+                    stroke={resolvedTheme === 'dark' ? '#FAFAFA' : '#A8E6CF'} 
+                    strokeWidth={3} 
+                    dot={{ r: 5, fill: resolvedTheme === 'dark' ? '#FAFAFA' : '#A8E6CF', strokeWidth: 2, stroke: resolvedTheme === 'dark' ? '#18181B' : '#fff' }} 
+                    activeDot={{ r: 7, strokeWidth: 3 }} 
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="reach" 
+                    stroke={resolvedTheme === 'dark' ? '#71717A' : '#6ECDB0'} 
+                    strokeWidth={3} 
+                    dot={{ r: 5, fill: resolvedTheme === 'dark' ? '#71717A' : '#6ECDB0', strokeWidth: 2, stroke: resolvedTheme === 'dark' ? '#18181B' : '#fff' }} 
+                    activeDot={{ r: 7, strokeWidth: 3 }} 
+                  />
                 </LineChart>
               </ResponsiveContainer>
             )}
 
             {/* Insight cards */}
-            <div className="grid gap-2.5 sm:grid-cols-3 mt-3">
+            <div className="grid gap-2 sm:gap-3 grid-cols-1 sm:grid-cols-3 mt-3 sm:mt-4">
               {loading ? (
-                <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-3.5 h-[90px] animate-pulse" />
+                <div className="bg-white rounded-xl p-4 h-[90px] animate-pulse shadow-sm" />
               ) : topPlatformData ? (
                 <InsightCard
                   icon={TrendingUp}
-                  title={`Platform Terbaik: ${topPlatformData.platform}`}
-                  text={`Rata-rata ER tertinggi sebesar ${topPlatformData.avgER.toFixed(1)}%.`}
+                  title="Best Performer"
+                  text={`${topPlatformData.platform} generated the highest average ER at ${topPlatformData.avgER.toFixed(1)}%.`}
                   tone="green"
                 />
               ) : (
                 <InsightCard
                   icon={AlertTriangle}
-                  title="Data tidak cukup"
-                  text="Tambahkan post untuk melihat insight platform."
+                  title="Best Performer"
+                  text="Not enough performance data to identify a best performer yet."
                   tone="amber"
                 />
               )}
 
               {loading ? (
-                <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-3.5 h-[90px] animate-pulse" />
-              ) : bestPost ? (
+                <div className="bg-white rounded-xl p-4 h-[90px] animate-pulse shadow-sm" />
+              ) : posts.length > 0 ? (
                 <InsightCard
-                  icon={CheckCircle2}
-                  title="Top Konten"
-                  text={`"${bestPost.name}" mencapai ${fmt(bestPost.reach)} orang.`}
-                  tone="blue"
+                  icon={AlertTriangle}
+                  title="Biggest Opportunity"
+                  text="Identify patterns in lower performing posts to improve future content."
+                  tone="amber"
                 />
               ) : (
                 <InsightCard
                   icon={BookOpen}
-                  title="Belum ada top konten"
-                  text="Mulai posting konten pertama Anda!"
+                  title="Biggest Opportunity"
+                  text="Not enough data yet."
                   tone="amber"
                 />
               )}
 
               {loading ? (
-                <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-3.5 h-[90px] animate-pulse" />
+                <div className="bg-white rounded-xl p-4 h-[90px] animate-pulse shadow-sm" />
+              ) : bestPost ? (
+                <InsightCard
+                  icon={ArrowUpRight}
+                  title="Recommended Action"
+                  text={`Increase content similar to "${bestPost.name ? bestPost.name.substring(0, 20) + '...' : 'your best post'}" next month.`}
+                  tone="blue"
+                />
               ) : (
                 <InsightCard
                   icon={ArrowUpRight}
-                  title="Next step"
-                  text="Perbanyak konten yang mirip dengan postingan terbaik Anda."
+                  title="Recommended Action"
+                  text="Not enough data to generate recommendations yet."
                   tone="blue"
                 />
               )}
@@ -364,11 +571,11 @@ export default function DashboardPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="flex flex-col gap-3.5">
+          <div className="flex flex-col gap-4">
 
             {/* Top posts */}
-            <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
-              <SectionTitle title="Top konten" note="5 post dengan impression tertinggi." />
+            <div className="bg-white rounded-2xl p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <SectionTitle title="Top 3 Content" note="3 post dengan impression tertinggi." />
               <div className="space-y-0">
                 {loading ? (
                   <div className="space-y-3 py-2">
@@ -387,7 +594,7 @@ export default function DashboardPage() {
                 ) : (
                   [...posts]
                     .sort((a, b) => b.impression - a.impression)
-                    .slice(0, 5)
+                    .slice(0, 3)
                     .map((post, idx) => (
                       <div key={post.id} className="flex gap-2.5 py-[10px] px-1 border-b border-cly-border last:border-0 items-center">
                         <span className="text-cly-micro font-black text-cly-text-3 w-4 shrink-0">{idx + 1}</span>
@@ -430,79 +637,141 @@ export default function DashboardPage() {
             </div>
 
             {/* Active goals */}
-            <div className="bg-cly-surface border border-cly-border rounded-[10px] shadow-cly p-[18px]">
-              <SectionTitle title="Goals aktif" note={`Bulan ${now.toLocaleDateString('id-ID', { month: 'long' })}`} />
+            <div className="bg-white dark:bg-cly-surface rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+              <SectionTitle title="Goal Progress" note="Progress goal per bulan" />
               {loading ? (
-                <div className="space-y-4 py-2">
-                  {[1, 2].map(i => (
-                    <div key={i} className="space-y-2">
-                      <div className="flex justify-between">
-                        <div className="h-3 w-1/3 bg-cly-border/50 rounded animate-pulse" />
-                        <div className="h-3 w-8 bg-cly-border/50 rounded animate-pulse" />
-                      </div>
-                      <div className="h-2 w-full bg-cly-border/50 rounded-full animate-pulse" />
+                <div className="py-2">
+                  <div className="flex items-center gap-3 sm:gap-5">
+                    <div className="size-20 sm:w-24 sm:h-24 rounded-full bg-cly-border/50 animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 w-20 bg-cly-border/50 rounded animate-pulse" />
+                      <div className="h-6 sm:h-8 w-24 sm:w-28 bg-cly-border/50 rounded animate-pulse" />
                     </div>
-                  ))}
+                  </div>
                 </div>
-              ) : goals.filter(g => 
-                // Show goals for current OR next month (for early planning)
-                (g.month === thisMonth || g.month === thisMonth + 1) && g.year === thisYear
-                // Don't filter by account - show all goals
-              ).length === 0 ? (
-                <p className="text-cly-sm text-cly-text-3 py-4 text-center">Belum ada goal bulan ini.</p>
+              ) : goals.length === 0 ? (
+                <div className="py-6 sm:py-8 text-center">
+                  <p className="text-sm text-cly-text-3 mb-1">Belum ada goal.</p>
+                  <p className="text-xs text-cly-text-3">Buat goal untuk mulai tracking progress.</p>
+                </div>
               ) : (
-                <div className="space-y-3">
-                  {goals
-                    .filter(g => 
-                      (g.month === thisMonth || g.month === thisMonth + 1) && g.year === thisYear
-                      // Don't filter by account - show all goals
-                    )
-                    .slice(0, 3)
-                    .map(goal => {
-                      // Filter posts based on goal criteria
-                      const relevant = posts.filter(p => {
-                        const monthMatch = isPostInMonth(p, goal.year, goal.month);
-                        // Case-insensitive platform matching
-                        const platformMatch = goal.platform === 'all' || 
-                          (p.platform && goal.platform && p.platform.toLowerCase() === goal.platform.toLowerCase());
-                        // For 'all' account goals, include all posts regardless of account
-                        const accountMatch = !goal.account || goal.account === 'all' || p.account === goal.account;
-                        return monthMatch && platformMatch && accountMatch;
-                      });
-                      
-                      // Calculate actual value based on metric
-                      let actual = 0;
-                      if (goal.metric === 'reach') {
-                        actual = relevant.reduce((s, p) => s + (p.reach || 0), 0);
-                      } else if (goal.metric === 'followers') {
-                        actual = relevant.reduce((s, p) => s + (p.followers_gained || 0), 0);
-                      } else if (goal.metric === 'posts') {
-                        actual = relevant.length;
-                      } else if (goal.metric === 'impression') {
-                        actual = relevant.reduce((s, p) => s + (p.impression || 0), 0);
-                      } else if (goal.metric === 'engagement' || goal.metric === 'likes' || goal.metric === 'comments') {
-                        // engagement = like + comment + share + save
-                        actual = relevant.reduce((s, p) => s + (p.like || 0) + (p.comment || 0) + (p.save || 0) + (p.share || 0), 0);
-                      }
-                      
-                      const pct = Math.min(goal.target > 0 ? Math.round((actual / goal.target) * 100) : 0, 100);
-                      
-                      return (
-                        <div key={goal.id}>
-                          <div className="flex justify-between text-cly-sm mb-1">
-                            <span className="font-semibold text-cly-text truncate">{goal.label}</span>
-                            <span className="font-black text-cly-text-2 shrink-0 ml-2">{pct}%</span>
+                <>
+                  {/* Current Goal Display */}
+                  {(() => {
+                    const goal = goals[currentGoalIndex];
+                    if (!goal) return null;
+                    
+                    const monthName = new Date(goal.year, goal.month - 1).toLocaleDateString('id-ID', { 
+                      month: 'long', 
+                      year: 'numeric' 
+                    });
+                    
+                    const relevant = posts.filter(p => {
+                      const monthMatch = isPostInMonth(p, goal.year, goal.month);
+                      const platformMatch = goal.platform === 'all' || 
+                        (p.platform && goal.platform && p.platform.toLowerCase() === goal.platform.toLowerCase());
+                      const accountMatch = !goal.account || goal.account === 'all' || p.account === goal.account;
+                      return monthMatch && platformMatch && accountMatch;
+                    });
+                    
+                    let actual = 0;
+                    if (goal.metric === 'reach') {
+                      actual = relevant.reduce((s, p) => s + (p.reach || 0), 0);
+                    } else if (goal.metric === 'followers') {
+                      actual = relevant.reduce((s, p) => s + (p.followers_gained || 0), 0);
+                    } else if (goal.metric === 'posts') {
+                      actual = relevant.length;
+                    } else if (goal.metric === 'impression') {
+                      actual = relevant.reduce((s, p) => s + (p.impression || 0), 0);
+                    } else {
+                      actual = relevant.reduce((s, p) => s + (p.like || 0) + (p.comment || 0) + (p.save || 0) + (p.share || 0), 0);
+                    }
+                    
+                    const pct = Math.min(goal.target > 0 ? Math.round((actual / goal.target) * 100) : 0, 100);
+                    const radius = 38;
+                    const circumference = 2 * Math.PI * radius;
+                    const strokeDashoffset = circumference - (pct / 100) * circumference;
+                    
+                    return (
+                      <div>
+                        {/* Month Badge */}
+                        <div className="flex items-center justify-center mb-4">
+                          <span className="text-xs font-semibold text-cly-text-3 uppercase tracking-wider px-3 py-1 rounded-full bg-cly-muted">
+                            {monthName}
+                          </span>
+                        </div>
+                        
+                        {/* Goal Display */}
+                        <div className="flex items-center gap-3 sm:gap-5 mb-3 sm:mb-4">
+                          {/* Circular Progress */}
+                          <div className="relative size-20 sm:w-24 sm:h-24 shrink-0">
+                            <svg className="size-20 sm:w-24 sm:h-24 transform -rotate-90" viewBox="0 0 88 88">
+                              <circle
+                                cx="44"
+                                cy="44"
+                                r={radius}
+                                stroke={resolvedTheme === 'dark' ? '#3F3F46' : '#E8ECEF'}
+                                strokeWidth="7"
+                                fill="none"
+                              />
+                              <circle
+                                cx="44"
+                                cy="44"
+                                r={radius}
+                                stroke={
+                                  resolvedTheme === 'dark' 
+                                    ? (pct >= 80 ? "#4ADE80" : pct >= 50 ? "#60A5FA" : "#F87171")
+                                    : (pct >= 80 ? "#6ECDB0" : pct >= 50 ? "#8EC5FC" : "#FFB5A0")
+                                }
+                                strokeWidth="7"
+                                fill="none"
+                                strokeDasharray={circumference}
+                                strokeDashoffset={strokeDashoffset}
+                                strokeLinecap="round"
+                                className="transition-all duration-500"
+                              />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-lg sm:text-xl font-black text-cly-text">{pct}%</span>
+                            </div>
                           </div>
-                          <div className="h-1.5 bg-cly-muted rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-cly-brand transition-all"
-                              style={{ width: `${pct}%` }}
-                            />
+                          
+                          {/* Goal Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs sm:text-sm font-semibold text-cly-text mb-1.5 sm:mb-2 capitalize">{goal.metric}</p>
+                            <p className="text-[10px] sm:text-xs text-cly-text-3 mb-1 sm:mb-1.5">Target: {fmt(goal.target)}</p>
+                            <p className="text-lg sm:text-xl font-black text-cly-text tracking-tight">{fmt(actual)}</p>
                           </div>
                         </div>
-                      );
-                    })}
-                </div>
+                      </div>
+                    );
+                  })()}
+                  
+                  {/* Navigation Controls */}
+                  <div className="flex items-center justify-between pt-3 sm:pt-4 border-t border-cly-border">
+                    <button
+                      onClick={() => setCurrentGoalIndex(prev => prev === 0 ? goals.length - 1 : prev - 1)}
+                      disabled={goals.length <= 1}
+                      className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold text-cly-text-2 hover:bg-cly-muted active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft size={14} className="sm:size-4" />
+                      <span className="hidden sm:inline">Previous</span>
+                    </button>
+                    
+                    <span className="text-xs text-cly-text-3 font-bold">
+                      {currentGoalIndex + 1} / {goals.length}
+                    </span>
+                    
+                    <button
+                      onClick={() => setCurrentGoalIndex(prev => prev === goals.length - 1 ? 0 : prev + 1)}
+                      disabled={goals.length <= 1}
+                      className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold text-cly-text-2 hover:bg-cly-muted active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <span className="hidden sm:inline">Next</span>
+                      <ChevronRight size={14} className="sm:size-4" />
+                    </button>
+                  </div>
+                </>
               )}
             </div>
 

@@ -23,6 +23,7 @@ interface CalEventModalProps {
   editEvent?: CalendarEvent | null;
   defaultDate?: string;
   onDelete?: (event: CalendarEvent) => void;
+  readOnly?: boolean;
 }
 
 interface FormFields {
@@ -66,7 +67,7 @@ function ViewRow({ label, value, multiline }: { label: string; value: React.Reac
   );
 }
 
-export function CalEventModal({ open, onOpenChange, editEvent, defaultDate, onDelete }: CalEventModalProps) {
+export function CalEventModal({ open, onOpenChange, editEvent, defaultDate, onDelete, readOnly }: CalEventModalProps) {
   const { createEvent, updateEvent } = useEvents();
   const { platforms } = usePlatforms();
   const { pillars } = usePillars();
@@ -210,19 +211,21 @@ export function CalEventModal({ open, onOpenChange, editEvent, defaultDate, onDe
               </div>
             )}
 
-            <DialogFooter className="sm:justify-between mt-4">
-              {onDelete ? (
-                <Button type="button" variant="destructive" onClick={() => onDelete(editEvent)}>
-                  Hapus
+            {!readOnly && (
+              <DialogFooter className="sm:justify-between mt-4">
+                {onDelete ? (
+                  <Button type="button" variant="destructive" onClick={() => onDelete(editEvent)}>
+                    Hapus
+                  </Button>
+                ) : (
+                  <div />
+                )}
+                <Button onClick={() => setMode('edit')} className="gap-1.5">
+                  <Pencil className="size-3.5" />
+                  Edit Event
                 </Button>
-              ) : (
-                <div />
-              )}
-              <Button onClick={() => setMode('edit')} className="gap-1.5">
-                <Pencil className="size-3.5" />
-                Edit Event
-              </Button>
-            </DialogFooter>
+              </DialogFooter>
+            )}
           </div>
         ) : (
           // ── EDIT / CREATE MODE ──

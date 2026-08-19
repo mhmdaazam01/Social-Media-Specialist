@@ -54,6 +54,7 @@ export default function ContentPage() {
   // Editing state
   const [editingCell, setEditingCell] = useState<{ postId: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [isAddingRow, setIsAddingRow] = useState(false);
   
   // Bulk delete state
   const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set());
@@ -172,26 +173,31 @@ export default function ContentPage() {
   }
 
   async function handleAddRow() {
-    const newPost = {
-      name: '',
-      link: '',
-      platform: '',
-      account: accountFilter !== 'all' ? accountFilter : '',
-      pillar: '',
-      format: '',
-      date: new Date().toISOString().split('T')[0],
-      impression: 0,
-      reach: 0,
-      like: 0,
-      comment: 0,
-      share: 0,
-      save: 0,
-      repost: 0,
-      profile_visit: 0,
-      followers_gained: 0,
-      caption_len: 0,
-    };
-    await createPost(newPost);
+    setIsAddingRow(true);
+    try {
+      const newPost = {
+        name: '',
+        link: '',
+        platform: '',
+        account: accountFilter !== 'all' ? accountFilter : '',
+        pillar: '',
+        format: '',
+        date: new Date().toISOString().split('T')[0],
+        impression: 0,
+        reach: 0,
+        like: 0,
+        comment: 0,
+        share: 0,
+        save: 0,
+        repost: 0,
+        profile_visit: 0,
+        followers_gained: 0,
+        caption_len: 0,
+      };
+      await createPost(newPost);
+    } finally {
+      setIsAddingRow(false);
+    }
   }
 
   function handleExport() {
@@ -324,18 +330,44 @@ export default function ContentPage() {
 
   return (
     <AppShell title="Konten">
-      <div className="flex flex-col gap-6">
+      <style jsx global>{`
+        .content-typography h1,
+        .content-typography h2,
+        .content-typography h3 {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 700 !important;
+        }
+        .content-typography th[class*="uppercase"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 600 !important;
+        }
+        .content-typography button[class*="font-semibold"],
+        .content-typography button[class*="font-bold"],
+        .content-typography td[class*="font-medium"],
+        .content-typography td[class*="font-bold"] {
+          font-family: var(--font-space-grotesk) !important;
+          font-weight: 600 !important;
+        }
+        .content-typography p,
+        .content-typography span:not([class*="font-bold"]):not([class*="font-semibold"]):not([class*="font-medium"]),
+        .content-typography div[class*="text-xs"],
+        .content-typography div[class*="text-sm"]:not([class*="font-bold"]) {
+          font-family: var(--font-dm-sans) !important;
+          font-weight: 400 !important;
+        }
+      `}</style>
+      <div className="flex flex-col gap-6 content-typography">
         
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-bold text-cly-text mb-1">Konten Performance</h1>
-            <p className="text-cly-sm text-cly-text-3">Pantau performa kontenmu dan temukan insight terbaik.</p>
+            <p className="text-sm text-cly-text-3">Pantau performa kontenmu dan temukan insight terbaik.</p>
           </div>
           <div className="flex items-center gap-2">
             <button 
               onClick={handleExport}
-              className="h-9 px-4 rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 text-cly-sm font-semibold hover:bg-cly-muted transition-colors inline-flex items-center gap-2"
+              className="h-8 px-4 rounded-lg border border-cly-border bg-white text-cly-text-2 text-xs font-medium hover:bg-cly-muted transition-all inline-flex items-center gap-2 shadow-sm"
             >
               <FileDown size={16} />
               Export
@@ -344,7 +376,7 @@ export default function ContentPage() {
             <a
               href="/template-konten.csv"
               download
-              className="h-9 px-4 rounded-lg bg-cly-brand text-white text-cly-sm font-semibold hover:bg-cly-brand-hover transition-colors inline-flex items-center gap-2"
+              className="h-8 px-4 rounded-lg bg-cly-brand text-white text-xs font-semibold hover:bg-cly-brand-hover transition-all inline-flex items-center gap-2 shadow-sm"
             >
               <FileText size={16} />
               Template
@@ -363,7 +395,7 @@ export default function ContentPage() {
                 placeholder="Cari judul konten..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-9 pl-10 pr-4 rounded-lg border border-cly-border bg-cly-surface text-cly-sm text-cly-text placeholder:text-cly-text-3 outline-none focus:border-cly-brand transition-colors"
+                className="w-full h-8 pl-10 pr-4 rounded-lg border border-cly-border bg-white text-xs text-cly-text placeholder:text-cly-text-3 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
               />
             </div>
 
@@ -371,20 +403,20 @@ export default function ContentPage() {
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="h-9 px-3 rounded-lg border border-cly-border bg-cly-surface text-cly-sm text-cly-text-2 outline-none focus:border-cly-brand transition-colors"
+              className="h-8 px-3 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
             />
 
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="h-9 px-3 rounded-lg border border-cly-border bg-cly-surface text-cly-sm text-cly-text-2 outline-none focus:border-cly-brand transition-colors"
+              className="h-8 px-3 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
             />
 
             <select
               value={accountFilter}
               onChange={(e) => setAccountFilter(e.target.value)}
-              className="h-9 px-3 pr-8 rounded-lg border border-cly-border bg-cly-surface text-cly-sm text-cly-text-2 outline-none focus:border-cly-brand transition-colors cursor-pointer"
+              className="h-8 px-3 pr-8 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer"
             >
               <option value="all">Semua Akun</option>
               {accounts.map(a => (
@@ -395,7 +427,7 @@ export default function ContentPage() {
             <select
               value={platformFilter}
               onChange={(e) => setPlatformFilter(e.target.value)}
-              className="h-9 px-3 pr-8 rounded-lg border border-cly-border bg-cly-surface text-cly-sm text-cly-text-2 outline-none focus:border-cly-brand transition-colors cursor-pointer"
+              className="h-8 px-3 pr-8 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer"
             >
               <option value="all">Semua Platform</option>
               {platforms.map(p => (
@@ -406,7 +438,7 @@ export default function ContentPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="h-9 px-3 pr-8 rounded-lg border border-cly-border bg-cly-surface text-cly-sm text-cly-text-2 outline-none focus:border-cly-brand transition-colors cursor-pointer"
+              className="h-8 px-3 pr-8 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer"
             >
               <option value="latest">Latest First</option>
               <option value="oldest">Oldest First</option>
@@ -419,21 +451,22 @@ export default function ContentPage() {
           <div className="flex items-center gap-2">
             <button 
               onClick={handleAddRow}
-              className="h-9 px-4 rounded-lg bg-cly-brand text-white text-cly-sm font-semibold hover:bg-cly-brand-hover transition-colors inline-flex items-center gap-2"
+              disabled={isAddingRow}
+              className={`h-8 px-4 rounded-lg text-white text-xs font-semibold transition-all inline-flex items-center gap-2 shadow-sm ${isAddingRow ? 'bg-cly-brand/70 cursor-not-allowed' : 'bg-cly-brand hover:bg-cly-brand-hover'}`}
             >
-              <Plus size={16} />
-              Tambah Konten
+              {isAddingRow ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+              {isAddingRow ? 'Menambahkan...' : 'Tambah Konten'}
             </button>
             <button 
               onClick={toggleBulkSelectMode}
-              className={`h-9 w-9 rounded-lg border border-cly-border ${bulkSelectMode ? 'bg-cly-brand text-white' : 'bg-cly-surface text-cly-text-2'} hover:bg-cly-muted transition-colors inline-flex items-center justify-center`}
+              className={`h-8 w-8 rounded-lg border border-cly-border ${bulkSelectMode ? 'bg-cly-brand text-white' : 'bg-white text-cly-text-2'} hover:bg-cly-muted transition-all inline-flex items-center justify-center shadow-sm`}
             >
               <Check size={16} />
             </button>
             {bulkSelectMode && selectedPosts.size > 0 && (
               <button 
                 onClick={handleBulkDelete}
-                className="h-9 px-4 rounded-lg bg-red-600 text-white text-cly-sm font-semibold hover:bg-red-700 transition-colors inline-flex items-center gap-2"
+                className="h-8 px-4 rounded-lg bg-gradient-to-br from-[#FFB5A0] to-[#FF9680] text-white text-xs font-semibold hover:shadow-md transition-all inline-flex items-center gap-2"
               >
                 <Trash2 size={16} />
                 Hapus ({selectedPosts.size})
@@ -443,13 +476,13 @@ export default function ContentPage() {
         </div>
 
         {/* Table */}
-        <div className="bg-cly-surface border border-cly-border rounded-lg shadow-cly overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-white dark:bg-cly-surface rounded-xl sm:rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.06)] overflow-hidden">
+          <div className="overflow-x-auto overflow-y-visible -webkit-overflow-scrolling-touch">
             <table className="w-full border-collapse min-w-[1500px]">
-              <thead className="bg-cly-muted">
+              <thead className="bg-gradient-to-br from-cly-muted to-white">
                 <tr className="border-b border-cly-border">
                   {bulkSelectMode && (
-                    <th className="text-center text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-12">
+                    <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-12">
                       <input
                         type="checkbox"
                         checked={paginatedPosts.length > 0 && selectedPosts.size === paginatedPosts.length}
@@ -458,33 +491,33 @@ export default function ContentPage() {
                       />
                     </th>
                   )}
-                  <th className="text-center text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-12">#</th>
-                  <th className="text-left text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 min-w-[250px]">Judul Konten</th>
-                  <th className="text-center text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[100px]">Tanggal</th>
-                  <th className="text-center text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[100px]">Akun</th>
-                  <th className="text-center text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[100px]">Platform</th>
-                  <th className="text-center text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[100px]">Pillar</th>
-                  <th className="text-center text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[100px]">Link Content</th>
-                  <th className="text-center text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[90px]">Impressions</th>
-                  <th className="text-center text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[90px]">Reach</th>
-                  <th className="text-center text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[70px]">Like</th>
-                  <th className="text-center text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[85px]">Comment</th>
-                  <th className="text-center text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[70px]">Share</th>
-                  <th className="text-center text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[70px]">Save</th>
-                  <th className="text-center text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[70px]">ER</th>
-                  <th className="text-center text-cly-xs font-bold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[50px]"></th>
+                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-12">No</th>
+                  <th className="text-left text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 min-w-[250px]">Judul Konten</th>
+                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[100px]">Tanggal</th>
+                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[100px]">Akun</th>
+                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[100px]">Platform</th>
+                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[100px]">Pillar</th>
+                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[100px]">Link Content</th>
+                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[90px]">Impressions</th>
+                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[90px]">Reach</th>
+                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[70px]">Like</th>
+                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[85px]">Comment</th>
+                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[70px]">Share</th>
+                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[70px]">Save</th>
+                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[70px]">ER</th>
+                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[50px]"></th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={bulkSelectMode ? 16 : 15} className="py-12 text-center text-cly-sm text-cly-text-3 animate-pulse">
+                    <td colSpan={bulkSelectMode ? 16 : 15} className="py-12 text-center text-sm text-cly-text-3 animate-pulse">
                       Memuat data...
                     </td>
                   </tr>
                 ) : paginatedPosts.length === 0 ? (
                   <tr>
-                    <td colSpan={bulkSelectMode ? 16 : 15} className="py-12 text-center text-cly-sm text-cly-text-3">
+                    <td colSpan={bulkSelectMode ? 16 : 15} className="py-12 text-center text-sm text-cly-text-3">
                       Tidak ada konten ditemukan.
                     </td>
                   </tr>
@@ -508,7 +541,7 @@ export default function ContentPage() {
                         )}
                         
                         {/* Number */}
-                        <td className="py-2 px-3 text-center text-cly-sm text-cly-text-3 font-semibold">
+                        <td className="py-2 px-3 text-center text-sm text-cly-text-3 font-medium">
                           {globalIdx}
                         </td>
 
@@ -550,7 +583,7 @@ export default function ContentPage() {
                               >
                                 {post.name ? post.name.charAt(0).toUpperCase() : '?'}
                               </div>
-                              <span className="text-cly-sm text-cly-text font-medium line-clamp-2">
+                              <span className="text-sm text-cly-text font-medium line-clamp-2">
                                 {post.name || 'Untitled'}
                               </span>
                             </div>
@@ -567,10 +600,10 @@ export default function ContentPage() {
                               onBlur={() => saveEdit()}
                               onKeyDown={handleKeyDown}
                               autoFocus
-                              className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
+                              className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text outline-none focus:ring-2 focus:ring-cly-brand/20"
                             />
                           ) : (
-                            <span className="text-cly-sm text-cly-text-2">
+                            <span className="text-sm text-cly-text-2 font-medium">
                               {post.date ? new Date(post.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                             </span>
                           )}
@@ -604,7 +637,7 @@ export default function ContentPage() {
                               }}
                               onBlur={() => cancelEdit()}
                               autoFocus
-                              className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
+                              className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text outline-none focus:ring-2 focus:ring-cly-brand/20"
                             >
                               <option value="">-</option>
                               {userPlatforms.map(p => (
@@ -634,7 +667,7 @@ export default function ContentPage() {
                               }}
                               onBlur={() => cancelEdit()}
                               autoFocus
-                              className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
+                              className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text outline-none focus:ring-2 focus:ring-cly-brand/20"
                             >
                               <option value="">-</option>
                               {userPillars.map(p => (
@@ -666,7 +699,7 @@ export default function ContentPage() {
                               onKeyDown={handleKeyDown}
                               autoFocus
                               placeholder="URL"
-                              className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text outline-none"
+                              className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text outline-none focus:ring-2 focus:ring-cly-brand/20"
                             />
                           ) : post.link ? (
                             <div className="flex items-center justify-center gap-1">
@@ -696,10 +729,10 @@ export default function ContentPage() {
                               onBlur={() => saveEdit()}
                               onKeyDown={handleKeyDown}
                               autoFocus
-                              className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text text-center outline-none"
+                              className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text text-center outline-none focus:ring-2 focus:ring-cly-brand/20"
                             />
                           ) : (
-                            <span className="text-cly-sm text-cly-text-2">{post.impression || 0}</span>
+                            <span className="text-sm text-cly-text-2 font-medium">{post.impression || 0}</span>
                           )}
                         </td>
 
@@ -713,10 +746,10 @@ export default function ContentPage() {
                               onBlur={() => saveEdit()}
                               onKeyDown={handleKeyDown}
                               autoFocus
-                              className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text text-center outline-none"
+                              className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text text-center outline-none focus:ring-2 focus:ring-cly-brand/20"
                             />
                           ) : (
-                            <span className="text-cly-sm text-cly-text-2">{post.reach || 0}</span>
+                            <span className="text-sm text-cly-text-2 font-medium">{post.reach || 0}</span>
                           )}
                         </td>
 
@@ -730,10 +763,10 @@ export default function ContentPage() {
                               onBlur={() => saveEdit()}
                               onKeyDown={handleKeyDown}
                               autoFocus
-                              className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text text-center outline-none"
+                              className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text text-center outline-none focus:ring-2 focus:ring-cly-brand/20"
                             />
                           ) : (
-                            <span className="text-cly-sm text-cly-text-2">{post.like || 0}</span>
+                            <span className="text-sm text-cly-text-2 font-medium">{post.like || 0}</span>
                           )}
                         </td>
 
@@ -747,10 +780,10 @@ export default function ContentPage() {
                               onBlur={() => saveEdit()}
                               onKeyDown={handleKeyDown}
                               autoFocus
-                              className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text text-center outline-none"
+                              className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text text-center outline-none focus:ring-2 focus:ring-cly-brand/20"
                             />
                           ) : (
-                            <span className="text-cly-sm text-cly-text-2">{post.comment || 0}</span>
+                            <span className="text-sm text-cly-text-2 font-medium">{post.comment || 0}</span>
                           )}
                         </td>
 
@@ -764,10 +797,10 @@ export default function ContentPage() {
                               onBlur={() => saveEdit()}
                               onKeyDown={handleKeyDown}
                               autoFocus
-                              className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text text-center outline-none"
+                              className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text text-center outline-none focus:ring-2 focus:ring-cly-brand/20"
                             />
                           ) : (
-                            <span className="text-cly-sm text-cly-text-2">{post.share || 0}</span>
+                            <span className="text-sm text-cly-text-2 font-medium">{post.share || 0}</span>
                           )}
                         </td>
 
@@ -781,16 +814,16 @@ export default function ContentPage() {
                               onBlur={() => saveEdit()}
                               onKeyDown={handleKeyDown}
                               autoFocus
-                              className="w-full h-7 px-2 border border-cly-brand rounded bg-cly-surface text-cly-sm text-cly-text text-center outline-none"
+                              className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text text-center outline-none focus:ring-2 focus:ring-cly-brand/20"
                             />
                           ) : (
-                            <span className="text-cly-sm text-cly-text-2">{post.save || 0}</span>
+                            <span className="text-sm text-cly-text-2 font-medium">{post.save || 0}</span>
                           )}
                         </td>
 
                         {/* ER - Auto-calculated, color-coded */}
                         <td className="py-2 px-3 text-center">
-                          <span className={`text-cly-sm font-bold ${getERColor(er)}`}>
+                          <span className={`text-sm font-semibold ${getERColor(er)}`}>
                             {er.toFixed(2)}%
                           </span>
                         </td>
@@ -816,24 +849,24 @@ export default function ContentPage() {
         {/* Pagination */}
         {!loading && filteredPosts.length > 0 && (
           <div className="flex items-center justify-between">
-            <div className="text-cly-sm text-cly-text-3">
+            <div className="text-sm text-cly-text-3 font-medium">
               Menampilkan {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredPosts.length)} dari {filteredPosts.length} data
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="w-9 h-9 rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 hover:bg-cly-muted transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-8 h-8 rounded-lg border border-cly-border bg-white text-cly-text-2 hover:bg-cly-muted transition-all inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 <ChevronLeft size={16} />
               </button>
-              <div className="w-9 h-9 rounded-lg bg-cly-brand text-white font-semibold inline-flex items-center justify-center text-cly-sm">
+              <div className="w-8 h-8 rounded-lg bg-cly-brand text-white font-semibold inline-flex items-center justify-center text-xs shadow-sm">
                 {currentPage}
               </div>
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="w-9 h-9 rounded-lg border border-cly-border bg-cly-surface text-cly-text-2 hover:bg-cly-muted transition-colors inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-8 h-8 rounded-lg border border-cly-border bg-white text-cly-text-2 hover:bg-cly-muted transition-all inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 <ChevronRight size={16} />
               </button>
@@ -843,7 +876,7 @@ export default function ContentPage() {
                   setItemsPerPage(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="h-9 px-3 rounded-lg border border-cly-border bg-cly-surface text-cly-sm text-cly-text-2 outline-none cursor-pointer"
+                className="h-8 px-3 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none cursor-pointer focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all"
               >
                 <option value={10}>10 / halaman</option>
                 <option value={25}>25 / halaman</option>
