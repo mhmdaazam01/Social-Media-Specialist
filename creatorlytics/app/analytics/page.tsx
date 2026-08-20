@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { usePersistedState } from '@/lib/hooks/usePersistedState';
 import { AppShell } from '@/components/layout/AppShell';
 import { SectionTitle, InsightCard, PlatformBadge } from '@/components/cly';
 import { usePosts } from '@/lib/hooks/usePosts';
@@ -29,11 +30,11 @@ export default function AnalyticsPage() {
   const { goals, loading: goalsLoading } = useGoals();
   const erMode = profile?.er_mode || 'impression';
 
-  const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
-  const [selectedAccount, setSelectedAccount] = useState<string>('all');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [chartView, setChartView] = useState<'daily' | 'monthly'>('daily');
+  const [selectedPlatform, setSelectedPlatform] = usePersistedState<string>('analytics_platform', 'all');
+  const [selectedAccount, setSelectedAccount] = usePersistedState<string>('analytics_account', 'all');
+  const [dateFrom, setDateFrom] = usePersistedState('analytics_dateFrom', '');
+  const [dateTo, setDateTo] = usePersistedState('analytics_dateTo', '');
+  const [chartView, setChartView] = usePersistedState<'daily' | 'monthly'>('analytics_chartView', 'daily');
   
   const filteredPosts = useMemo(() => {
     let filtered = posts;
@@ -48,17 +49,9 @@ export default function AnalyticsPage() {
       filtered = filtered.filter(p => p.account === selectedAccount);
     }
     
-    // Date range filter (default to last 7 days if empty)
+    // Date range filter
     let effectiveDateFrom = dateFrom;
     let effectiveDateTo = dateTo;
-
-    if (!dateFrom && !dateTo) {
-      const to = new Date();
-      const from = new Date();
-      from.setDate(to.getDate() - 6);
-      effectiveDateFrom = from.toISOString().split('T')[0];
-      effectiveDateTo = to.toISOString().split('T')[0];
-    }
 
     if (effectiveDateFrom) {
       filtered = filtered.filter(p => p.date && p.date >= effectiveDateFrom);
@@ -74,11 +67,53 @@ export default function AnalyticsPage() {
   const { pillars } = usePillars();
 
   const chartData = useMemo(() => {
+    // Determine effective dates for the chart specifically
+    let chartDateFrom = dateFrom;
+    let chartDateTo = dateTo;
+
+    // Apply default 7 days only for daily view if no date range is selected
+    if (!dateFrom && !dateTo && chartView === 'daily') {
+      const todayStr = new Date().toISOString().split('T')[0];
+      let referenceDateStr = todayStr;
+
+      // Find the most recent post date
+      const mostRecentDateStr = filteredPosts.reduce((latest, p) => 
+        (!latest || (p.date && p.date > latest)) ? (p.date as string) : latest
+      , '');
+
+      if (mostRecentDateStr) {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+        
+        // If the most recent post is older than 7 days ago, use its date as the reference
+        if (mostRecentDateStr < sevenDaysAgoStr) {
+          referenceDateStr = mostRecentDateStr;
+        }
+      }
+
+      const to = new Date(referenceDateStr);
+      const from = new Date(to);
+      from.setDate(to.getDate() - 6);
+      
+      chartDateFrom = from.toISOString().split('T')[0];
+      chartDateTo = to.toISOString().split('T')[0];
+    }
+
+    // Filter posts for the chart based on the effective dates
+    let chartPosts = filteredPosts;
+    if (chartDateFrom) {
+      chartPosts = chartPosts.filter(p => p.date && p.date >= chartDateFrom);
+    }
+    if (chartDateTo) {
+      chartPosts = chartPosts.filter(p => p.date && p.date <= chartDateTo);
+    }
+
     if (chartView === 'monthly') {
       // Monthly aggregation
       const monthMap: Record<string, { reach: number; impression: number; engagement: number; count: number }> = {};
       
-      filteredPosts.forEach(p => {
+      chartPosts.forEach(p => {
         if (!p.date) return;
         const month = p.date.slice(0, 7); // "YYYY-MM"
         if (!monthMap[month]) {
@@ -110,7 +145,7 @@ export default function AnalyticsPage() {
       // Daily view
       const dailyMap: Record<string, { reach: number; impression: number; engagement: number }> = {};
       
-      filteredPosts.forEach(p => {
+      chartPosts.forEach(p => {
         if (!p.date) return;
         if (!dailyMap[p.date]) {
           dailyMap[p.date] = { reach: 0, impression: 0, engagement: 0 };

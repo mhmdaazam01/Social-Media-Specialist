@@ -284,26 +284,41 @@ export default function ContentPage() {
     // If editing link, fetch thumbnail and auto-detect platform
     if (field === 'link' && finalValue) {
       const linkUrl = String(finalValue);
-      const validUrl = getValidHref(linkUrl);
       
-      // Update link first
-      updatePost(postId, { link: linkUrl });
-      
-      // Auto-detect platform if not set
-      const detectedPlatform = getPlatformFromUrl(validUrl);
-      if (detectedPlatform) {
-        const currentPost = posts.find(p => p.id === postId);
-        if (currentPost && !currentPost.platform) {
-          updatePost(postId, { platform: detectedPlatform });
+      const currentPost = posts.find(p => p.id === postId);
+      // Skip if link hasn't changed
+      if (currentPost?.link === linkUrl) {
+        if (options?.reverse !== undefined) {
+          moveToNextCell(options.reverse, postId);
+        } else {
+          setEditingCell(null);
+          setEditValue('');
         }
+        return;
       }
+      
+      const validUrl = getValidHref(linkUrl);
+      const detectedPlatform = getPlatformFromUrl(validUrl);
+      
+      // Update link and immediately clear old thumbnail to force refresh
+      const updates: Partial<Post> = { 
+        link: linkUrl, 
+        thumbnail: '' 
+      };
+      
+      if (detectedPlatform && (!currentPost || !currentPost.platform)) {
+        updates.platform = detectedPlatform;
+      }
+      
+      updatePost(postId, updates);
       
       // Fetch thumbnail via API route (async, with loading indicator)
       setFetchingThumbnailIds(prev => new Set(prev).add(postId));
+      fetchedThumbnailsRef.current.add(postId);
       try {
         // For Instagram, we use iframe fallback instead of fetching thumbnail
         if (validUrl.includes('instagram.com')) {
-          // Do nothing, UI will render iframe fallback
+          // Do nothing, UI will render iframe fallback because thumbnail is already cleared
         } else {
           const response = await fetch(`/api/thumbnail?url=${encodeURIComponent(validUrl)}`);
           if (response.ok) {
@@ -588,9 +603,12 @@ export default function ContentPage() {
                     const er = post.impression > 0 ? (totalEngagement / post.impression) * 100 : 0;
                     const globalIdx = (currentPage - 1) * itemsPerPage + idx + 1;
                     
+                    // Clean up broken thumbnail from previous bug
+                    const isBrokenIgThumb = post.thumbnail?.includes('/media/?size=m');
+                    
                     // Extract IG shortcode for fallback widget
                     let igShortcode = null;
-                    if (post.platform?.toLowerCase() === 'instagram' && !post.thumbnail && post.link) {
+                    if (post.platform?.toLowerCase() === 'instagram' && (!post.thumbnail || isBrokenIgThumb) && post.link) {
                       const validUrl = getValidHref(post.link);
                       igShortcode = extractIGShortcode(validUrl);
                     }
@@ -631,7 +649,7 @@ export default function ContentPage() {
                                 <div className="w-10 h-10 rounded bg-cly-muted flex items-center justify-center shrink-0">
                                   <Loader2 size={16} className="animate-spin text-cly-brand" />
                                 </div>
-                              ) : post.thumbnail ? (
+                              ) : post.thumbnail && !isBrokenIgThumb ? (
                                 <>
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img 
@@ -664,7 +682,7 @@ export default function ContentPage() {
                                 </div>
                               ) : null}
                               <div 
-                                className={`w-10 h-10 rounded bg-cly-muted flex items-center justify-center text-cly-xs font-bold text-cly-text-3 shrink-0 ${post.thumbnail || fetchingThumbnailIds.has(post.id) || igShortcode ? 'hidden' : ''}`}
+                                className={`w-10 h-10 rounded bg-cly-muted flex items-center justify-center text-cly-xs font-bold text-cly-text-3 shrink-0 ${(post.thumbnail && !isBrokenIgThumb) || fetchingThumbnailIds.has(post.id) || igShortcode ? 'hidden' : ''}`}
                               >
                                 {post.name ? post.name.charAt(0).toUpperCase() : '?'}
                               </div>

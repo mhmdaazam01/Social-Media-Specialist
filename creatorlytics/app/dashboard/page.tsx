@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { usePersistedState } from '@/lib/hooks/usePersistedState';
 import { AppShell } from '@/components/layout/AppShell';
 import { MetricCard, InsightCard, SectionTitle, Badge } from '@/components/cly';
 import { usePosts } from '@/lib/hooks/usePosts';
@@ -26,12 +27,12 @@ export default function DashboardPage() {
   const loading = postsLoading || goalsLoading;
   
   // Chart filters
-  const [chartView, setChartView] = useState<'daily' | 'monthly'>('daily');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [chartView, setChartView] = usePersistedState<'daily' | 'monthly'>('dashboard_chartView', 'daily');
+  const [dateFrom, setDateFrom] = usePersistedState('dashboard_dateFrom', '');
+  const [dateTo, setDateTo] = usePersistedState('dashboard_dateTo', '');
   
   // Goal carousel
-  const [currentGoalIndex, setCurrentGoalIndex] = useState(0);
+  const [currentGoalIndex, setCurrentGoalIndex] = usePersistedState('dashboard_goalIndex', 0);
 
   const now = useMemo(() => new Date(), []);
   const thisMonth = now.getMonth() + 1;
@@ -99,11 +100,31 @@ export default function DashboardPage() {
     let effectiveDateFrom = dateFrom;
     let effectiveDateTo = dateTo;
 
-    // Apply default 7 days if no date range is selected
-    if (!dateFrom && !dateTo) {
-      const to = new Date();
-      const from = new Date();
+    // Apply default 7 days only for daily view if no date range is selected
+    if (!dateFrom && !dateTo && chartView === 'daily') {
+      const todayStr = new Date().toISOString().split('T')[0];
+      let referenceDateStr = todayStr;
+
+      // Find the most recent post date
+      const mostRecentDateStr = filteredPosts.reduce((latest, p) => 
+        (!latest || (p.date && p.date > latest)) ? (p.date as string) : latest
+      , '');
+
+      if (mostRecentDateStr) {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+        
+        // If the most recent post is older than 7 days ago, use its date as the reference
+        if (mostRecentDateStr < sevenDaysAgoStr) {
+          referenceDateStr = mostRecentDateStr;
+        }
+      }
+
+      const to = new Date(referenceDateStr);
+      const from = new Date(to);
       from.setDate(to.getDate() - 6);
+      
       effectiveDateFrom = from.toISOString().split('T')[0];
       effectiveDateTo = to.toISOString().split('T')[0];
     }
