@@ -47,16 +47,6 @@ const extractIGShortcode = (url: string): string | null => {
   return match?.[1] || null;
 };
 
-// Get a direct thumbnail URL for Instagram posts (works in <img> tags)
-const getInstagramDirectThumb = (link: string): string | null => {
-  const validUrl = getValidHref(link);
-  const shortcode = extractIGShortcode(validUrl);
-  if (shortcode) {
-    return `https://www.instagram.com/p/${shortcode}/media/?size=m`;
-  }
-  return null;
-};
-
 export default function ContentPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
@@ -107,12 +97,8 @@ export default function ContentPage() {
       const validUrl = getValidHref(post.link);
       if (!validUrl || validUrl === '#') return;
 
-      // For Instagram, use direct media URL immediately
+      // For Instagram, we use iframe fallback instead of fetching thumbnail
       if (validUrl.includes('instagram.com')) {
-        const directThumb = getInstagramDirectThumb(post.link!);
-        if (directThumb) {
-          updatePost(post.id, { thumbnail: directThumb });
-        }
         return;
       }
 
@@ -315,12 +301,9 @@ export default function ContentPage() {
       // Fetch thumbnail via API route (async, with loading indicator)
       setFetchingThumbnailIds(prev => new Set(prev).add(postId));
       try {
-        // For Instagram, use direct media URL
+        // For Instagram, we use iframe fallback instead of fetching thumbnail
         if (validUrl.includes('instagram.com')) {
-          const directThumb = getInstagramDirectThumb(String(finalValue));
-          if (directThumb) {
-            updatePost(postId, { thumbnail: directThumb });
-          }
+          // Do nothing, UI will render iframe fallback
         } else {
           const response = await fetch(`/api/thumbnail?url=${encodeURIComponent(validUrl)}`);
           if (response.ok) {
@@ -605,6 +588,12 @@ export default function ContentPage() {
                     const er = post.impression > 0 ? (totalEngagement / post.impression) * 100 : 0;
                     const globalIdx = (currentPage - 1) * itemsPerPage + idx + 1;
                     
+                    // Extract IG shortcode for fallback widget
+                    let igShortcode = null;
+                    if (post.platform?.toLowerCase() === 'instagram' && !post.thumbnail && post.link) {
+                      const validUrl = getValidHref(post.link);
+                      igShortcode = extractIGShortcode(validUrl);
+                    }
                     
                     return (
                       <tr key={post.id} className="border-b border-cly-border hover:bg-cly-muted/30 transition-colors">
@@ -656,9 +645,26 @@ export default function ContentPage() {
                                   }}
                                   />
                                 </>
+                              ) : igShortcode ? (
+                                <div className="w-10 h-10 rounded overflow-hidden shrink-0 relative bg-white pointer-events-none border border-cly-border">
+                                  <iframe 
+                                    src={`https://www.instagram.com/p/${igShortcode}/embed/captioned`}
+                                    style={{
+                                      width: '320px',
+                                      height: '400px',
+                                      transform: 'scale(0.125)',
+                                      transformOrigin: 'top left',
+                                      position: 'absolute',
+                                      top: '0',
+                                      left: '0',
+                                      border: 'none',
+                                    }}
+                                    scrolling="no"
+                                  />
+                                </div>
                               ) : null}
                               <div 
-                                className={`w-10 h-10 rounded bg-cly-muted flex items-center justify-center text-cly-xs font-bold text-cly-text-3 shrink-0 ${post.thumbnail || fetchingThumbnailIds.has(post.id) ? 'hidden' : ''}`}
+                                className={`w-10 h-10 rounded bg-cly-muted flex items-center justify-center text-cly-xs font-bold text-cly-text-3 shrink-0 ${post.thumbnail || fetchingThumbnailIds.has(post.id) || igShortcode ? 'hidden' : ''}`}
                               >
                                 {post.name ? post.name.charAt(0).toUpperCase() : '?'}
                               </div>
