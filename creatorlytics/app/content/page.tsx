@@ -18,16 +18,22 @@ import {
 } from 'lucide-react';
 import type { Post } from '@/types';
 
-// Helper to extract a valid URL if the user pasted embed HTML
 const getValidHref = (link?: string): string => {
   if (!link) return '#';
   if (link.trim().startsWith('<')) {
     // Try to extract permalink from Instagram embed
     const permalinkMatch = link.match(/data-instgrm-permalink="([^"]+)"/);
     if (permalinkMatch) return permalinkMatch[1];
-    // Try to extract src
-    const srcMatch = link.match(/src="([^"]+)"/);
-    if (srcMatch) return srcMatch[1];
+    
+    // Try to extract cite from TikTok embed
+    const citeMatch = link.match(/cite="([^"]+)"/);
+    if (citeMatch) return citeMatch[1];
+
+    // Try to extract src (exclude embed.js scripts)
+    const srcMatches = Array.from(link.matchAll(/src="([^"]+)"/g));
+    const validSrc = srcMatches.find(m => !m[1].includes('embed.js'));
+    if (validSrc) return validSrc[1];
+
     // Try to extract href
     const hrefMatch = link.match(/href="([^"]+)"/);
     if (hrefMatch) return hrefMatch[1];
@@ -228,12 +234,13 @@ export default function ContentPage() {
     // If editing link, fetch thumbnail and auto-detect platform
     if (field === 'link' && finalValue) {
       const linkUrl = String(finalValue);
+      const validUrl = getValidHref(linkUrl);
       
       // Update link first
-      updatePost(postId, { link: String(finalValue) });
+      updatePost(postId, { link: linkUrl });
       
       // Auto-detect platform if not set
-      const detectedPlatform = getPlatformFromUrl(linkUrl);
+      const detectedPlatform = getPlatformFromUrl(validUrl);
       if (detectedPlatform) {
         const currentPost = posts.find(p => p.id === postId);
         if (currentPost && !currentPost.platform) {
@@ -244,7 +251,7 @@ export default function ContentPage() {
       // Fetch thumbnail via API route (async, with loading indicator)
       setFetchingThumbnailIds(prev => new Set(prev).add(postId));
       try {
-        const response = await fetch(`/api/thumbnail?url=${encodeURIComponent(linkUrl)}`);
+        const response = await fetch(`/api/thumbnail?url=${encodeURIComponent(validUrl)}`);
         if (response.ok) {
           const data = await response.json();
           if (data.thumbnail) {
