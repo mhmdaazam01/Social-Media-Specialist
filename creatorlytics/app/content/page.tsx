@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { CSVImport } from '@/components/posts/CSVImport';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -41,6 +41,22 @@ const getValidHref = (link?: string): string => {
   return link;
 };
 
+// Extract Instagram shortcode from any IG URL
+const extractIGShortcode = (url: string): string | null => {
+  const match = url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/);
+  return match?.[1] || null;
+};
+
+// Get a direct thumbnail URL for Instagram posts (works in <img> tags)
+const getInstagramDirectThumb = (link: string): string | null => {
+  const validUrl = getValidHref(link);
+  const shortcode = extractIGShortcode(validUrl);
+  if (shortcode) {
+    return `https://www.instagram.com/p/${shortcode}/media/?size=m`;
+  }
+  return null;
+};
+
 export default function ContentPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<Post | null>(null);
@@ -72,6 +88,54 @@ export default function ContentPage() {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Track which posts we already tried to auto-fetch thumbnails for
+  const fetchedThumbnailsRef = useRef<Set<string>>(new Set());
+
+  // Auto-fetch thumbnails for posts that have links but no thumbnails
+  useEffect(() => {
+    if (loading || posts.length === 0) return;
+
+    const postsNeedingThumbnails = posts.filter(
+      p => p.link && !p.thumbnail && !fetchedThumbnailsRef.current.has(p.id) && !fetchingThumbnailIds.has(p.id)
+    );
+
+    if (postsNeedingThumbnails.length === 0) return;
+
+    postsNeedingThumbnails.forEach(post => {
+      fetchedThumbnailsRef.current.add(post.id);
+      const validUrl = getValidHref(post.link);
+      if (!validUrl || validUrl === '#') return;
+
+      // For Instagram, use direct media URL immediately
+      if (validUrl.includes('instagram.com')) {
+        const directThumb = getInstagramDirectThumb(post.link!);
+        if (directThumb) {
+          updatePost(post.id, { thumbnail: directThumb });
+        }
+        return;
+      }
+
+      // For TikTok/YouTube, fetch via API
+      setFetchingThumbnailIds(prev => new Set(prev).add(post.id));
+      fetch(`/api/thumbnail?url=${encodeURIComponent(validUrl)}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.thumbnail) {
+            updatePost(post.id, { thumbnail: data.thumbnail });
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          setFetchingThumbnailIds(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(post.id);
+            return newSet;
+          });
+        });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [posts, loading]);
 
   const handleImport = useCallback(() => {
     // Refresh after import
@@ -251,13 +315,20 @@ export default function ContentPage() {
       // Fetch thumbnail via API route (async, with loading indicator)
       setFetchingThumbnailIds(prev => new Set(prev).add(postId));
       try {
-        const response = await fetch(`/api/thumbnail?url=${encodeURIComponent(validUrl)}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.thumbnail) {
-            // Proxy the thumbnail through our API to avoid CORS issues
-            const proxyUrl = `/api/thumbnail/proxy?url=${encodeURIComponent(data.thumbnail)}`;
-            updatePost(postId, { thumbnail: proxyUrl });
+        // For Instagram, use direct media URL
+        if (validUrl.includes('instagram.com')) {
+          const directThumb = getInstagramDirectThumb(String(finalValue));
+          if (directThumb) {
+            updatePost(postId, { thumbnail: directThumb });
+          }
+        } else {
+          const response = await fetch(`/api/thumbnail?url=${encodeURIComponent(validUrl)}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.thumbnail) {
+              // Store thumbnail URL directly (img tags don't have CORS restrictions)
+              updatePost(postId, { thumbnail: data.thumbnail });
+            }
           }
         }
       } catch (error) {
@@ -533,6 +604,7 @@ export default function ContentPage() {
                     const totalEngagement = (post.like || 0) + (post.comment || 0) + (post.share || 0) + (post.save || 0);
                     const er = post.impression > 0 ? (totalEngagement / post.impression) * 100 : 0;
                     const globalIdx = (currentPage - 1) * itemsPerPage + idx + 1;
+                    
                     
                     return (
                       <tr key={post.id} className="border-b border-cly-border hover:bg-cly-muted/30 transition-colors">
