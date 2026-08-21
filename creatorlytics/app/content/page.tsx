@@ -263,7 +263,7 @@ export default function ContentPage() {
   // Editing functions
   function startEdit(postId: string, field: string, value: string | number | undefined) {
     setEditingCell({ postId, field });
-    setEditValue(String(value || ''));
+    setEditValue(typeof value === 'number' && value > 0 ? value.toLocaleString('id-ID') : String(value || ''));
   }
 
   function cancelEdit() {
@@ -278,7 +278,7 @@ export default function ContentPage() {
     let finalValue: string | number = editValue;
     
     if (['impression', 'reach', 'like', 'comment', 'share', 'save', 'repost', 'profile_visit', 'followers_gained'].includes(field)) {
-      finalValue = parseInt(editValue) || 0;
+      finalValue = parseInt(String(editValue).replace(/\./g, '')) || 0;
     }
     
     // If editing link, fetch thumbnail and auto-detect platform
@@ -826,16 +826,19 @@ export default function ContentPage() {
                         <td className="py-2 px-3 text-center cursor-text" onClick={() => startEdit(post.id, 'impression', post.impression)}>
                           {editingCell?.postId === post.id && editingCell?.field === 'impression' ? (
                             <input
-                              type="number"
+                              type="text"
                               value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '');
+                                setEditValue(val ? Number(val).toLocaleString('id-ID') : '');
+                              }}
                               onBlur={() => saveEdit()}
                               onKeyDown={handleKeyDown}
                               autoFocus
                               className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text text-center outline-none focus:ring-2 focus:ring-cly-brand/20"
                             />
                           ) : (
-                            <span className="text-sm text-cly-text-2 font-medium">{post.impression || 0}</span>
+                            <span className="text-sm text-cly-text-2 font-medium">{(post.impression || 0).toLocaleString('id-ID')}</span>
                           )}
                         </td>
 
@@ -843,16 +846,19 @@ export default function ContentPage() {
                         <td className="py-2 px-3 text-center cursor-text" onClick={() => startEdit(post.id, 'reach', post.reach)}>
                           {editingCell?.postId === post.id && editingCell?.field === 'reach' ? (
                             <input
-                              type="number"
+                              type="text"
                               value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '');
+                                setEditValue(val ? Number(val).toLocaleString('id-ID') : '');
+                              }}
                               onBlur={() => saveEdit()}
                               onKeyDown={handleKeyDown}
                               autoFocus
                               className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text text-center outline-none focus:ring-2 focus:ring-cly-brand/20"
                             />
                           ) : (
-                            <span className="text-sm text-cly-text-2 font-medium">{post.reach || 0}</span>
+                            <span className="text-sm text-cly-text-2 font-medium">{(post.reach || 0).toLocaleString('id-ID')}</span>
                           )}
                         </td>
 
@@ -860,16 +866,19 @@ export default function ContentPage() {
                         <td className="py-2 px-3 text-center cursor-text" onClick={() => startEdit(post.id, 'like', post.like)}>
                           {editingCell?.postId === post.id && editingCell?.field === 'like' ? (
                             <input
-                              type="number"
+                              type="text"
                               value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '');
+                                setEditValue(val ? Number(val).toLocaleString('id-ID') : '');
+                              }}
                               onBlur={() => saveEdit()}
                               onKeyDown={handleKeyDown}
                               autoFocus
                               className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text text-center outline-none focus:ring-2 focus:ring-cly-brand/20"
                             />
                           ) : (
-                            <span className="text-sm text-cly-text-2 font-medium">{post.like || 0}</span>
+                            <span className="text-sm text-cly-text-2 font-medium">{(post.like || 0).toLocaleString('id-ID')}</span>
                           )}
                         </td>
 
@@ -877,16 +886,19 @@ export default function ContentPage() {
                         <td className="py-2 px-3 text-center cursor-text" onClick={() => startEdit(post.id, 'comment', post.comment)}>
                           {editingCell?.postId === post.id && editingCell?.field === 'comment' ? (
                             <input
-                              type="number"
+                              type="text"
                               value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '');
+                                setEditValue(val ? Number(val).toLocaleString('id-ID') : '');
+                              }}
                               onBlur={() => saveEdit()}
                               onKeyDown={handleKeyDown}
                               autoFocus
                               className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text text-center outline-none focus:ring-2 focus:ring-cly-brand/20"
                             />
                           ) : (
-                            <span className="text-sm text-cly-text-2 font-medium">{post.comment || 0}</span>
+                            <span className="text-sm text-cly-text-2 font-medium">{(post.comment || 0).toLocaleString('id-ID')}</span>
                           )}
                         </td>
 
@@ -894,16 +906,19 @@ export default function ContentPage() {
                         <td className="py-2 px-3 text-center cursor-text" onClick={() => startEdit(post.id, 'share', post.share)}>
                           {editingCell?.postId === post.id && editingCell?.field === 'share' ? (
                             <input
-                              type="number"
+                              type="text"
                               value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '');
+                                setEditValue(val ? Number(val).toLocaleString('id-ID') : '');
+                              }}
                               onBlur={() => saveEdit()}
                               onKeyDown={handleKeyDown}
                               autoFocus
                               className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text text-center outline-none focus:ring-2 focus:ring-cly-brand/20"
                             />
                           ) : (
-                            <span className="text-sm text-cly-text-2 font-medium">{post.share || 0}</span>
+                            <span className="text-sm text-cly-text-2 font-medium">{(post.share || 0).toLocaleString('id-ID')}</span>
                           )}
                         </td>
 
@@ -911,16 +926,19 @@ export default function ContentPage() {
                         <td className="py-2 px-3 text-center cursor-text" onClick={() => startEdit(post.id, 'save', post.save)}>
                           {editingCell?.postId === post.id && editingCell?.field === 'save' ? (
                             <input
-                              type="number"
+                              type="text"
                               value={editValue}
-                              onChange={(e) => setEditValue(e.target.value)}
+                              onChange={(e) => {
+                                const val = e.target.value.replace(/\D/g, '');
+                                setEditValue(val ? Number(val).toLocaleString('id-ID') : '');
+                              }}
                               onBlur={() => saveEdit()}
                               onKeyDown={handleKeyDown}
                               autoFocus
                               className="w-full h-7 px-2 border border-cly-brand rounded-lg bg-white text-xs text-cly-text text-center outline-none focus:ring-2 focus:ring-cly-brand/20"
                             />
                           ) : (
-                            <span className="text-sm text-cly-text-2 font-medium">{post.save || 0}</span>
+                            <span className="text-sm text-cly-text-2 font-medium">{(post.save || 0).toLocaleString('id-ID')}</span>
                           )}
                         </td>
 

@@ -32,6 +32,7 @@ export default function PlannerPage() {
   // Brief modal (view/edit brief) — opened by clicking the card
   const [briefOpen, setBriefOpen] = useState(false);
   const [briefIdea, setBriefIdea] = useState<ContentIdea | null>(null);
+  const [briefInitialMode, setBriefInitialMode] = useState<'view' | 'edit'>('view');
 
   // Idea modal (edit metadata) — opened by the pencil button on card
   const [modalOpen, setModalOpen] = useState(false);
@@ -70,15 +71,17 @@ export default function PlannerPage() {
 
   // Klik card → BriefModal (view mode)
   function handleView(idea: ContentIdea) {
+    setBriefInitialMode('view');
     setBriefIdea(idea);
     setBriefOpen(true);
   }
 
-  // Pencil button → IdeaModal for Ideas, CreateBriefModal for Briefs
+  // Pencil button → IdeaModal for Ideas, BriefModal for Briefs (in edit mode)
   function handleEdit(idea: ContentIdea) {
     if (idea.status === 'brief') {
-      setEditBriefIdea(idea);
-      setCreateBriefOpen(true);
+      setBriefInitialMode('edit');
+      setBriefIdea(idea);
+      setBriefOpen(true);
     } else {
       setEditIdea(idea);
       setModalOpen(true);
@@ -269,10 +272,18 @@ export default function PlannerPage() {
                           >
                             <h4 className="mb-2 text-sm font-bold text-cly-text">{idea.title || <span className="text-cly-text-2 italic font-medium">Tanpa judul</span>}</h4>
                             {idea.description && (
-                              <p className="mb-3 line-clamp-2 text-xs text-cly-text-2">{idea.description}</p>
+                              <p className="mb-3 line-clamp-2 text-xs text-cly-text-2">
+                                {idea.description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()}
+                              </p>
                             )}
                             <div className="flex flex-wrap gap-1.5">
-                              <PlatformBadge platform={idea.platform} />
+                              {idea.platform ? (
+                                idea.platform.split(',').filter(Boolean).map(plat => (
+                                  <PlatformBadge key={plat} platform={plat.trim()} />
+                                ))
+                              ) : (
+                                <PlatformBadge platform="" />
+                              )}
                               <Badge tone={priorityColor}>{idea.priority}</Badge>
                               {idea.pillar && <Badge tone="blue">{idea.pillar}</Badge>}
                             </div>
@@ -340,6 +351,7 @@ export default function PlannerPage() {
           onOpenChange={setBriefOpen}
           idea={briefIdea}
           readOnly={isViewer}
+          initialMode={briefInitialMode}
         />
 
         {/* Create Brief modal — dedicated creation form */}

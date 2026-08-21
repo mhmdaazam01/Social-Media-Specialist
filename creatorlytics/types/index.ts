@@ -63,6 +63,8 @@ export interface ContentBrief {
   format_video: string;
   durasi: string;
   ref_visual: string;
+  accounts?: string[];
+  platforms?: string[];
 }
 
 export interface ContentIdea {

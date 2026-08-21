@@ -10,6 +10,7 @@ import { useUser } from '@/lib/hooks/useUser';
 import { useTheme } from '@/lib/context/ThemeContext';
 import { calcTotalER, fmt, isPostInMonth } from '@/lib/utils/analytics';
 import { getValidHref } from '@/lib/utils/link';
+import { PostThumbnail } from '@/components/cly/PostThumbnail';
 import {
   Eye, TrendingUp, BookOpen, Target,
   ArrowUpRight, AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight,
@@ -494,6 +495,13 @@ export default function DashboardPage() {
                     dy={8}
                   />
                   <YAxis 
+                    domain={(() => {
+                      const allVals = chartData.flatMap(d => [d.impression, d.reach]).filter(v => v > 0);
+                      if (allVals.length === 0) return [0, 1];
+                      const min = Math.min(...allVals);
+                      const max = Math.max(...allVals);
+                      return [Math.max(0, Math.floor(min * 0.85)), Math.ceil(max * 1.05)];
+                    })()}
                     tick={{ fontSize: 12, fill: resolvedTheme === 'dark' ? '#A1A1AA' : '#A0AEC0', fontWeight: 500 }} 
                     tickFormatter={v => fmt(v)} 
                     axisLine={false} 
@@ -619,23 +627,13 @@ export default function DashboardPage() {
                     .map((post, idx) => (
                       <div key={post.id} className="flex gap-2.5 py-[10px] px-1 border-b border-cly-border last:border-0 items-center">
                         <span className="text-cly-micro font-black text-cly-text-3 w-4 shrink-0">{idx + 1}</span>
-                        <a 
-                          href={getValidHref(post.link)} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="w-[36px] h-[36px] rounded-md bg-cly-muted border border-cly-border/50 shrink-0 overflow-hidden flex items-center justify-center hover:opacity-80 transition-opacity"
-                        >
-                          {post.thumbnail ? (
-                            <>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={post.thumbnail} alt={post.name || 'thumbnail'} className="w-full h-full object-cover" />
-                            </>
-                          ) : (
-                            <span className="text-[9px] font-bold text-cly-text-3 uppercase">
-                              {post.name ? post.name.substring(0, 2) : '?'}
-                            </span>
-                          )}
-                        </a>
+                        <PostThumbnail
+                          name={post.name}
+                          thumbnail={post.thumbnail}
+                          platform={post.platform}
+                          link={post.link}
+                          size={36}
+                        />
                         <div className="flex-1 min-w-0">
                           <a href={getValidHref(post.link)} target="_blank" rel="noopener noreferrer" className="block text-cly-base font-bold text-cly-text truncate hover:underline">
                             {post.name || 'Untitled'}

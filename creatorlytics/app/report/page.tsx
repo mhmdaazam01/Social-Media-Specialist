@@ -11,6 +11,7 @@ import { usePillars } from '@/lib/hooks/usePillars';
 import { useGoals } from '@/lib/hooks/useGoals';
 import { calcTotalER, calcER, fmt, fmtPercent, aggregateByPlatform } from '@/lib/utils/analytics';
 import { getValidHref } from '@/lib/utils/link';
+import { PostThumbnail } from '@/components/cly/PostThumbnail';
 import { formatMonth } from '@/lib/utils/formatting';
 import { FileText, Printer } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -506,24 +507,13 @@ export default function ReportPage() {
                             <tr key={p.id} className={idx < topPosts.length - 1 ? 'border-b border-cly-border' : ''}>
                               <td className="py-3">
                                 <div className="flex items-center gap-3">
-                                  {/* Thumbnail Link */}
-                                  <a 
-                                    href={getValidHref(p.link)} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="w-[36px] h-[36px] rounded-md bg-cly-muted border border-cly-border/50 shrink-0 overflow-hidden flex items-center justify-center hover:opacity-80 transition-opacity"
-                                  >
-                                    {p.thumbnail ? (
-                                      <>
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src={p.thumbnail} alt={p.name} className="w-full h-full object-cover" />
-                                      </>
-                                    ) : (
-                                      <span className="text-[9px] font-bold text-cly-text-3 uppercase">
-                                        {p.name ? p.name.substring(0, 2) : '?'}
-                                      </span>
-                                    )}
-                                  </a>
+                                  <PostThumbnail
+                                    name={p.name}
+                                    thumbnail={p.thumbnail}
+                                    platform={p.platform}
+                                    link={p.link}
+                                    size={36}
+                                  />
                                   <a href={getValidHref(p.link)} target="_blank" rel="noopener noreferrer" className="text-cly-sm text-cly-text font-semibold max-w-xs truncate hover:underline">
                                     {p.name || 'Untitled'}
                                   </a>
@@ -823,23 +813,14 @@ export default function ReportPage() {
                               <tr key={p.id} className={idx < filteredPosts.length - 1 ? 'border-b border-cly-border' : ''}>
                                 <td className="py-3">
                                   <div className="flex items-center gap-3">
-                                    <a 
-                                      href={getValidHref(p.link)} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="w-[36px] h-[36px] rounded-md bg-cly-muted border border-cly-border/50 shrink-0 overflow-hidden flex items-center justify-center hover:opacity-80 transition-opacity"
-                                    >
-                                      {p.thumbnail ? (
-                                        <>
-                                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                                          <img src={p.thumbnail} alt={p.name} className="w-full h-full object-cover" />
-                                        </>
-                                      ) : (
-                                        <span className="text-[9px] font-bold text-cly-text-3 uppercase">
-                                          {p.name ? p.name.substring(0, 2) : '?'}
-                                        </span>
-                                      )}
-                                    </a>
+                                   {/* Thumbnail Link */}
+                                   <PostThumbnail
+                                     name={p.name}
+                                     thumbnail={p.thumbnail}
+                                     platform={p.platform}
+                                     link={p.link}
+                                     size={36}
+                                   />
                                     <a href={getValidHref(p.link)} target="_blank" rel="noopener noreferrer" className="text-cly-sm text-cly-text font-semibold max-w-xs truncate hover:underline">
                                       {p.name || 'Untitled'}
                                     </a>

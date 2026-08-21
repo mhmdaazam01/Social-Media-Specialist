@@ -221,10 +221,14 @@ export default function SharePlannerGuestPage() {
                           {idea.title || <span className="italic text-cly-text-muted">Tanpa judul</span>}
                         </h4>
                         {idea.description && (
-                          <p className="mb-2 line-clamp-2 text-cly-xs text-cly-text-muted">{idea.description}</p>
+                          <p className="mb-2 line-clamp-2 text-cly-xs text-cly-text-muted">
+                            {idea.description.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()}
+                          </p>
                         )}
                         <div className="flex flex-wrap gap-1">
-                          {idea.platform && <PlatformBadge platform={idea.platform} />}
+                          {idea.platform && idea.platform.split(',').filter(Boolean).map(plat => (
+                            <PlatformBadge key={plat} platform={plat.trim()} />
+                          ))}
                           {idea.pillar && <Badge tone="neutral">{idea.pillar}</Badge>}
                           {idea.format && <Badge tone="neutral">{idea.format}</Badge>}
                           {idea.priority === 'high' && <Badge tone="red">High</Badge>}

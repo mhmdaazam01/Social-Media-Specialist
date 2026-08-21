@@ -18,6 +18,9 @@ import {
 import type { ContentIdea, ContentBrief } from '@/types';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { usePillars } from '@/lib/hooks/usePillars';
+import { useAccounts } from '@/lib/hooks/useAccounts';
+import { useEvents } from '@/lib/hooks/useEvents';
+import { today } from '@/lib/utils/formatting';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 
 interface BriefModalProps {
@@ -25,6 +28,7 @@ interface BriefModalProps {
   onOpenChange: (open: boolean) => void;
   idea: ContentIdea | null;
   readOnly?: boolean;
+  initialMode?: 'view' | 'edit';
 }
 
 const EMPTY_BRIEF: ContentBrief = {
@@ -57,6 +61,8 @@ const PRIORITY_COLOR: Record<string, string> = {
 };
 
 interface EditForm {
+  title: string;
+  pillar: string;
   priority: 'low' | 'med' | 'high';
   deadline: string;
   narasi: string;
@@ -67,9 +73,11 @@ interface EditForm {
   format_video: string;
   durasi: string;
   ref_links: string[];
+  platforms: string[];
+  accounts: string[];
 }
 
-export function BriefModal({ open, onOpenChange, idea, readOnly }: BriefModalProps) {
+export function BriefModal({ open, onOpenChange, idea, readOnly, initialMode = 'view' }: BriefModalProps) {
   const { createIdea, updateIdea } = useIdeas();
 
   async function handleDuplicateInModal() {
@@ -77,7 +85,7 @@ export function BriefModal({ open, onOpenChange, idea, readOnly }: BriefModalPro
     try {
       const briefData = idea.brief && typeof idea.brief === 'object' ? { ...idea.brief } : {};
       const newTitle = `${idea.title || 'Konten'} (Salinan)`;
-      
+
       await createIdea({
         title: newTitle,
         description: idea.description,
@@ -98,9 +106,13 @@ export function BriefModal({ open, onOpenChange, idea, readOnly }: BriefModalPro
   }
   const { platforms } = usePlatforms();
   const { pillars } = usePillars();
-  const [mode, setMode] = useState<'view' | 'edit'>('view');
+  const { accounts: accountList } = useAccounts();
+  const { events, createEvent, updateEvent, deleteEvent } = useEvents();
+  const [mode, setMode] = useState<'view' | 'edit'>(initialMode);
   const [brief, setBrief] = useState<ContentBrief>(EMPTY_BRIEF);
   const [form, setForm] = useState<EditForm>({
+    title: '',
+    pillar: '',
     priority: 'med',
     deadline: '',
     narasi: '',
@@ -111,8 +123,13 @@ export function BriefModal({ open, onOpenChange, idea, readOnly }: BriefModalPro
     format_video: '',
     durasi: '',
     ref_links: [''],
+    platforms: [],
+    accounts: [],
   });
   const [saving, setSaving] = useState(false);
+  const [addToCalendar, setAddToCalendar] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState(today());
+  const [initialEventLoaded, setInitialEventLoaded] = useState(false);
 
   const platform = platforms.find(p => p.platform_id === idea?.platform);
   const pillar = pillars.find(p => p.pillar_id === idea?.pillar);
@@ -120,13 +137,16 @@ export function BriefModal({ open, onOpenChange, idea, readOnly }: BriefModalPro
   useEffect(() => {
     queueMicrotask(() => {
       if (!open) {
-        setMode('view');
+        setMode(initialMode);
+        setInitialEventLoaded(false);
         return;
       }
       if (idea) {
         const b = getBrief(idea);
         setBrief(b);
         setForm({
+          title: idea.title ?? '',
+          pillar: idea.pillar ?? '',
           priority: idea.priority ?? 'med',
           deadline: b.deadline ?? '',
           narasi: b.narasi ?? idea.description ?? '',
@@ -137,10 +157,26 @@ export function BriefModal({ open, onOpenChange, idea, readOnly }: BriefModalPro
           format_video: b.format_video ?? idea.format ?? '',
           durasi: b.durasi ?? '',
           ref_links: idea.ref_links?.length > 0 ? idea.ref_links : [''],
+          platforms: idea.platform ? idea.platform.split(',').filter(Boolean) : [],
+          accounts: b.accounts ?? [],
         });
       }
     });
-  }, [open, idea]);
+  }, [open, idea, initialMode]);
+
+  useEffect(() => {
+    if (open && idea && !initialEventLoaded) {
+      const linked = events.find(e => e.idea_id === idea.id);
+      if (linked) {
+        setAddToCalendar(true);
+        setScheduleDate(linked.scheduled_date);
+      } else {
+        setAddToCalendar(false);
+        setScheduleDate(today());
+      }
+      setInitialEventLoaded(true);
+    }
+  }, [open, idea, events, initialEventLoaded]);
 
   function upd<K extends keyof EditForm>(key: K, val: EditForm[K]) {
     setForm(prev => ({ ...prev, [key]: val }));
@@ -177,12 +213,39 @@ export function BriefModal({ open, onOpenChange, idea, readOnly }: BriefModalPro
         ref_visual: brief.ref_visual ?? '',
       };
       await updateIdea(idea.id, {
+        title: form.title,
+        pillar: form.pillar,
         priority: form.priority,
         format: form.format_video,
         description: form.narasi,
+        platform: form.platforms.join(','),
         ref_links: form.ref_links.map(l => l.trim()).filter(Boolean),
         brief: briefData,
       });
+
+      const linkedEvent = events.find(e => e.idea_id === idea.id);
+      if (addToCalendar && scheduleDate) {
+        const eventPayload = {
+          title: form.title,
+          platform: form.platforms.join(','),
+          account: form.accounts.join(','),
+          pillar: form.pillar,
+          format: form.format_video,
+          scheduled_date: scheduleDate,
+          scheduled_time: linkedEvent?.scheduled_time || '12:00',
+          status: linkedEvent?.status || 'scheduled',
+          idea_id: idea.id,
+          notes: form.narasi,
+        };
+        if (linkedEvent) {
+          await updateEvent(linkedEvent.id, eventPayload);
+        } else {
+          await createEvent(eventPayload);
+        }
+      } else if (!addToCalendar && linkedEvent) {
+        await deleteEvent(linkedEvent.id);
+      }
+
       setBrief(briefData);
       toast.success('Brief berhasil disimpan');
       setMode('view');
@@ -352,6 +415,79 @@ export function BriefModal({ open, onOpenChange, idea, readOnly }: BriefModalPro
         {mode === 'edit' && (
           <div className="mt-2 space-y-4">
 
+            {/* Informasi Dasar */}
+            <SectionBlock icon={<FileText className="size-4" />} title="Informasi Dasar">
+              <div className="space-y-3">
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Judul Konten <span className="text-red-500">*</span></Label>
+                  <Input
+                    value={form.title}
+                    onChange={e => upd('title', e.target.value)}
+                    placeholder="Contoh: Review Produk X"
+                  />
+                </div>
+
+                <div className="grid gap-1.5">
+                  <Label className="text-xs">Platform</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    {platforms.map(p => (
+                      <label key={p.platform_id} className="flex items-center gap-2 text-xs text-cly-text cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={form.platforms.includes(p.platform_id)}
+                          onChange={e => {
+                            if (e.target.checked) upd('platforms', [...form.platforms, p.platform_id]);
+                            else upd('platforms', form.platforms.filter(id => id !== p.platform_id));
+                          }}
+                          className="size-3.5 rounded border-cly-border text-cly-brand focus:ring-cly-brand"
+                        />
+                        {p.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid gap-1.5 mt-2">
+                  <Label className="text-xs">Akun</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    {accountList.map(a => (
+                      <label key={a.id} className="flex items-center gap-2 text-xs text-cly-text cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={form.accounts.includes(a.name)}
+                          onChange={e => {
+                            if (e.target.checked) upd('accounts', [...form.accounts, a.name]);
+                            else upd('accounts', form.accounts.filter(name => name !== a.name));
+                          }}
+                          className="size-3.5 rounded border-cly-border text-cly-brand focus:ring-cly-brand"
+                        />
+                        {a.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid gap-1.5 mt-2">
+                  <Label className="text-xs">Pilar</Label>
+                  <Select value={form.pillar} onValueChange={v => upd('pillar', v ?? '')}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pilih pilar">
+                        {form.pillar
+                          ? pillars.find(p => p.pillar_id === form.pillar)?.label || form.pillar
+                          : 'Pilih pilar'}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">-</SelectItem>
+                      {pillars.map(p => (
+                        <SelectItem key={p.pillar_id} value={p.pillar_id}>{p.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </SectionBlock>
+
             {/* Prioritas + Deadline */}
             <SectionBlock icon={<Flame className="size-4" />} title="Prioritas & Deadline">
               <div className="grid grid-cols-2 gap-3">
@@ -378,6 +514,29 @@ export function BriefModal({ open, onOpenChange, idea, readOnly }: BriefModalPro
                     placeholder="Contoh: 20 Agustus 2026"
                   />
                 </div>
+              </div>
+              
+              <div className="mt-4 flex flex-col gap-3 rounded-lg border border-cly-border bg-cly-muted/30 p-3">
+                <label className="flex items-center gap-2 text-xs font-semibold text-cly-text cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={addToCalendar}
+                    onChange={e => setAddToCalendar(e.target.checked)}
+                    className="size-4 rounded border-cly-border text-cly-brand focus:ring-cly-brand"
+                  />
+                  Jadwalkan otomatis di Kalender
+                </label>
+                {addToCalendar && (
+                  <div className="grid gap-1.5 pl-6">
+                    <Label className="text-xs text-cly-text-2">Pilih Tanggal</Label>
+                    <Input
+                      type="date"
+                      value={scheduleDate}
+                      onChange={e => setScheduleDate(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                )}
               </div>
             </SectionBlock>
 
@@ -528,13 +687,15 @@ function ViewRow({ label, value, multiline }: { label: string; value: string; mu
     return (
       <div className="space-y-0.5">
         <span className="text-[11px] text-muted-foreground">{label}</span>
-        <div 
+        <div
           className="text-sm leading-relaxed max-w-none [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2 [&_li]:mb-1 [&_b]:font-bold [&_i]:italic"
-          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(value, {
-            ALLOWED_TAGS: ['b', 'i', 'u', 'ul', 'ol', 'li', 'p', 'br', 'span', 'strong', 'em'],
-            ALLOWED_ATTR: [],
-            KEEP_CONTENT: true,
-          }) }}
+          dangerouslySetInnerHTML={{
+            __html: DOMPurify.sanitize(value, {
+              ALLOWED_TAGS: ['b', 'i', 'u', 'ul', 'ol', 'li', 'p', 'br', 'span', 'strong', 'em'],
+              ALLOWED_ATTR: [],
+              KEEP_CONTENT: true,
+            })
+          }}
         />
       </div>
     );

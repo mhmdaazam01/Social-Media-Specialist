@@ -12,6 +12,9 @@ import { useIdeas } from '@/lib/hooks/useIdeas';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { usePillars } from '@/lib/hooks/usePillars';
 import { useUser } from '@/lib/hooks/useUser';
+import { useAccounts } from '@/lib/hooks/useAccounts';
+import { useEvents } from '@/lib/hooks/useEvents';
+import { today } from '@/lib/utils/formatting';
 import { createClient } from '@/lib/supabase/client';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { Plus, X, Target, MessageSquare, Video, FileText, Flame, Sparkles, BookmarkPlus } from 'lucide-react';
@@ -74,7 +77,8 @@ interface CreateBriefModalProps {
 interface BriefFormFields {
   // Identity
   title: string;
-  platform: string;
+  platforms: string[];
+  accounts: string[];
   pillar: string;
   // Brief fields
   priority: 'low' | 'med' | 'high';
@@ -94,7 +98,8 @@ interface BriefFormFields {
 
 const emptyForm: BriefFormFields = {
   title: '',
-  platform: '',
+  platforms: [],
+  accounts: [],
   pillar: '',
   priority: 'med',
   deadline: '',
@@ -115,10 +120,14 @@ export function CreateBriefModal({ open, onOpenChange, editIdea }: CreateBriefMo
   const { platforms } = usePlatforms();
   const { pillars } = usePillars();
   const { profile } = useUser();
+  const { accounts: accountList } = useAccounts();
+  const { createEvent } = useEvents();
   const supabase = createClient();
   const [form, setForm] = useState<BriefFormFields>(emptyForm);
   const [loading, setLoading] = useState(false);
   const [presets, setPresets] = useState<BriefPreset[]>(DEFAULT_PRESETS);
+  const [addToCalendar, setAddToCalendar] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState(today());
 
   // Fetch presets from Supabase (with fallback to localStorage)
   const fetchPresets = useCallback(async () => {
@@ -243,10 +252,11 @@ export function CreateBriefModal({ open, onOpenChange, editIdea }: CreateBriefMo
     if (!open) return;
     queueMicrotask(() => {
       if (editIdea) {
-        const brief = (editIdea.brief && typeof editIdea.brief === 'object') ? editIdea.brief as Record<string, string> : {};
+        const brief = (editIdea.brief && typeof editIdea.brief === 'object') ? editIdea.brief as any : {};
         setForm({
           title: editIdea.title ?? '',
-          platform: editIdea.platform ?? '',
+          platforms: editIdea.platform ? editIdea.platform.split(',').filter(Boolean) : [],
+          accounts: brief.accounts ?? [],
           pillar: editIdea.pillar ?? '',
           priority: editIdea.priority ?? 'med',
           deadline: brief.deadline ?? '',
@@ -259,8 +269,12 @@ export function CreateBriefModal({ open, onOpenChange, editIdea }: CreateBriefMo
           durasi: brief.durasi ?? '',
           ref_links: editIdea.ref_links?.length > 0 ? editIdea.ref_links : [''],
         });
+        setAddToCalendar(false);
+        setScheduleDate(today());
       } else {
         setForm(emptyForm);
+        setAddToCalendar(false);
+        setScheduleDate(today());
       }
     });
   }, [open, editIdea]);
@@ -301,12 +315,14 @@ export function CreateBriefModal({ open, onOpenChange, editIdea }: CreateBriefMo
         format_video: form.format_video,
         durasi: form.durasi,
         ref_visual: '',
+        accounts: form.accounts,
+        platforms: form.platforms,
       };
 
       const data = {
         title: form.title,
         description: form.narasi,
-        platform: form.platform,
+        platform: form.platforms.join(','),
         pillar: form.pillar,
         format: form.format_video,
         status: 'brief' as const,
@@ -320,7 +336,21 @@ export function CreateBriefModal({ open, onOpenChange, editIdea }: CreateBriefMo
         await updateIdea(editIdea.id, data);
         toast.success('Brief berhasil diperbarui');
       } else {
-        await createIdea(data);
+        const createdIdea = await createIdea(data);
+        if (createdIdea && addToCalendar && scheduleDate) {
+          await createEvent({
+            title: form.title,
+            platform: form.platforms.join(','),
+            account: form.accounts.join(','),
+            pillar: form.pillar,
+            format: form.format_video,
+            scheduled_date: scheduleDate,
+            scheduled_time: '12:00',
+            status: 'scheduled',
+            idea_id: createdIdea.id,
+            notes: form.narasi,
+          });
+        }
         toast.success('Brief berhasil dibuat');
       }
       onOpenChange(false);
@@ -363,27 +393,46 @@ export function CreateBriefModal({ open, onOpenChange, editIdea }: CreateBriefMo
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="grid gap-2">
-                <Label>Platform</Label>
-                <Select value={form.platform} onValueChange={v => update('platform', v ?? '')}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Pilih platform">
-                      {form.platform === 'all'
-                        ? 'Semua Platform'
-                        : form.platform
-                          ? platforms.find(p => p.platform_id === form.platform)?.name || form.platform
-                          : 'Pilih platform'}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">-</SelectItem>
-                    <SelectItem value="all">Semua Platform</SelectItem>
-                    {platforms.map(p => (
-                      <SelectItem key={p.platform_id} value={p.platform_id}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Platform (Bisa lebih dari 1)</Label>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  {platforms.map(p => (
+                    <label key={p.platform_id} className="flex items-center gap-2 text-xs text-cly-text cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.platforms.includes(p.platform_id)}
+                        onChange={e => {
+                          if (e.target.checked) update('platforms', [...form.platforms, p.platform_id]);
+                          else update('platforms', form.platforms.filter(id => id !== p.platform_id));
+                        }}
+                        className="size-3.5 rounded border-cly-border text-cly-brand focus:ring-cly-brand"
+                      />
+                      {p.name}
+                    </label>
+                  ))}
+                </div>
               </div>
+              
               <div className="grid gap-2">
+                <Label>Akun (Bisa lebih dari 1)</Label>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  {accountList.map(a => (
+                    <label key={a.id} className="flex items-center gap-2 text-xs text-cly-text cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.accounts.includes(a.name)}
+                        onChange={e => {
+                          if (e.target.checked) update('accounts', [...form.accounts, a.name]);
+                          else update('accounts', form.accounts.filter(name => name !== a.name));
+                        }}
+                        className="size-3.5 rounded border-cly-border text-cly-brand focus:ring-cly-brand"
+                      />
+                      {a.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid gap-2 col-span-2 sm:col-span-1">
                 <Label>Pilar</Label>
                 <Select value={form.pillar} onValueChange={v => update('pillar', v ?? '')}>
                   <SelectTrigger className="w-full">
@@ -431,6 +480,31 @@ export function CreateBriefModal({ open, onOpenChange, editIdea }: CreateBriefMo
                 />
               </div>
             </div>
+            
+            {!editIdea && (
+              <div className="mt-4 flex flex-col gap-3 rounded-lg border border-cly-border bg-cly-muted/30 p-3">
+                <label className="flex items-center gap-2 text-xs font-semibold text-cly-text cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={addToCalendar}
+                    onChange={e => setAddToCalendar(e.target.checked)}
+                    className="size-4 rounded border-cly-border text-cly-brand focus:ring-cly-brand"
+                  />
+                  Jadwalkan otomatis di Kalender
+                </label>
+                {addToCalendar && (
+                  <div className="grid gap-1.5 pl-6">
+                    <Label className="text-xs text-cly-text-2">Pilih Tanggal</Label>
+                    <Input
+                      type="date"
+                      value={scheduleDate}
+                      onChange={e => setScheduleDate(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </SectionBlock>
 
           {/* ── Narasi Konten */}
