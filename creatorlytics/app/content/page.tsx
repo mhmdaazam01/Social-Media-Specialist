@@ -3,6 +3,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { CSVImport } from '@/components/posts/CSVImport';
+import { SpreadsheetColumnHeader } from '@/components/posts/SpreadsheetColumnHeader';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { PlatformBadge } from '@/components/cly';
 import { usePosts } from '@/lib/hooks/usePosts';
@@ -12,7 +13,7 @@ import { usePillars } from '@/lib/hooks/usePillars';
 import { postsToCSV } from '@/lib/utils/export';
 import { getPlatformFromUrl } from '@/lib/utils/thumbnail';
 import { 
-  Search, FileDown, FileText, 
+  Search, FileDown, 
   Plus, Link as LinkIcon,
   ChevronLeft, ChevronRight, Check, Trash2, Loader2
 } from 'lucide-react';
@@ -59,9 +60,24 @@ export default function ContentPage() {
   const [accountFilter, setAccountFilter] = useState('all');
   const [platformFilter, setPlatformFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('latest');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+
+  // Sorting state (per-column spreadsheet sort)
+  const [sortConfig, setSortConfig] = useState<{ field: string; direction: 'asc' | 'desc' }>({
+    field: 'date',
+    direction: 'desc',
+  });
+
+  const handleSort = useCallback((field: string, direction: 'asc' | 'desc') => {
+    setSortConfig({ field, direction });
+    setCurrentPage(1);
+  }, []);
+
+  const handleResetSort = useCallback(() => {
+    setSortConfig({ field: 'date', direction: 'desc' });
+    setCurrentPage(1);
+  }, []);
 
   // Editing state
   const [editingCell, setEditingCell] = useState<{ postId: string; field: string } | null>(null);
@@ -154,18 +170,40 @@ export default function ContentPage() {
     }
     
     // Sorting
-    if (sortBy === 'latest') {
-      filtered.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    } else if (sortBy === 'oldest') {
-      filtered.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-    } else if (sortBy === 'impression') {
-      filtered.sort((a, b) => (b.impression || 0) - (a.impression || 0));
-    } else if (sortBy === 'reach') {
-      filtered.sort((a, b) => (b.reach || 0) - (a.reach || 0));
-    }
+    const { field, direction } = sortConfig;
+    const factor = direction === 'asc' ? 1 : -1;
+
+    filtered.sort((a, b) => {
+      if (field === 'date') {
+        return factor * (a.date || '').localeCompare(b.date || '');
+      }
+      if (field === 'name') {
+        return factor * (a.name || '').localeCompare(b.name || '');
+      }
+      if (field === 'account') {
+        return factor * (a.account || '').localeCompare(b.account || '');
+      }
+      if (field === 'platform') {
+        return factor * (a.platform || '').localeCompare(b.platform || '');
+      }
+      if (field === 'pillar') {
+        return factor * (a.pillar || '').localeCompare(b.pillar || '');
+      }
+      if (field === 'er') {
+        const erA = a.impression > 0 ? (((a.like || 0) + (a.comment || 0) + (a.share || 0) + (a.save || 0)) / a.impression) * 100 : 0;
+        const erB = b.impression > 0 ? (((b.like || 0) + (b.comment || 0) + (b.share || 0) + (b.save || 0)) / b.impression) * 100 : 0;
+        return factor * (erA - erB);
+      }
+      if (['impression', 'reach', 'like', 'comment', 'share', 'save'].includes(field)) {
+        const valA = Number(a[field as keyof Post]) || 0;
+        const valB = Number(b[field as keyof Post]) || 0;
+        return factor * (valA - valB);
+      }
+      return 0;
+    });
     
     return filtered;
-  }, [posts, accountFilter, platformFilter, dateFrom, dateTo, searchQuery, sortBy]);
+  }, [posts, accountFilter, platformFilter, dateFrom, dateTo, searchQuery, sortConfig]);
 
   const platforms = useMemo(() => {
     const unique = new Set(posts.map(p => p.platform).filter(Boolean));
@@ -440,25 +478,15 @@ export default function ContentPage() {
             <h1 className="text-2xl font-bold text-cly-text mb-1">Konten Performance</h1>
             <p className="text-sm text-cly-text-3">Pantau performa kontenmu dan temukan insight terbaik.</p>
           </div>
-          <div className="grid grid-cols-3 md:flex md:flex-wrap items-center gap-2 w-full md:w-auto">
+          <div className="flex items-center gap-2 w-full md:w-auto">
             <button 
               onClick={handleExport}
-              className="h-8 rounded-lg border border-cly-border bg-white text-cly-text-2 text-xs font-medium hover:bg-cly-muted transition-all flex items-center justify-center gap-1.5 shadow-sm px-1 md:px-4 w-full md:w-auto"
+              className="h-8 rounded-lg border border-cly-border bg-white dark:bg-cly-surface text-cly-text-2 text-xs font-medium hover:bg-cly-muted transition-all flex items-center justify-center gap-1.5 shadow-sm px-3"
             >
               <FileDown size={14} className="shrink-0" />
-              <span className="truncate md:inline">Export</span>
+              <span>Export</span>
             </button>
-            <div className="flex items-center justify-center w-full md:w-auto">
-              <CSVImport onImport={handleImport} />
-            </div>
-            <a
-              href="/template-konten.csv"
-              download
-              className="h-8 rounded-lg bg-cly-brand text-white text-xs font-semibold hover:bg-cly-brand-hover transition-all flex items-center justify-center gap-1.5 shadow-sm px-1 md:px-4 w-full md:w-auto"
-            >
-              <FileText size={14} className="shrink-0" />
-              <span className="truncate md:inline">Template</span>
-            </a>
+            <CSVImport onImport={handleImport} />
           </div>
         </div>
 
@@ -539,14 +567,39 @@ export default function ContentPage() {
               ))}
             </select>
             <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              value={
+                sortConfig.field === 'date' && sortConfig.direction === 'desc' ? 'latest' :
+                sortConfig.field === 'date' && sortConfig.direction === 'asc' ? 'oldest' :
+                sortConfig.field === 'impression' && sortConfig.direction === 'desc' ? 'impression_desc' :
+                sortConfig.field === 'reach' && sortConfig.direction === 'desc' ? 'reach_desc' :
+                sortConfig.field === 'comment' && sortConfig.direction === 'desc' ? 'comment_desc' :
+                sortConfig.field === 'like' && sortConfig.direction === 'desc' ? 'like_desc' :
+                sortConfig.field === 'er' && sortConfig.direction === 'desc' ? 'er_desc' : 'custom'
+              }
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === 'latest') handleSort('date', 'desc');
+                else if (val === 'oldest') handleSort('date', 'asc');
+                else if (val === 'impression_desc') handleSort('impression', 'desc');
+                else if (val === 'reach_desc') handleSort('reach', 'desc');
+                else if (val === 'comment_desc') handleSort('comment', 'desc');
+                else if (val === 'like_desc') handleSort('like', 'desc');
+                else if (val === 'er_desc') handleSort('er', 'desc');
+              }}
               className="w-full md:w-auto md:min-w-[140px] h-8 px-2 md:px-3 pr-6 rounded-lg border border-cly-border bg-white text-xs text-cly-text-2 outline-none focus:border-cly-brand focus:ring-2 focus:ring-cly-brand/20 transition-all cursor-pointer truncate col-span-2 md:col-span-1"
             >
-              <option value="latest">Latest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="impression">Highest Impression</option>
-              <option value="reach">Highest Reach</option>
+              <option value="latest">Tanggal (Terbaru)</option>
+              <option value="oldest">Tanggal (Terlama)</option>
+              <option value="comment_desc">Comment Terbanyak</option>
+              <option value="like_desc">Like Terbanyak</option>
+              <option value="impression_desc">Impression Tertinggi</option>
+              <option value="reach_desc">Reach Tertinggi</option>
+              <option value="er_desc">ER Tertinggi</option>
+              {![
+                'date:desc', 'date:asc', 'impression:desc', 'reach:desc', 'comment:desc', 'like:desc', 'er:desc'
+              ].includes(`${sortConfig.field}:${sortConfig.direction}`) && (
+                <option value="custom">Kustom ({sortConfig.field} {sortConfig.direction === 'desc' ? '↓' : '↑'})</option>
+              )}
             </select>
           </div>
         </div>
@@ -568,19 +621,139 @@ export default function ContentPage() {
                     </th>
                   )}
                   <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-12">No</th>
-                  <th className="text-left text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 min-w-[250px]">Judul Konten</th>
-                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[100px]">Tanggal</th>
-                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[100px]">Akun</th>
-                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[100px]">Platform</th>
-                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[100px]">Pillar</th>
+                  <SpreadsheetColumnHeader
+                    title="Judul Konten"
+                    field="name"
+                    type="text"
+                    align="left"
+                    className="min-w-[250px]"
+                    currentSortField={sortConfig.field}
+                    currentSortDirection={sortConfig.direction}
+                    onSort={handleSort}
+                    onResetSort={handleResetSort}
+                  />
+                  <SpreadsheetColumnHeader
+                    title="Tanggal"
+                    field="date"
+                    type="date"
+                    align="center"
+                    className="w-[115px]"
+                    currentSortField={sortConfig.field}
+                    currentSortDirection={sortConfig.direction}
+                    onSort={handleSort}
+                    onResetSort={handleResetSort}
+                  />
+                  <SpreadsheetColumnHeader
+                    title="Akun"
+                    field="account"
+                    type="text"
+                    align="center"
+                    className="w-[110px]"
+                    currentSortField={sortConfig.field}
+                    currentSortDirection={sortConfig.direction}
+                    onSort={handleSort}
+                    onResetSort={handleResetSort}
+                  />
+                  <SpreadsheetColumnHeader
+                    title="Platform"
+                    field="platform"
+                    type="text"
+                    align="center"
+                    className="w-[115px]"
+                    currentSortField={sortConfig.field}
+                    currentSortDirection={sortConfig.direction}
+                    onSort={handleSort}
+                    onResetSort={handleResetSort}
+                  />
+                  <SpreadsheetColumnHeader
+                    title="Pillar"
+                    field="pillar"
+                    type="text"
+                    align="center"
+                    className="w-[110px]"
+                    currentSortField={sortConfig.field}
+                    currentSortDirection={sortConfig.direction}
+                    onSort={handleSort}
+                    onResetSort={handleResetSort}
+                  />
                   <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[100px]">Link Content</th>
-                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[90px]">Impressions</th>
-                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[90px]">Reach</th>
-                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[70px]">Like</th>
-                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[85px]">Comment</th>
-                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[70px]">Share</th>
-                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[70px]">Save</th>
-                  <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[70px]">ER</th>
+                  <SpreadsheetColumnHeader
+                    title="Impressions"
+                    field="impression"
+                    type="number"
+                    align="center"
+                    className="w-[115px]"
+                    currentSortField={sortConfig.field}
+                    currentSortDirection={sortConfig.direction}
+                    onSort={handleSort}
+                    onResetSort={handleResetSort}
+                  />
+                  <SpreadsheetColumnHeader
+                    title="Reach"
+                    field="reach"
+                    type="number"
+                    align="center"
+                    className="w-[95px]"
+                    currentSortField={sortConfig.field}
+                    currentSortDirection={sortConfig.direction}
+                    onSort={handleSort}
+                    onResetSort={handleResetSort}
+                  />
+                  <SpreadsheetColumnHeader
+                    title="Like"
+                    field="like"
+                    type="number"
+                    align="center"
+                    className="w-[80px]"
+                    currentSortField={sortConfig.field}
+                    currentSortDirection={sortConfig.direction}
+                    onSort={handleSort}
+                    onResetSort={handleResetSort}
+                  />
+                  <SpreadsheetColumnHeader
+                    title="Comment"
+                    field="comment"
+                    type="number"
+                    align="center"
+                    className="w-[100px]"
+                    currentSortField={sortConfig.field}
+                    currentSortDirection={sortConfig.direction}
+                    onSort={handleSort}
+                    onResetSort={handleResetSort}
+                  />
+                  <SpreadsheetColumnHeader
+                    title="Share"
+                    field="share"
+                    type="number"
+                    align="center"
+                    className="w-[85px]"
+                    currentSortField={sortConfig.field}
+                    currentSortDirection={sortConfig.direction}
+                    onSort={handleSort}
+                    onResetSort={handleResetSort}
+                  />
+                  <SpreadsheetColumnHeader
+                    title="Save"
+                    field="save"
+                    type="number"
+                    align="center"
+                    className="w-[80px]"
+                    currentSortField={sortConfig.field}
+                    currentSortDirection={sortConfig.direction}
+                    onSort={handleSort}
+                    onResetSort={handleResetSort}
+                  />
+                  <SpreadsheetColumnHeader
+                    title="ER"
+                    field="er"
+                    type="number"
+                    align="center"
+                    className="w-[80px]"
+                    currentSortField={sortConfig.field}
+                    currentSortDirection={sortConfig.direction}
+                    onSort={handleSort}
+                    onResetSort={handleResetSort}
+                  />
                   <th className="text-center text-xs font-semibold text-cly-text-3 uppercase tracking-wider py-3 px-3 w-[50px]"></th>
                 </tr>
               </thead>
