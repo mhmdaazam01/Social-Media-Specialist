@@ -83,7 +83,7 @@ export default function ShareCalendarGuestPage() {
   const calendarDays = useMemo(() => {
     const firstDay = new Date(year, month - 1, 1);
     const lastDay = new Date(year, month, 0);
-    const startDay = firstDay.getDay();
+    const startDay = (firstDay.getDay() + 6) % 7; // Monday = 0, Sunday = 6
     const totalDays = lastDay.getDate();
     const days: Array<{ date: number | null; dateStr: string | null; events: CalendarEvent[] }> = [];
     for (let i = 0; i < startDay; i++) days.push({ date: null, dateStr: null, events: [] });
@@ -198,7 +198,7 @@ export default function ShareCalendarGuestPage() {
 
           {/* Day Headers */}
           <div className="grid grid-cols-7 border-b border-cly-border">
-            {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(d => (
+            {['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].map(d => (
               <div key={d} className="py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-cly-text-muted">
                 {d}
               </div>
@@ -208,7 +208,8 @@ export default function ShareCalendarGuestPage() {
           {/* Days */}
           <div className="grid grid-cols-7">
             {calendarDays.map((day, idx) => {
-              const todayStr = new Date().toISOString().split('T')[0];
+              const now = new Date();
+              const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
               const isToday = day.dateStr === todayStr;
               return (
                 <div

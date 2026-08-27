@@ -28,7 +28,7 @@ export function AIInsightsTab() {
       // Gunakan p.date (format 'YYYY-MM-DD') karena tidak ada kolom jam
       const dateStr = p.date || p.created_at;
       if (!dateStr) return;
-      const dateObj = new Date(dateStr);
+      const dateObj = new Date(dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00');
       if (isNaN(dateObj.getTime())) return;
 
       // getDay(): 0 = Minggu, 1 = Senin ... 6 = Sabtu → map ke 1–7 (Senin=1, Minggu=7)

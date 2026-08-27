@@ -19,10 +19,10 @@ export function ShareButton({ targetType }: ShareButtonProps) {
       <button
         id={`share-button-${targetType}`}
         onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 rounded-lg border border-cly-border bg-white px-4 py-2 text-xs font-semibold text-cly-text transition-all hover:border-cly-brand hover:text-cly-brand hover:shadow-md active:scale-95 shadow-sm"
+        className="flex items-center justify-center gap-1.5 h-8 rounded-lg border border-cly-border bg-white dark:bg-cly-surface px-3 text-xs font-medium text-cly-text-2 transition-all hover:border-cly-brand hover:text-cly-brand hover:bg-cly-muted active:scale-95 shadow-sm"
       >
-        <Users className="size-5" />
-        Share
+        <Users size={14} className="shrink-0" />
+        <span>Share</span>
       </button>
 
       <ShareModal

@@ -124,7 +124,7 @@ export interface Settings {
 // ── Collaboration ─────────────────────────────────────────────
 export type CollabRole = 'owner' | 'editor' | 'viewer';
 export type CollabStatus = 'pending' | 'active';
-export type CollabTargetType = 'planner' | 'calendar' | 'all';
+export type CollabTargetType = 'planner' | 'calendar' | 'content';
 
 export interface PlannerShare {
   id: string;

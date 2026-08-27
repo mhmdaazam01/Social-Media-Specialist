@@ -12,7 +12,7 @@ import { useEvents } from '@/lib/hooks/useEvents';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { usePillars } from '@/lib/hooks/usePillars';
 import { useAccounts } from '@/lib/hooks/useAccounts';
-import { today } from '@/lib/utils/formatting';
+import { today, formatDateWithDay } from '@/lib/utils/formatting';
 import { FORMAT_OPTIONS } from '@/lib/constants';
 import type { CalendarEvent } from '@/types';
 import { Pencil, Calendar } from 'lucide-react';
@@ -162,7 +162,7 @@ export function CalEventModal({ open, onOpenChange, editEvent, defaultDate, onDe
               <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                 <Calendar className="size-4" />
                 <span>
-                  {editEvent.scheduled_date} {editEvent.scheduled_time ? `• ${editEvent.scheduled_time}` : ''}
+                  {formatDateWithDay(editEvent.scheduled_date)} {editEvent.scheduled_time ? `• ${editEvent.scheduled_time}` : ''}
                 </span>
                 <span className="text-border px-1">•</span>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${

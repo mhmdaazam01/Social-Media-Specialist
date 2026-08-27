@@ -218,8 +218,7 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
     const workspaces: SharedWorkspace[] = ownerIds.map((ownerId) => {
       const entry = ownerMap.get(ownerId)!;
       const info = userInfoMap.get(ownerId);
-      const rawTargets = shareMap.get(ownerId) ?? ['all'];
-      const targetTypes = rawTargets.includes('all') ? ['planner', 'calendar'] : rawTargets;
+      const targetTypes = shareMap.get(ownerId) ?? [];
       return {
         collaboratorRow: entry.collaboratorRow as PlannerCollaborator,
         ownerName: info?.display_name || 'Unknown',

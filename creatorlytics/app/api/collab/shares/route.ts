@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { target_type, default_role, public_enabled } = body;
 
-  if (!['planner', 'calendar', 'all'].includes(target_type)) {
+  if (!['planner', 'calendar', 'content'].includes(target_type)) {
     return NextResponse.json({ error: 'Invalid target_type' }, { status: 400 });
   }
 

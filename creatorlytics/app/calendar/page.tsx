@@ -26,6 +26,7 @@ export default function CalendarPage() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [weekStartsOnMonday, setWeekStartsOnMonday] = useState(true);
   const { events, deleteEvent } = useEvents();
   const { user } = useUser();
   const { activeWorkspaceId, getRoleInWorkspace } = useCollaboration();
@@ -34,13 +35,14 @@ export default function CalendarPage() {
   const roleInActiveWorkspace = isOwnWorkspace ? 'owner' : getRoleInWorkspace(activeWorkspaceId ?? '');
   const isViewer = !isOwnWorkspace && roleInActiveWorkspace === 'viewer';
 
-  const monthName = new Date(year, month - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+  const monthName = new Date(year, month - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
   // Build calendar grid
   const calendarDays = useMemo(() => {
     const firstDay = new Date(year, month - 1, 1);
     const lastDay = new Date(year, month, 0);
-    const startDay = firstDay.getDay(); // 0 = Sunday
+    const rawStartDay = firstDay.getDay(); // 0 = Sunday, 1 = Monday ... 6 = Saturday
+    const startDay = weekStartsOnMonday ? (rawStartDay + 6) % 7 : rawStartDay;
     const totalDays = lastDay.getDate();
 
     const days: Array<{ date: number | null; dateStr: string | null; events: CalendarEvent[] }> = [];
@@ -58,7 +60,7 @@ export default function CalendarPage() {
     }
 
     return days;
-  }, [year, month, events]);
+  }, [year, month, events, weekStartsOnMonday]);
 
   // Conflict detection: multiple events on same day
   const conflicts = useMemo(() => {
@@ -199,41 +201,89 @@ export default function CalendarPage() {
           {/* Calendar Grid */}
           <div className="rounded-2xl bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
             {/* Month navigation */}
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-base font-bold capitalize text-cly-text">{monthName}</h3>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => {
-                    if (month === 1) {
-                      setYear(y => y - 1);
-                      setMonth(12);
-                    } else {
-                      setMonth(m => m - 1);
-                    }
-                  }}
-                  className="rounded-lg border border-cly-border bg-white p-1.5 text-cly-text-3 transition-all hover:border-cly-brand hover:text-cly-brand hover:shadow-sm"
-                >
-                  <ChevronLeftIcon className="size-4" />
-                </button>
-                <button
-                  onClick={() => {
-                    if (month === 12) {
-                      setYear(y => y + 1);
-                      setMonth(1);
-                    } else {
-                      setMonth(m => m + 1);
-                    }
-                  }}
-                  className="rounded-lg border border-cly-border bg-white p-1.5 text-cly-text-3 transition-all hover:border-cly-brand hover:text-cly-brand hover:shadow-sm"
-                >
-                  <ChevronRightIcon className="size-4" />
-                </button>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold capitalize text-cly-text">{monthName}</h3>
+                {(year !== now.getFullYear() || month !== now.getMonth() + 1) && (
+                  <button
+                    onClick={() => {
+                      const cur = new Date();
+                      setYear(cur.getFullYear());
+                      setMonth(cur.getMonth() + 1);
+                    }}
+                    className="rounded-md border border-cly-border bg-cly-muted/60 px-2 py-0.5 text-[11px] font-semibold text-cly-text-2 hover:bg-cly-brand-tint hover:text-cly-brand transition-all"
+                  >
+                    Bulan Ini
+                  </button>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {/* Week Start Toggle */}
+                <div className="flex items-center rounded-lg border border-cly-border bg-cly-muted/40 p-0.5 text-[11px] font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setWeekStartsOnMonday(true)}
+                    className={`rounded-md px-2 py-0.5 transition-all ${
+                      weekStartsOnMonday
+                        ? 'bg-white font-semibold text-cly-brand shadow-xs'
+                        : 'text-cly-text-3 hover:text-cly-text'
+                    }`}
+                  >
+                    Senin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWeekStartsOnMonday(false)}
+                    className={`rounded-md px-2 py-0.5 transition-all ${
+                      !weekStartsOnMonday
+                        ? 'bg-white font-semibold text-cly-brand shadow-xs'
+                        : 'text-cly-text-3 hover:text-cly-text'
+                    }`}
+                  >
+                    Minggu
+                  </button>
+                </div>
+
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => {
+                      if (month === 1) {
+                        setYear(y => y - 1);
+                        setMonth(12);
+                      } else {
+                        setMonth(m => m - 1);
+                      }
+                    }}
+                    aria-label="Bulan sebelumnya"
+                    className="rounded-lg border border-cly-border bg-white p-1.5 text-cly-text-3 transition-all hover:border-cly-brand hover:text-cly-brand hover:shadow-sm"
+                  >
+                    <ChevronLeftIcon className="size-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (month === 12) {
+                        setYear(y => y + 1);
+                        setMonth(1);
+                      } else {
+                        setMonth(m => m + 1);
+                      }
+                    }}
+                    aria-label="Bulan berikutnya"
+                    className="rounded-lg border border-cly-border bg-white p-1.5 text-cly-text-3 transition-all hover:border-cly-brand hover:text-cly-brand hover:shadow-sm"
+                  >
+                    <ChevronRightIcon className="size-4" />
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* Day headers */}
             <div className="mb-2 grid grid-cols-7 gap-1">
-              {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(day => (
+              {(weekStartsOnMonday
+                ? ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
+                : ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
+              ).map(day => (
                 <div key={day} className="py-2 text-center text-xs font-semibold text-cly-text-3">
                   {day}
                 </div>
@@ -352,7 +402,7 @@ export default function CalendarPage() {
 
               function renderEventCard(evt: CalendarEvent, variant: 'upcoming' | 'past') {
                 const dateObj = new Date(evt.scheduled_date + 'T00:00:00');
-                const dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                const dateStr = dateObj.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
                 const isChecked = selectedIds.has(evt.id);
                 const cardClass = variant === 'upcoming'
                   ? `flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all hover:shadow-sm ${

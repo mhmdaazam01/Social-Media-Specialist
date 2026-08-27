@@ -3,9 +3,10 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * GET /api/collab/guest?token=xxx&type=planner|calendar
+ * GET /api/collab/guest?token=xxx&type=planner|calendar|content
  * Public endpoint: resolves share token and returns read-only data.
  * No authentication required if public_enabled = true.
+ * Each share token is scoped to exactly one target_type (no 'all').
  */
 export async function GET(request: NextRequest) {
   const cookieStore = await cookies();
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const token = searchParams.get('token');
-  const type = searchParams.get('type') as 'planner' | 'calendar' | null;
+  const type = searchParams.get('type') as 'planner' | 'calendar' | 'content' | null;
 
   if (!token || !type) {
     return NextResponse.json({ error: 'Missing token or type' }, { status: 400 });
@@ -40,9 +41,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: shareError ? `Database error: ${shareError.message}` : 'Share token not found' }, { status: 404 });
   }
 
-  // Check if type is accessible via this share
-  const typeAllowed = share.target_type === 'all' || share.target_type === type;
-  if (!typeAllowed) {
+  // Strict type check: token must match exactly the requested type
+  if (share.target_type !== type) {
     return NextResponse.json({ error: 'This link does not grant access to this section' }, { status: 403 });
   }
 
@@ -84,11 +84,12 @@ export async function GET(request: NextRequest) {
     .eq('id', share.owner_id)
     .single();
 
-  // Fetch data
+  // Fetch data based on type
   let ideas = null;
   let events = null;
+  let posts = null;
 
-  if (type === 'planner' || share.target_type === 'all') {
+  if (type === 'planner') {
     const { data } = await supabase
       .from('content_ideas')
       .select('*')
@@ -97,13 +98,27 @@ export async function GET(request: NextRequest) {
     ideas = data;
   }
 
-  if (type === 'calendar' || share.target_type === 'all') {
+  if (type === 'calendar') {
     const { data } = await supabase
       .from('calendar_events')
       .select('*')
       .eq('user_id', share.owner_id)
       .order('scheduled_date', { ascending: true });
     events = data;
+  }
+
+  if (type === 'content') {
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    const oneYearAgoStr = oneYearAgo.toISOString().split('T')[0];
+
+    const { data } = await supabase
+      .from('posts')
+      .select('*')
+      .eq('user_id', share.owner_id)
+      .gte('date', oneYearAgoStr)
+      .order('date', { ascending: false });
+    posts = data;
   }
 
   // Determine user state
@@ -136,6 +151,7 @@ export async function GET(request: NextRequest) {
     owner: ownerProfile,
     ideas,
     events,
+    posts,
     isLoggedIn,
     isOwner,
     isCollaborator,

@@ -40,8 +40,15 @@ export function daysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate();
 }
 
-export function firstDayOfMonth(year: number, month: number): number {
-  return new Date(year, month - 1, 1).getDay();
+export function formatDateWithDay(date: string): string {
+  if (!date) return '';
+  const d = new Date(date + 'T00:00:00');
+  return d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+export function firstDayOfMonth(year: number, month: number, startOnMonday = true): number {
+  const day = new Date(year, month - 1, 1).getDay();
+  return startOnMonday ? (day + 6) % 7 : day;
 }
 
 export function parseDateParts(dateStr: string): { year: number; month: number } | null {

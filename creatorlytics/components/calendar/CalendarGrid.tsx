@@ -17,7 +17,7 @@ interface CalendarGridProps {
   onNextMonth: () => void;
 }
 
-const DAY_HEADERS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+const DAY_HEADERS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
 // Status color map
 const STATUS_COLOR: Record<string, string> = {

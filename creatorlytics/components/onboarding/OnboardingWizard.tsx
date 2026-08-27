@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/hooks/useUser';
 import { usePillars } from '@/lib/hooks/usePillars';
 import { useAccounts } from '@/lib/hooks/useAccounts';
+import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +29,16 @@ const PRESET_NICHES = [
   'Gaming', 'Seni & Desain', 'Parenting', 'Otomotif',
 ];
 
+const PRESET_PLATFORMS = [
+  { id: 'instagram', name: 'Instagram', emoji: '📸' },
+  { id: 'tiktok', name: 'TikTok', emoji: '🎵' },
+  { id: 'x', name: 'X (Twitter)', emoji: '𝕏' },
+  { id: 'threads', name: 'Threads', emoji: '🧵' },
+  { id: 'facebook', name: 'Facebook', emoji: '📘' },
+  { id: 'youtube', name: 'YouTube', emoji: '🎥' },
+  { id: 'linkedin', name: 'LinkedIn', emoji: '💼' },
+];
+
 const PILLAR_COLORS = [
   { color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
   { color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
@@ -43,6 +54,7 @@ export function OnboardingWizard() {
   const { user, profile, refreshProfile } = useUser();
   const { addPillar } = usePillars();
   const { addAccount } = useAccounts();
+  const { addPlatform } = usePlatforms();
   const supabase = createClient();
 
   const [step, setStep] = useState(1);
@@ -53,8 +65,9 @@ export function OnboardingWizard() {
   const [niche, setNiche] = useState(profile?.niche || '');
   const [customNiche, setCustomNiche] = useState('');
 
-  // Step 2 — Account name
+  // Step 2 — Account & Platform
   const [accountName, setAccountName] = useState('');
+  const [selectedPlatform, setSelectedPlatform] = useState('instagram');
 
   // Step 3 — Pillars
   const [pillars, setPillars] = useState<{ label: string; emoji: string }[]>([]);
@@ -78,8 +91,10 @@ export function OnboardingWizard() {
 
   // -------- navigation --------
   const canNext = () => {
-    if (step === 1) return displayName.trim().length > 0 && (niche.trim().length > 0 || customNiche.trim().length > 0);
-    if (step === 2) return accountName.trim().length > 0;
+    // Step 1: displayName is mandatory, niche is optional
+    if (step === 1) return displayName.trim().length > 0;
+    // Step 2: accountName and selecting 1 platform are mandatory
+    if (step === 2) return accountName.trim().length > 0 && selectedPlatform.trim().length > 0;
     return true; // step 3 (pillars) is optional
   };
 
@@ -107,7 +122,21 @@ export function OnboardingWizard() {
         await addAccount(accountName.trim());
       }
 
-      // 3. Add pillars
+      // 3. Add selected platform
+      if (selectedPlatform.trim()) {
+        const platInfo = PRESET_PLATFORMS.find(p => p.id === selectedPlatform) || {
+          id: selectedPlatform.toLowerCase().replace(/\s+/g, '-'),
+          name: selectedPlatform,
+          emoji: '📱'
+        };
+        await addPlatform({
+          platform_id: platInfo.id,
+          name: platInfo.name,
+          emoji: platInfo.emoji,
+        });
+      }
+
+      // 4. Add pillars
       await Promise.all(
         pillars.map((p, i) => {
           const c = PILLAR_COLORS[i % PILLAR_COLORS.length];
@@ -121,7 +150,7 @@ export function OnboardingWizard() {
         })
       );
 
-      // 4. Refresh profile so OnboardingGuard sees is_onboarded = true
+      // 5. Refresh profile so OnboardingGuard sees is_onboarded = true
       await refreshProfile();
       toast.success('Selamat datang di Creatorlytics!');
     } catch (err) {
@@ -150,7 +179,7 @@ export function OnboardingWizard() {
               Langkah {step} dari {TOTAL_STEPS}
             </p>
             {step === 1 && <StepHeader icon={<User className="size-5" />} title="Siapa kamu?" desc="Biar dashboard bisa disesuaikan buat kamu." />}
-            {step === 2 && <StepHeader icon={<BarChart3 className="size-5" />} title="Nama akun sosmedmu?" desc="Ini akan jadi akun default saat kamu input data konten." />}
+            {step === 2 && <StepHeader icon={<BarChart3 className="size-5" />} title="Akun & Platform" desc="Tentukan akun dan platform utama tempat kamu mempublikasikan konten." />}
             {step === 3 && <StepHeader icon={<Layers className="size-5" />} title="Pilar konten kamu (opsional)" desc="Kategori konten yang sering kamu buat. Bisa ditambah nanti di Settings." />}
           </div>
 
@@ -159,7 +188,7 @@ export function OnboardingWizard() {
             {step === 1 && (
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label>Nama tampilan</Label>
+                  <Label>Nama tampilan <span className="text-red-500">*</span></Label>
                   <Input
                     placeholder="Misal: Budi Kreator"
                     value={displayName}
@@ -168,25 +197,37 @@ export function OnboardingWizard() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Niche konten</Label>
+                  <Label>
+                    Niche konten <span className="text-xs text-muted-foreground font-normal">(opsional)</span>
+                  </Label>
                   <div className="flex flex-wrap gap-2">
-                    {PRESET_NICHES.map(n => (
-                      <button
-                        key={n}
-                        type="button"
-                        onClick={() => { setNiche(n); setCustomNiche(''); }}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                          niche === n && !customNiche
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'bg-muted/40 border-border text-muted-foreground hover:border-primary/50'
-                        }`}
-                      >
-                        {n}
-                      </button>
-                    ))}
+                    {PRESET_NICHES.map(n => {
+                      const isSelected = niche === n && !customNiche;
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setNiche('');
+                            } else {
+                              setNiche(n);
+                              setCustomNiche('');
+                            }
+                          }}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-primary text-primary-foreground border-primary font-semibold'
+                              : 'bg-muted/40 border-border text-muted-foreground hover:border-primary/50'
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      );
+                    })}
                   </div>
                   <Input
-                    placeholder="Atau ketik niche sendiri..."
+                    placeholder="Atau ketik niche sendiri (opsional)..."
                     value={customNiche}
                     onChange={e => { setCustomNiche(e.target.value); setNiche(''); }}
                   />
@@ -195,9 +236,9 @@ export function OnboardingWizard() {
             )}
 
             {step === 2 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label>Username atau nama akun</Label>
+                  <Label>Username atau nama akun <span className="text-red-500">*</span></Label>
                   <Input
                     placeholder="Misal: @budikreator"
                     value={accountName}
@@ -205,8 +246,33 @@ export function OnboardingWizard() {
                     autoFocus
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label>Pilih Platform Utama <span className="text-red-500">*</span></Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {PRESET_PLATFORMS.map(p => {
+                      const isSelected = selectedPlatform === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => setSelectedPlatform(p.id)}
+                          className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-medium transition-all text-left cursor-pointer ${
+                            isSelected
+                              ? 'bg-primary text-primary-foreground border-primary shadow-xs font-semibold scale-[1.02]'
+                              : 'bg-muted/40 border-border text-foreground hover:border-primary/50 hover:bg-muted/60'
+                          }`}
+                        >
+                          <span className="text-base">{p.emoji}</span>
+                          <span className="truncate">{p.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <p className="text-xs text-muted-foreground">
-                  Kalau kamu punya beberapa akun, tenang — bisa ditambah lagi nanti di Settings.
+                  Pilih platform utama akun ini. Kamu bisa menambah akun dan platform lain kapan saja di menu Settings.
                 </p>
               </div>
             )}
@@ -237,7 +303,7 @@ export function OnboardingWizard() {
                           <button
                             type="button"
                             onClick={() => removePillarItem(p.label)}
-                            className="ml-1 opacity-60 hover:opacity-100"
+                            className="ml-1 opacity-60 hover:opacity-100 cursor-pointer"
                             aria-label={`Hapus pilar ${p.label}`}
                           >
                             <X className="size-3" />
@@ -289,7 +355,7 @@ export function OnboardingWizard() {
               type="button"
               onClick={finish}
               disabled={saving}
-              className="w-full text-center text-xs text-muted-foreground hover:text-foreground mt-2 transition-colors"
+              className="w-full text-center text-xs text-muted-foreground hover:text-foreground mt-2 transition-colors cursor-pointer"
             >
               Lewati, setup nanti
             </button>

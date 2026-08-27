@@ -10,6 +10,9 @@ import { usePosts } from '@/lib/hooks/usePosts';
 import { useAccounts } from '@/lib/hooks/useAccounts';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
 import { usePillars } from '@/lib/hooks/usePillars';
+import { useUser } from '@/lib/hooks/useUser';
+import { useCollaboration } from '@/lib/context/CollaborationContext';
+import { ShareButton } from '@/components/collaboration/ShareButton';
 import { postsToCSV } from '@/lib/utils/export';
 import { getPlatformFromUrl } from '@/lib/utils/thumbnail';
 import { 
@@ -55,6 +58,12 @@ export default function ContentPage() {
   const { accounts } = useAccounts();
   const { platforms: userPlatforms } = usePlatforms();
   const { pillars: userPillars } = usePillars();
+  const { user } = useUser();
+  const { activeWorkspaceId, getRoleInWorkspace } = useCollaboration();
+  
+  const isOwnWorkspace = !activeWorkspaceId || activeWorkspaceId === user?.id;
+  const roleInActiveWorkspace = isOwnWorkspace ? 'owner' : getRoleInWorkspace(activeWorkspaceId ?? '');
+  const isViewer = !isOwnWorkspace && roleInActiveWorkspace === 'viewer';
   
   // Filters
   const [accountFilter, setAccountFilter] = useState('all');
@@ -487,6 +496,7 @@ export default function ContentPage() {
               <span>Export</span>
             </button>
             <CSVImport onImport={handleImport} />
+            {isOwnWorkspace && <ShareButton targetType="content" />}
           </div>
         </div>
 

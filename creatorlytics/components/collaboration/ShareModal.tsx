@@ -45,7 +45,7 @@ export function ShareModal({ open, onClose, targetType }: ShareModalProps) {
 
   // Derive share for this target_type
   const share: PlannerShare | undefined = myShares.find(
-    s => s.target_type === targetType || s.target_type === 'all'
+    s => s.target_type === targetType
   );
 
   const shareUrl = share ? getShareUrl(share.share_token, targetType) : '';
@@ -139,7 +139,12 @@ export function ShareModal({ open, onClose, targetType }: ShareModalProps) {
 
   if (!open) return null;
 
-  const sectionLabel = targetType === 'planner' ? 'Content Planner' : targetType === 'calendar' ? 'Calendar' : 'Planner & Calendar';
+  const sectionLabel =
+    targetType === 'planner'
+      ? 'Content Planner'
+      : targetType === 'calendar'
+      ? 'Calendar'
+      : 'Konten Performance';
 
   // Helper for generating initials
   const getInitials = (name: string, email: string) => {
