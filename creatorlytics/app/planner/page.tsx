@@ -14,6 +14,7 @@ import { Badge, PlatformBadge } from '@/components/cly';
 import { ShareButton } from '@/components/collaboration/ShareButton';
 import { useUser } from '@/lib/hooks/useUser';
 import { useCollaboration } from '@/lib/context/CollaborationContext';
+import { getValidHref } from '@/lib/utils/link';
 import type { ContentIdea, PostStatus } from '@/types';
 
 export default function PlannerPage() {
@@ -295,7 +296,7 @@ export default function PlannerPage() {
                               {idea.ref_links.filter(Boolean).map((link, i) => (
                                 <a
                                   key={i}
-                                  href={link.startsWith('http') ? link : `https://${link}`}
+                                  href={getValidHref(link)}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={e => e.stopPropagation()}

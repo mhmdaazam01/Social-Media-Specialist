@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import DOMPurify from 'isomorphic-dompurify';
+import { getValidHref } from '@/lib/utils/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -167,14 +168,16 @@ export function BriefModal({ open, onOpenChange, idea, readOnly, initialMode = '
   useEffect(() => {
     if (open && idea && !initialEventLoaded) {
       const linked = events.find(e => e.idea_id === idea.id);
-      if (linked) {
-        setAddToCalendar(true);
-        setScheduleDate(linked.scheduled_date);
-      } else {
-        setAddToCalendar(false);
-        setScheduleDate(today());
-      }
-      setInitialEventLoaded(true);
+      queueMicrotask(() => {
+        if (linked) {
+          setAddToCalendar(true);
+          setScheduleDate(linked.scheduled_date);
+        } else {
+          setAddToCalendar(false);
+          setScheduleDate(today());
+        }
+        setInitialEventLoaded(true);
+      });
     }
   }, [open, idea, events, initialEventLoaded]);
 
@@ -391,7 +394,7 @@ export function BriefModal({ open, onOpenChange, idea, readOnly, initialMode = '
                       {idea.ref_links.filter(Boolean).map((link, i) => (
                         <a
                           key={i}
-                          href={link}
+                          href={getValidHref(link)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-1.5 text-xs text-indigo-500 hover:underline"

@@ -252,21 +252,21 @@ export function CreateBriefModal({ open, onOpenChange, editIdea }: CreateBriefMo
     if (!open) return;
     queueMicrotask(() => {
       if (editIdea) {
-        const brief = (editIdea.brief && typeof editIdea.brief === 'object') ? editIdea.brief as any : {};
+        const brief = (editIdea.brief && typeof editIdea.brief === 'object') ? editIdea.brief as Record<string, unknown> : {};
         setForm({
           title: editIdea.title ?? '',
           platforms: editIdea.platform ? editIdea.platform.split(',').filter(Boolean) : [],
-          accounts: brief.accounts ?? [],
+          accounts: Array.isArray(brief.accounts) ? (brief.accounts as string[]) : [],
           pillar: editIdea.pillar ?? '',
           priority: editIdea.priority ?? 'med',
-          deadline: brief.deadline ?? '',
-          narasi: brief.narasi ?? editIdea.description ?? '',
-          target_usia: brief.target_usia ?? '',
-          target_minat: brief.target_minat ?? '',
-          target_painpoint: brief.target_painpoint ?? '',
-          tone: brief.tone ?? '',
-          format_video: brief.format_video ?? editIdea.format ?? '',
-          durasi: brief.durasi ?? '',
+          deadline: (brief.deadline as string) ?? '',
+          narasi: (brief.narasi as string) ?? editIdea.description ?? '',
+          target_usia: (brief.target_usia as string) ?? '',
+          target_minat: (brief.target_minat as string) ?? '',
+          target_painpoint: (brief.target_painpoint as string) ?? '',
+          tone: (brief.tone as string) ?? '',
+          format_video: (brief.format_video as string) ?? editIdea.format ?? '',
+          durasi: (brief.durasi as string) ?? '',
           ref_links: editIdea.ref_links?.length > 0 ? editIdea.ref_links : [''],
         });
         setAddToCalendar(false);

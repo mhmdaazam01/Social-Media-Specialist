@@ -3,12 +3,13 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { 
-  FileText, LogIn, Loader2, Lock, Eye, Edit3, AlertTriangle, 
-  Search, Link as LinkIcon, Layers, BarChart2
+  LogIn, Loader2, Lock, Eye, Edit3, AlertTriangle, 
+  Search, Link as LinkIcon
 } from 'lucide-react';
 import { PlatformBadge } from '@/components/cly';
 import { toast } from 'sonner';
 import type { Post } from '@/types';
+import { getValidHref } from '@/lib/utils/link';
 
 interface GuestData {
   share: {
@@ -28,19 +29,7 @@ interface GuestData {
   isCollaborator: boolean;
 }
 
-const getValidHref = (link?: string): string => {
-  if (!link) return '#';
-  if (link.trim().startsWith('<')) {
-    const match = link.match(/data-instgrm-permalink="([^"]+)"/);
-    if (match && match[1]) return match[1];
-    const srcMatch = link.match(/src="([^"]+)"/);
-    if (srcMatch && srcMatch[1]) return srcMatch[1];
-  }
-  if (!link.startsWith('http://') && !link.startsWith('https://')) {
-    return `https://${link}`;
-  }
-  return link;
-};
+
 
 export default function ShareContentGuestPage() {
   const params = useParams();
@@ -106,8 +95,9 @@ export default function ShareContentGuestPage() {
   };
 
   const filteredPosts = useMemo(() => {
-    if (!data?.posts) return [];
-    return data.posts.filter(p => {
+    const posts = data?.posts;
+    if (!posts) return [];
+    return posts.filter(p => {
       const matchesSearch = !search || 
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         p.account.toLowerCase().includes(search.toLowerCase()) ||
@@ -115,7 +105,7 @@ export default function ShareContentGuestPage() {
       const matchesPlatform = selectedPlatform === 'all' || p.platform.toLowerCase() === selectedPlatform.toLowerCase();
       return matchesSearch && matchesPlatform;
     });
-  }, [data?.posts, search, selectedPlatform]);
+  }, [data, search, selectedPlatform]);
 
   // Summary Metrics
   const metrics = useMemo(() => {

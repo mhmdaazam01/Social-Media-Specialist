@@ -95,7 +95,7 @@ export function RichTextEditor({ value, onValueChange, placeholder, className, r
       style={{ minHeight: "120px" }}
       dangerouslySetInnerHTML={{ __html: initialValue }}
     />
-  ), [initialValue, handleInput, handleKeyDown]); // NEVER RE-RENDER
+  ), [initialValue, handleInput, handleKeyDown, readOnly]);
 
   return (
     <div className={`flex flex-col rounded-md border bg-transparent shadow-sm transition-colors ${

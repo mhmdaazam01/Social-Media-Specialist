@@ -50,8 +50,8 @@ export default function AnalyticsPage() {
     }
     
     // Date range filter
-    let effectiveDateFrom = dateFrom;
-    let effectiveDateTo = dateTo;
+    const effectiveDateFrom = dateFrom;
+    const effectiveDateTo = dateTo;
 
     if (effectiveDateFrom) {
       filtered = filtered.filter(p => p.date && p.date >= effectiveDateFrom);

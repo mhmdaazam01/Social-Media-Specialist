@@ -3,7 +3,6 @@
 import { useState, useCallback } from 'react';
 import {
   Link2,
-  Copy,
   Check,
   ChevronDown,
   Trash2,
@@ -61,9 +60,10 @@ export function ShareModal({ open, onClose, targetType }: ShareModalProps) {
       } else {
         toast.success(result.public_enabled ? 'Akses umum diubah ke Publik' : 'Akses umum dibatasi');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat mengubah pengaturan link publik';
       console.error('Toggle public error:', err);
-      toast.error(err.message || 'Terjadi kesalahan saat mengubah pengaturan link publik');
+      toast.error(msg);
     }
     setTogglingPublic(false);
   }, [upsertShare, targetType, publicRole]);
@@ -77,9 +77,10 @@ export function ShareModal({ open, onClose, targetType }: ShareModalProps) {
       } else {
         toast.success(`Peran link publik diubah menjadi ${newRole === 'editor' ? 'Editor' : 'Pelihat'}`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat mengubah peran link publik';
       console.error('Change link role error:', err);
-      toast.error(err.message || 'Terjadi kesalahan saat mengubah peran link publik');
+      toast.error(msg);
     }
     setTogglingPublic(false);
   }, [upsertShare, targetType, isPublic]);
@@ -163,7 +164,7 @@ export function ShareModal({ open, onClose, targetType }: ShareModalProps) {
         
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4">
-          <h2 className="text-[22px] text-gray-800">Bagikan "{sectionLabel}"</h2>
+          <h2 className="text-[22px] text-gray-800">Bagikan &ldquo;{sectionLabel}&rdquo;</h2>
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}

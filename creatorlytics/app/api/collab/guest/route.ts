@@ -2,15 +2,9 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
-/**
- * GET /api/collab/guest?token=xxx&type=planner|calendar|content
- * Public endpoint: resolves share token and returns read-only data.
- * No authentication required if public_enabled = true.
- * Each share token is scoped to exactly one target_type (no 'all').
- */
-export async function GET(request: NextRequest) {
+async function createSupabaseServer() {
   const cookieStore = await cookies();
-  const supabase = createServerClient(
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -20,6 +14,16 @@ export async function GET(request: NextRequest) {
       },
     }
   );
+}
+
+/**
+ * GET /api/collab/guest?token=xxx&type=planner|calendar|content
+ * Public endpoint: resolves share token and returns read-only data.
+ * No authentication required if public_enabled = true.
+ * Each share token is scoped to exactly one target_type (no 'all').
+ */
+export async function GET(request: NextRequest) {
+  const supabase = await createSupabaseServer();
 
   const { searchParams } = new URL(request.url);
   const token = searchParams.get('token');
@@ -29,16 +33,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing token or type' }, { status: 400 });
   }
 
-  // Resolve share
-  const { data: share, error: shareError } = await supabase
-    .from('planner_shares')
-    .select('*')
-    .eq('share_token', token)
-    .single();
+  // Resolve share via RPC — prevents token enumeration (no full-table SELECT)
+  const { data: shareRows, error: shareError } = await supabase
+    .rpc('get_share_by_token', { p_token: token });
+
+  const share = shareRows?.[0] ?? null;
 
   if (shareError || !share) {
     console.error('Share fetch error:', shareError);
-    return NextResponse.json({ error: shareError ? `Database error: ${shareError.message}` : 'Share token not found' }, { status: 404 });
+    return NextResponse.json(
+      { error: shareError ? `Database error: ${shareError.message}` : 'Share token not found' },
+      { status: 404 }
+    );
   }
 
   // Strict type check: token must match exactly the requested type
@@ -77,12 +83,13 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Fetch owner profile
-  const { data: ownerProfile } = await supabase
-    .from('profiles')
-    .select('id, display_name')
-    .eq('id', share.owner_id)
-    .single();
+  // Fetch owner profile via RPC — no direct SELECT on profiles table
+  const { data: ownerProfileRows } = await supabase
+    .rpc('get_public_share_owner', { p_token: token });
+
+  const ownerProfile = ownerProfileRows?.[0]
+    ? { id: share.owner_id, display_name: ownerProfileRows[0].display_name }
+    : { id: share.owner_id, display_name: null };
 
   // Fetch data based on type
   let ideas = null;
@@ -125,22 +132,22 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const isLoggedIn = !!user;
   const isOwner = user?.id === share.owner_id;
-  
+
   let isCollaborator = false;
   if (isLoggedIn && !isOwner) {
     const { data: collab } = await supabase
       .from('planner_collaborators')
       .select('id')
       .eq('owner_id', share.owner_id)
-      .eq('collaborator_user_id', user.id)
+      .eq('collaborator_user_id', user!.id)
       .eq('status', 'active')
       .maybeSingle();
-      
+
     const { data: linkMember } = await supabase
       .from('planner_share_members')
       .select('id')
       .eq('share_id', share.id)
-      .eq('collaborator_user_id', user.id)
+      .eq('collaborator_user_id', user!.id)
       .maybeSingle();
 
     isCollaborator = !!collab || !!linkMember;

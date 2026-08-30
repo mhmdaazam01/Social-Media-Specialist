@@ -13,7 +13,6 @@ interface GoalCardProps {
 
 export function GoalCard({ goal, progress, actual, onEdit, onDelete }: GoalCardProps) {
   const capped = Math.min(progress, 100);
-  const confidenceColor = capped >= 80 ? 'text-[#6ECDB0]' : capped >= 50 ? 'text-[#8EC5FC]' : 'text-[#FFB5A0]';
   const confidenceBg = capped >= 80 ? 'bg-gradient-to-br from-[#A8E6CF] to-[#6ECDB0]' : capped >= 50 ? 'bg-gradient-to-br from-[#8EC5FC] to-[#6BA3E8]' : 'bg-gradient-to-br from-[#FFB5A0] to-[#FF9680]';
 
   return (

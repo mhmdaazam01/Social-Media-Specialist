@@ -82,7 +82,7 @@ export default function SharePlannerGuestPage() {
         toast.error(json.error || 'Gagal bergabung dengan workspace');
         setClaiming(false);
       }
-    } catch (err) {
+    } catch {
       toast.error('Terjadi kesalahan jaringan');
       setClaiming(false);
     }

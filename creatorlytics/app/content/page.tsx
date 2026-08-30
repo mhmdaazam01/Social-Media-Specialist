@@ -15,6 +15,7 @@ import { useCollaboration } from '@/lib/context/CollaborationContext';
 import { ShareButton } from '@/components/collaboration/ShareButton';
 import { postsToCSV } from '@/lib/utils/export';
 import { getPlatformFromUrl } from '@/lib/utils/thumbnail';
+import { getValidHref } from '@/lib/utils/link';
 import { 
   Search, FileDown, 
   Plus, Link as LinkIcon,
@@ -22,28 +23,7 @@ import {
 } from 'lucide-react';
 import type { Post } from '@/types';
 
-const getValidHref = (link?: string): string => {
-  if (!link) return '#';
-  if (link.trim().startsWith('<')) {
-    // Try to extract permalink from Instagram embed
-    const permalinkMatch = link.match(/data-instgrm-permalink="([^"]+)"/);
-    if (permalinkMatch) return permalinkMatch[1];
-    
-    // Try to extract cite from TikTok embed
-    const citeMatch = link.match(/cite="([^"]+)"/);
-    if (citeMatch) return citeMatch[1];
 
-    // Try to extract src (exclude embed.js scripts)
-    const srcMatches = Array.from(link.matchAll(/src="([^"]+)"/g));
-    const validSrc = srcMatches.find(m => !m[1].includes('embed.js'));
-    if (validSrc) return validSrc[1];
-
-    // Try to extract href
-    const hrefMatch = link.match(/href="([^"]+)"/);
-    if (hrefMatch) return hrefMatch[1];
-  }
-  return link;
-};
 
 // Extract Instagram shortcode from any IG URL
 const extractIGShortcode = (url: string): string | null => {
@@ -59,18 +39,18 @@ export default function ContentPage() {
   const { platforms: userPlatforms } = usePlatforms();
   const { pillars: userPillars } = usePillars();
   const { user } = useUser();
-  const { activeWorkspaceId, getRoleInWorkspace } = useCollaboration();
-  
+  const { activeWorkspaceId } = useCollaboration();
   const isOwnWorkspace = !activeWorkspaceId || activeWorkspaceId === user?.id;
-  const roleInActiveWorkspace = isOwnWorkspace ? 'owner' : getRoleInWorkspace(activeWorkspaceId ?? '');
-  const isViewer = !isOwnWorkspace && roleInActiveWorkspace === 'viewer';
-  
   // Filters
   const [accountFilter, setAccountFilter] = useState('all');
   const [platformFilter, setPlatformFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Sorting state (per-column spreadsheet sort)
   const [sortConfig, setSortConfig] = useState<{ field: string; direction: 'asc' | 'desc' }>({
@@ -99,10 +79,6 @@ export default function ContentPage() {
   
   // Thumbnail loading state
   const [fetchingThumbnailIds, setFetchingThumbnailIds] = useState<Set<string>>(new Set());
-
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Track which posts we already tried to auto-fetch thumbnails for
   const fetchedThumbnailsRef = useRef<Set<string>>(new Set());

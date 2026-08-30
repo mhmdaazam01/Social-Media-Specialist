@@ -12,6 +12,7 @@ import { usePillars } from '@/lib/hooks/usePillars';
 import { useData } from '@/lib/context/DataContext';
 import { Trash2Icon, PlusIcon, UserIcon, LayoutGridIcon, BellIcon, AlertTriangleIcon, PencilIcon, PaletteIcon } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 type Tab = 'profile' | 'platforms' | 'appearance' | 'notifications';
 
@@ -26,6 +27,8 @@ export default function SettingsPage() {
   const supabase = createClient();
 
   const [activeTab, setActiveTab] = useState<Tab>('profile');
+  const [factoryResetDialogOpen, setFactoryResetDialogOpen] = useState(false);
+  const [deleteAccountDialogOpen, setDeleteAccountDialogOpen] = useState(false);
 
   const [platformName, setPlatformName] = useState('');
   const [accountName, setAccountName] = useState('');
@@ -212,19 +215,26 @@ export default function SettingsPage() {
   }
 
   async function handleFactoryReset() {
-    if (confirm('APAKAH ANDA YAKIN? Semua data Anda akan dihapus permanen!')) {
-      await factoryReset();
-      toast.success('Semua data berhasil direset');
-      await refreshProfile();
-    }
+    await factoryReset();
+    toast.success('Semua data berhasil direset');
+    await refreshProfile();
   }
 
   async function handleDeleteAccount() {
-    if (confirm('APAKAH ANDA YAKIN? Tindakan ini akan menghapus semua data Anda dan mengeluarkan Anda dari aplikasi secara permanen.')) {
-      await factoryReset();
-      await supabase.auth.signOut();
-      router.push('/login');
+    await factoryReset();
+    try {
+      const res = await fetch('/api/account/delete', { method: 'POST' });
+      if (!res.ok) {
+        const json = await res.json();
+        toast.error(json.error ?? 'Gagal menghapus akun');
+        return;
+      }
+    } catch {
+      toast.error('Gagal menghapus akun');
+      return;
     }
+    await supabase.auth.signOut();
+    router.push('/login');
   }
 
   return (
@@ -356,13 +366,13 @@ export default function SettingsPage() {
               </p>
               <div className="mt-4 flex flex-col sm:flex-row gap-3">
                 <button
-                  onClick={handleFactoryReset}
+                  onClick={() => setFactoryResetDialogOpen(true)}
                   className="rounded-lg bg-gradient-to-br from-[#FFB5A0] to-[#FF9680] px-4 py-2 text-xs font-bold text-white transition-all hover:shadow-lg active:scale-95 shadow-md"
                 >
                   Hapus Seluruh Data (Factory Reset)
                 </button>
                 <button
-                  onClick={handleDeleteAccount}
+                  onClick={() => setDeleteAccountDialogOpen(true)}
                   className="rounded-lg bg-gradient-to-br from-[#B93B32] to-[#992B23] px-4 py-2 text-xs font-bold text-white transition-all hover:shadow-lg active:scale-95 shadow-md"
                 >
                   Hapus Akun Saya
@@ -810,6 +820,26 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={factoryResetDialogOpen}
+        onOpenChange={setFactoryResetDialogOpen}
+        onConfirm={handleFactoryReset}
+        title="Hapus Seluruh Data?"
+        description="Semua data Anda (posts, platforms, pillars, dsb) akan dihapus permanen dari database. Tindakan ini tidak bisa dibatalkan."
+        confirmText="Ya, Hapus Semua Data"
+        cancelText="Batal"
+        variant="destructive"
+      />
+      <ConfirmDialog
+        open={deleteAccountDialogOpen}
+        onOpenChange={setDeleteAccountDialogOpen}
+        onConfirm={handleDeleteAccount}
+        title="Hapus Akun Saya?"
+        description="Tindakan ini akan menghapus semua data Anda dan akun Anda secara permanen. Anda tidak dapat masuk kembali setelah ini. Tindakan ini tidak bisa dibatalkan."
+        confirmText="Ya, Hapus Akun Saya"
+        cancelText="Batal"
+        variant="destructive"
+      />
     </AppShell>
   );
 }

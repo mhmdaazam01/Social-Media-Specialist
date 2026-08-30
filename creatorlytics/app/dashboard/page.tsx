@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { usePersistedState } from '@/lib/hooks/usePersistedState';
 import { AppShell } from '@/components/layout/AppShell';
-import { MetricCard, InsightCard, SectionTitle, Badge } from '@/components/cly';
+import { MetricCard, InsightCard, SectionTitle } from '@/components/cly';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { useGoals } from '@/lib/hooks/useGoals';
 import { useUser } from '@/lib/hooks/useUser';
@@ -13,7 +13,7 @@ import { getValidHref } from '@/lib/utils/link';
 import { PostThumbnail } from '@/components/cly/PostThumbnail';
 import {
   Eye, TrendingUp, BookOpen, Target,
-  ArrowUpRight, AlertTriangle, CheckCircle2, ChevronLeft, ChevronRight,
+  ArrowUpRight, AlertTriangle, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -210,7 +210,7 @@ export default function DashboardPage() {
   }, [posts]);
 
 
-  const { totalPosts, totalReach, totalImpression, totalEngagement, avgER, activePosts, reachDelta, goalConfidence } = metrics;
+  const { totalPosts, totalReach, totalImpression, totalEngagement, avgER, reachDelta, goalConfidence } = metrics;
 
   return (
     <AppShell title="Dashboard">

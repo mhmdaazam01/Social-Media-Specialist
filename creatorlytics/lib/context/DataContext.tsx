@@ -87,8 +87,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [accountsLoading, setAccountsLoading] = useState(true);
 
-  const [hasFetched, setHasFetched] = useState(false);
-
   const fetchAll = useCallback(async () => {
     if (!user || !activeWorkspaceId) return;
 
@@ -125,8 +123,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setIdeasLoading(false);
     setEventsLoading(false);
     setAccountsLoading(false);
-
-    setHasFetched(true);
   }, [supabase, user, activeWorkspaceId]);
 
   useEffect(() => {
@@ -140,16 +136,17 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       };
       load();
     } else if (!user) {
-      if (!cancelled) {
-        setHasFetched(false);
-        setPosts([]); setPostsLoading(false);
-        setGoals([]); setGoalsLoading(false);
-        setPlatforms([]); setPlatformsLoading(false);
-        setPillars([]); setPillarsLoading(false);
-        setIdeas([]); setIdeasLoading(false);
-        setEvents([]); setEventsLoading(false);
-        setAccounts([]); setAccountsLoading(false);
-      }
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setPosts([]); setPostsLoading(false);
+          setGoals([]); setGoalsLoading(false);
+          setPlatforms([]); setPlatformsLoading(false);
+          setPillars([]); setPillarsLoading(false);
+          setIdeas([]); setIdeasLoading(false);
+          setEvents([]); setEventsLoading(false);
+          setAccounts([]); setAccountsLoading(false);
+        }
+      });
     }
 
     // Cleanup: prevents stale data from a previous workspace

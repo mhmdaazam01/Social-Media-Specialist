@@ -1,5 +1,6 @@
 'use client';
 
+import { getValidHref } from '@/lib/utils/link';
 import DOMPurify from 'isomorphic-dompurify';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge, PlatformBadge } from '@/components/cly';
@@ -135,7 +136,7 @@ export function GuestBriefModal({ open, onOpenChange, idea }: GuestBriefModalPro
                     {idea.ref_links.filter(Boolean).map((link, i) => (
                       <a
                         key={i}
-                        href={link.startsWith('http') ? link : `https://${link}`}
+                        href={getValidHref(link)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-1.5 text-xs text-indigo-500 hover:underline"

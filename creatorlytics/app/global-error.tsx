@@ -50,7 +50,10 @@ export default function GlobalError({
                 <RefreshCcw className="size-4" />
                 Coba Lagi
               </Button>
-              <Button variant="outline" className="flex-1 gap-2" onClick={() => window.location.href = '/dashboard'}>
+              <Button variant="outline" className="flex-1 gap-2" onClick={() => {
+                // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+                window.location.href = '/dashboard';
+              }}>
                   <Home className="size-4" />
                   Dashboard
               </Button>

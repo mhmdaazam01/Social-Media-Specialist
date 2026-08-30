@@ -635,10 +635,8 @@ export default function ReportPage() {
                         
                         // Calculate status
                         let status = "On Track";
-                        let statusColor = "text-cly-blue";
                         if (progress >= 100) {
                           status = "Achieved";
-                          statusColor = "text-cly-green";
                         } else {
                           // Simple pace logic based on current day of month
                           const now = new Date();
@@ -648,12 +646,10 @@ export default function ReportPage() {
                             const expectedPct = (daysPassed / daysInMonth) * 100;
                             if (progress < expectedPct * 0.8) {
                               status = "At Risk";
-                              statusColor = "text-cly-amber";
                             }
                           } else if (goal.year < now.getFullYear() || (goal.year === now.getFullYear() && goal.month < now.getMonth() + 1)) {
                             // Past month and not achieved
                             status = "At Risk";
-                            statusColor = "text-cly-amber";
                           }
                         }
                         

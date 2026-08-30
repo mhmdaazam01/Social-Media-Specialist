@@ -4,11 +4,16 @@ export function exportToCSV(data: Record<string, unknown>[], filename: string): 
   if (data.length === 0) return;
   const headers = Object.keys(data[0]);
   const rows = data.map(row => headers.map(h => {
-    const val = row[h];
-    if (typeof val === 'string' && (val.includes(',') || val.includes('"') || val.includes('\n'))) {
+    let val = String(row[h] ?? '');
+    // CSV formula injection prevention: prefix cells that could be interpreted
+    // as formulas by spreadsheet applications (Excel, Google Sheets, LibreOffice)
+    if (/^[=+\-@\t\r]/.test(val)) {
+      val = `'${val}`;
+    }
+    if (typeof row[h] === 'string' && (val.includes(',') || val.includes('"') || val.includes('\n'))) {
       return `"${val.replace(/"/g, '""')}"`;
     }
-    return String(val ?? '');
+    return val;
   }));
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

@@ -27,7 +27,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       const p = profile as unknown as Record<string, unknown>;
       const savedTheme = p.theme as Theme | undefined;
       if (savedTheme && ['light', 'dark', 'auto'].includes(savedTheme)) {
-        setThemeState(savedTheme);
+        queueMicrotask(() => {
+          setThemeState(savedTheme);
+        });
       }
     }
   }, [profile]);
@@ -46,7 +48,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     const resolved = getResolvedTheme(theme);
-    setResolvedTheme(resolved);
+    queueMicrotask(() => {
+      setResolvedTheme(resolved);
+    });
 
     // Apply theme to HTML element
     if (typeof document !== 'undefined') {

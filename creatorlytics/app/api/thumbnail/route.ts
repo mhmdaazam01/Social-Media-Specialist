@@ -1,4 +1,21 @@
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { assertSafeExternalUrl } from '@/lib/utils/url-guard';
+
+async function createSupabaseServer() {
+  const cookieStore = await cookies();
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => cookieStore.getAll(),
+        setAll: (toSet) => toSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)),
+      },
+    }
+  );
+}
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -11,6 +28,20 @@ export async function GET(request: NextRequest) {
   // Prevent DOS from extremely long URLs
   if (url.length > 2000) {
     return NextResponse.json({ error: 'URL too long' }, { status: 400 });
+  }
+
+  // Require authentication
+  const supabase = await createSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // SSRF guard — validate before any outbound fetch
+  try {
+    await assertSafeExternalUrl(url);
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 400 });
   }
 
   try {
@@ -46,14 +77,14 @@ export async function GET(request: NextRequest) {
 
 async function getTikTokThumbnail(url: string): Promise<string | null> {
   try {
-    // Clean up TikTok URL - remove query parameters for oEmbed
     const cleanUrl = url.trim().split('?')[0];
     const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(cleanUrl)}`;
 
     const response = await fetch(oembedUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      }
+      },
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!response.ok) return null;
@@ -67,25 +98,22 @@ async function getTikTokThumbnail(url: string): Promise<string | null> {
 
 async function getInstagramThumbnail(url: string): Promise<string | null> {
   try {
-    // Clean up Instagram URL and ensure it has trailing slash for oEmbed
     let cleanUrl = url.trim();
-
-    // Remove query parameters
     cleanUrl = cleanUrl.split('?')[0];
 
-    // Ensure trailing slash for /p/, /reel/, /tv/ URLs
     if (cleanUrl.match(/instagram\.com\/(p|reel|tv)\/[A-Za-z0-9_-]+$/)) {
       cleanUrl = cleanUrl + '/';
     }
 
-    // Strategy 1: Try Instagram oEmbed API (no auth required, works for public posts)
+    // Strategy 1: Instagram oEmbed API
     try {
       const oembedApiUrl = `https://api.instagram.com/oembed?url=${encodeURIComponent(cleanUrl)}`;
 
       const response = await fetch(oembedApiUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
+        },
+        signal: AbortSignal.timeout(5000),
       });
 
       if (response.ok) {
@@ -98,7 +126,7 @@ async function getInstagramThumbnail(url: string): Promise<string | null> {
       // oEmbed not available, try scraping
     }
 
-    // Strategy 2: Scrape og:image from the page with full browser-like headers
+    // Strategy 2: Scrape og:image from the page
     try {
       const response = await fetch(cleanUrl, {
         headers: {
@@ -107,17 +135,16 @@ async function getInstagramThumbnail(url: string): Promise<string | null> {
           'Accept-Language': 'en-US,en;q=0.5',
         },
         redirect: 'follow',
+        signal: AbortSignal.timeout(5000),
       });
 
       if (response.ok) {
         const html = await response.text();
 
-        // Try og:image
         const ogImageMatch = html.match(/<meta\s+(?:property|name)="og:image"\s+content="([^"]+)"/i)
           || html.match(/<meta\s+content="([^"]+)"\s+(?:property|name)="og:image"/i);
         if (ogImageMatch?.[1]) return ogImageMatch[1];
 
-        // Try twitter:image
         const twitterImageMatch = html.match(/<meta\s+(?:property|name)="twitter:image"\s+content="([^"]+)"/i)
           || html.match(/<meta\s+content="([^"]+)"\s+(?:property|name)="twitter:image"/i);
         if (twitterImageMatch?.[1]) return twitterImageMatch[1];
@@ -139,7 +166,6 @@ async function getInstagramThumbnail(url: string): Promise<string | null> {
 }
 
 function extractInstagramShortcode(url: string): string | null {
-  // Match /p/SHORTCODE/, /reel/SHORTCODE/, /tv/SHORTCODE/
   const match = url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/);
   return match?.[1] || null;
 }
@@ -151,7 +177,6 @@ function getYouTubeThumbnail(url: string): string | null {
     if (url.includes('youtube.com')) {
       const urlObj = new URL(url);
       videoId = urlObj.searchParams.get('v');
-      // Handle /shorts/ URLs
       if (!videoId) {
         const shortsMatch = url.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]+)/);
         videoId = shortsMatch?.[1] || null;
@@ -181,18 +206,17 @@ async function getGenericOGImage(url: string): Promise<string | null> {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       },
       redirect: 'follow',
+      signal: AbortSignal.timeout(5000),
     });
 
     if (!response.ok) return null;
 
     const html = await response.text();
 
-    // Try og:image
     const ogMatch = html.match(/<meta\s+(?:property|name)="og:image"\s+content="([^"]+)"/i)
       || html.match(/<meta\s+content="([^"]+)"\s+(?:property|name)="og:image"/i);
     if (ogMatch?.[1]) return ogMatch[1];
 
-    // Try twitter:image
     const twMatch = html.match(/<meta\s+(?:property|name)="twitter:image"\s+content="([^"]+)"/i)
       || html.match(/<meta\s+content="([^"]+)"\s+(?:property|name)="twitter:image"/i);
     if (twMatch?.[1]) return twMatch[1];

@@ -21,6 +21,9 @@ async function createSupabaseServer() {
  * Called when a logged-in user visits a share link.
  * Links their user_id to the pending collaborator row (matched by email)
  * or creates a new active collaborator row using the share's default_role.
+ *
+ * Identity (email + user_id) is sourced from the server-side session,
+ * not from client-supplied parameters — the RPC enforces this internally.
  */
 export async function POST(request: NextRequest) {
   const supabase = await createSupabaseServer();
@@ -31,11 +34,9 @@ export async function POST(request: NextRequest) {
   const { share_token } = body;
   if (!share_token) return NextResponse.json({ error: 'Missing share_token' }, { status: 400 });
 
-  // Use securely definer RPC to bypass RLS and handle claiming
+  // RPC resolves identity from auth.uid() / auth.jwt() — not from client params
   const { data, error } = await supabase.rpc('claim_workspace_share', {
     p_share_token: share_token,
-    p_collaborator_email: user.email,
-    p_collaborator_user_id: user.id
   });
 
   if (error) {

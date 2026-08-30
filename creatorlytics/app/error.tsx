@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
 export default function Error({
@@ -13,6 +14,7 @@ export default function Error({
   useEffect(() => {
     console.error('🔴 [Error Boundary]:', error);
   }, [error]);
+  const router = useRouter();
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 text-center">
@@ -42,7 +44,7 @@ export default function Error({
         </Button>
         <Button
           variant="outline"
-          onClick={() => (window.location.href = '/dashboard')}
+          onClick={() => router.push('/dashboard')}
         >
           Kembali ke Dashboard
         </Button>

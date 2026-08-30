@@ -85,7 +85,9 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
   // When user logs in or changes, if no active workspace is set, set it to their own ID.
   useEffect(() => {
     if (user && !activeWorkspaceId) {
-      setActiveWorkspaceIdState(user.id);
+      queueMicrotask(() => {
+        setActiveWorkspaceIdState(user.id);
+      });
     }
   }, [user, activeWorkspaceId]);
 
@@ -144,15 +146,28 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
     if (linkErr) {
       console.error('Error fetching linkData:', linkErr);
     }
-    console.log('Direct Data:', directData);
-    console.log('Link Data:', linkData);
 
-    // Build a unified map of owner_id → { role, targetTypes, source }
+
+    interface PlannerShareMemberWithShare {
+      id: string;
+      collaborator_email: string;
+      collaborator_user_id: string;
+      created_at: string;
+      planner_shares: {
+        id: string;
+        owner_id: string;
+        target_type: string;
+        default_role: 'viewer' | 'editor';
+        public_enabled: boolean;
+      } | null;
+    }
+
+    // Build a unified map of owner_id → { role, targetTypes, source, collaboratorRow }
     // Direct access takes priority over link access
-    const ownerMap = new Map<string, { role: string; targetTypes: string[]; source: 'direct' | 'link'; collaboratorRow?: any }>();
+    const ownerMap = new Map<string, { role: string; targetTypes: string[]; source: 'direct' | 'link'; collaboratorRow?: PlannerCollaborator }>();
 
     // Process direct access first
-    (directData ?? []).forEach((c: any) => {
+    ((directData ?? []) as PlannerCollaborator[]).forEach((c) => {
       ownerMap.set(c.owner_id, {
         role: c.role,
         targetTypes: [],
@@ -162,7 +177,7 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
     });
 
     // Process link access (don't overwrite direct access)
-    (linkData ?? []).forEach((lm: any) => {
+    ((linkData ?? []) as unknown as PlannerShareMemberWithShare[]).forEach((lm) => {
       const share = lm.planner_shares;
       if (!share) return;
       const ownerId = share.owner_id;
@@ -233,8 +248,10 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
   }, [supabase, user]);
 
   useEffect(() => {
+    let cancelled = false;
     if (!user) {
       queueMicrotask(() => {
+        if (cancelled) return;
         setMyShares([]);
         setCollaborators([]);
         setSharedWithMe([]);
@@ -244,9 +261,18 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
       });
       return;
     }
-    fetchMyShares();
-    fetchCollaborators();
-    fetchSharedWithMe();
+    const loadAll = async () => {
+      if (cancelled) return;
+      await Promise.all([
+        fetchMyShares(),
+        fetchCollaborators(),
+        fetchSharedWithMe(),
+      ]);
+    };
+    loadAll();
+    return () => {
+      cancelled = true;
+    };
   }, [user, fetchMyShares, fetchCollaborators, fetchSharedWithMe]);
 
   // ── Realtime ──────────────────────────────────────────────────

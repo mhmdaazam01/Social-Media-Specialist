@@ -10,7 +10,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ClipboardList, FileSpreadsheet, Settings, Users } from 'lucide-react';
+import { ClipboardList, FileSpreadsheet, Settings } from 'lucide-react';
+
 
 const mainNavItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
