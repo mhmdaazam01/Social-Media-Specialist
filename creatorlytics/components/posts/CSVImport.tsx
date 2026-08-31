@@ -143,13 +143,31 @@ export function CSVImport({ onImport }: CSVImportProps) {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // File size limit: 5MB (P2-7)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ukuran file maksimal 5 MB');
+      if (inputRef.current) inputRef.current.value = '';
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = async () => {
       try {
-        const text = reader.result as string;
+        let text = reader.result as string;
+        // Strip UTF-8 BOM if present (P2-7)
+        if (text.charCodeAt(0) === 0xFEFF) {
+          text = text.slice(1);
+        }
+
         const rows = parseCSV(text);
         if (rows.length === 0) {
           toast.error('File CSV kosong atau format tidak valid');
+          return;
+        }
+
+        // Row limit: 2000 rows (P2-7)
+        if (rows.length > 2000) {
+          toast.error('Maksimal 2.000 baris per file CSV');
           return;
         }
 
@@ -191,9 +209,17 @@ export function CSVImport({ onImport }: CSVImportProps) {
           };
         });
 
-        const count = await importPosts(posts);
-        if (count > 0) {
-          toast.success(`Berhasil mengimpor ${count} postingan`);
+        // Chunked batch imports (100 rows per batch) (P2-7)
+        const BATCH_SIZE = 100;
+        let totalCount = 0;
+        for (let i = 0; i < posts.length; i += BATCH_SIZE) {
+          const chunk = posts.slice(i, i + BATCH_SIZE);
+          const count = await importPosts(chunk);
+          totalCount += count;
+        }
+
+        if (totalCount > 0) {
+          toast.success(`Berhasil mengimpor ${totalCount} postingan`);
           onImport();
         } else {
           toast.error('Gagal mengimpor data. Cek koneksi dan coba lagi.');

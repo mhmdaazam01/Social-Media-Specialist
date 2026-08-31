@@ -10,6 +10,7 @@ import { PlatformBadge } from '@/components/cly';
 import { toast } from 'sonner';
 import type { Post } from '@/types';
 import { getValidHref } from '@/lib/utils/link';
+import { formatDate } from '@/lib/utils/formatting';
 
 interface GuestData {
   share: {
@@ -315,7 +316,7 @@ export default function ShareContentGuestPage() {
                         <td className="py-2.5 px-3 text-center text-cly-text-3 font-medium">{idx + 1}</td>
                         <td className="py-2.5 px-3 font-medium text-cly-text">{post.name || 'Untitled'}</td>
                         <td className="py-2.5 px-3 text-center text-cly-text-2">
-                          {post.date ? new Date(post.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                          {post.date ? formatDate(post.date) : '-'}
                         </td>
                         <td className="py-2.5 px-3 text-center text-cly-text-2">{post.account || '-'}</td>
                         <td className="py-2.5 px-3 text-center">

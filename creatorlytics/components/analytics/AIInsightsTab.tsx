@@ -5,7 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { usePosts } from '@/lib/hooks/usePosts';
 import { useGoals } from '@/lib/hooks/useGoals';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
-import { calcER, isPostInMonth } from '@/lib/utils/analytics';
+import { useUser } from '@/lib/hooks/useUser';
+import { calcER } from '@/lib/utils/analytics';
+import { calcGoalProgress } from '@/lib/utils/insights';
 import { currentMonth, currentYear } from '@/lib/utils/formatting';
 import { Calendar, Target, Flame, Lightbulb, BarChart2, MessageSquare, TrendingUp } from 'lucide-react';
 
@@ -15,6 +17,8 @@ export function AIInsightsTab() {
   const { posts } = usePosts();
   const { goals } = useGoals();
   const { platforms } = usePlatforms();
+  const { profile } = useUser();
+  const erMode = profile?.er_mode || 'impression';
 
   // 1. Heatmap per Hari dalam Seminggu
   const heatmapData = useMemo(() => {
@@ -35,7 +39,7 @@ export function AIInsightsTab() {
       let day = dateObj.getDay();
       if (day === 0) day = 7;
 
-      const er = calcER(p, 'impression');
+      const er = calcER(p, erMode);
       grid[day].count += 1;
       grid[day].sumER += er;
     });
@@ -49,7 +53,7 @@ export function AIInsightsTab() {
 
     const max = Math.max(...days.map(d => d.avgER));
     return { days, maxAvgER: max };
-  }, [posts]);
+  }, [posts, erMode]);
 
   // Hari posting terbaik berdasarkan avg ER
   const bestDay = useMemo(() => {
@@ -82,37 +86,7 @@ export function AIInsightsTab() {
     const daysRemaining = daysInMonth - daysPassed;
 
     return currentMonthGoals.map(goal => {
-      // Calculate current progress
-      const filteredPosts = posts.filter(p => {
-        if (!isPostInMonth(p, goal.year, goal.month)) return false;
-        if (goal.platform !== 'all' && p.platform !== goal.platform) return false;
-        return true;
-      });
-
-      let actual = 0;
-      switch (goal.metric) {
-        case 'followers':
-          actual = filteredPosts.reduce((s, p) => s + p.followers_gained, 0);
-          break;
-        case 'reach':
-          actual = filteredPosts.reduce((s, p) => s + p.reach, 0);
-          break;
-        case 'impression':
-          actual = filteredPosts.reduce((s, p) => s + p.impression, 0);
-          break;
-        case 'engagement':
-          actual = filteredPosts.reduce((s, p) => s + p.like + p.comment + p.save + p.share, 0);
-          break;
-        case 'posts':
-          actual = filteredPosts.length;
-          break;
-        case 'likes':
-          actual = filteredPosts.reduce((s, p) => s + p.like, 0);
-          break;
-        case 'comments':
-          actual = filteredPosts.reduce((s, p) => s + p.comment, 0);
-          break;
-      }
+      const actual = calcGoalProgress(goal, posts);
 
       const currentRate = daysPassed > 0 ? actual / daysPassed : 0;
       const predictedFinal = actual + (currentRate * daysRemaining);
@@ -148,7 +122,7 @@ export function AIInsightsTab() {
       if (!matrix[platform][format]) matrix[platform][format] = { count: 0, sumER: 0 };
 
       matrix[platform][format].count += 1;
-      matrix[platform][format].sumER += calcER(p, 'impression');
+      matrix[platform][format].sumER += calcER(p, erMode);
     });
 
     const list: Array<{ platform: string; format: string; avgER: number; count: number }> = [];
@@ -164,7 +138,7 @@ export function AIInsightsTab() {
     });
 
     return list.sort((a, b) => b.avgER - a.avgER).slice(0, 5);
-  }, [posts]);
+  }, [posts, erMode]);
 
   return (
     <div className="space-y-6">

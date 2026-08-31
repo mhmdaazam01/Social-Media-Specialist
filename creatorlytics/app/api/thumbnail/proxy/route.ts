@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
-import { assertSafeExternalUrl } from '@/lib/utils/url-guard';
+import { assertSafeExternalUrl, safeFetch, readSafeBody } from '@/lib/utils/url-guard';
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8 MB
 
@@ -25,9 +25,9 @@ async function createSupabaseServer() {
  *
  * Security:
  *  - Requires authentication
- *  - SSRF guard: validates host/IP before fetching
+ *  - SSRF guard: validates host/IP before fetching AND validates every redirect hop (P0-3)
  *  - Only proxies image/* content types
- *  - Hard size limit of 8 MB
+ *  - Hard size limit of 8 MB enforced via streaming (not just Content-Length header)
  *  - 5-second timeout on outbound fetch
  *  - No wildcard CORS header
  */
@@ -45,22 +45,22 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'URL is required' }, { status: 400 });
   }
 
-  // SSRF guard
+  // SSRF guard — validate initial URL
   try {
     await assertSafeExternalUrl(url);
-  } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 400 });
+  } catch {
+    return NextResponse.json({ error: 'URL not allowed' }, { status: 400 });
   }
 
   try {
-    const response = await fetch(url, {
+    // P0-3: safeFetch follows redirects manually, validating each hop
+    const response = await safeFetch(url, {
+      maxBytes: MAX_IMAGE_BYTES,
+      timeoutMs: 5000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'image/*',
-        'Referer': new URL(url).origin,
       },
-      redirect: 'follow',
-      signal: AbortSignal.timeout(5000),
     });
 
     if (!response.ok) {
@@ -73,16 +73,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Remote resource is not an image' }, { status: 415 });
     }
 
-    // Enforce size limit
-    const contentLength = response.headers.get('content-length');
-    if (contentLength && parseInt(contentLength, 10) > MAX_IMAGE_BYTES) {
-      return NextResponse.json({ error: 'Image too large' }, { status: 413 });
-    }
-
-    const buffer = await response.arrayBuffer();
-    if (buffer.byteLength > MAX_IMAGE_BYTES) {
-      return NextResponse.json({ error: 'Image too large' }, { status: 413 });
-    }
+    // Stream body with hard byte cap — prevents OOM from chunked responses
+    const buffer = await readSafeBody(response, MAX_IMAGE_BYTES);
 
     return new NextResponse(buffer, {
       status: 200,
@@ -92,7 +84,12 @@ export async function GET(request: NextRequest) {
         // No Access-Control-Allow-Origin: * — restricted to same-origin callers
       },
     });
-  } catch {
+  } catch (err) {
+    const msg = (err as Error).message;
+    if (msg === 'Response too large') {
+      return NextResponse.json({ error: 'Image too large' }, { status: 413 });
+    }
+    // Redact internal details (P1-7)
     return NextResponse.json({ error: 'Failed to proxy image' }, { status: 500 });
   }
 }

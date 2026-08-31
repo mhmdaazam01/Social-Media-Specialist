@@ -15,6 +15,7 @@ import {
   aggregateByPlatform, isPostInMonth,
   fmt, fmtPercent,
 } from '@/lib/utils/analytics';
+import { calcGoalProgress } from '@/lib/utils/insights';
 import { TrendingUp, BookOpen, AlertTriangle, Target } from 'lucide-react';
 import {
   ComposedChart, Line, XAxis, YAxis, Tooltip,
@@ -41,7 +42,7 @@ export default function AnalyticsPage() {
     
     // Platform filter
     if (selectedPlatform !== 'all') {
-      filtered = filtered.filter(p => p.platform === selectedPlatform);
+      filtered = filtered.filter(p => p.platform && p.platform.toLowerCase() === selectedPlatform.toLowerCase());
     }
     
     // Account filter
@@ -709,30 +710,7 @@ export default function AnalyticsPage() {
                   }
                 })
                 .map(goal => {
-                  // Calculate progress
-                  const relevant = filteredPosts.filter(p => {
-                    const matchMonth = isPostInMonth(p, goal.year, goal.month);
-                    // Case-insensitive platform matching
-                    const matchPlatform = goal.platform === 'all' || 
-                      (p.platform && goal.platform && p.platform.toLowerCase() === goal.platform.toLowerCase());
-                    const matchAccount = !goal.account || goal.account === 'all' || p.account === goal.account;
-                    return matchMonth && matchPlatform && matchAccount;
-                  });
-                  
-                  let actual = 0;
-                  if (goal.metric === 'reach') {
-                    actual = relevant.reduce((s, p) => s + (p.reach || 0), 0);
-                  } else if (goal.metric === 'followers') {
-                    actual = relevant.reduce((s, p) => s + (p.followers_gained || 0), 0);
-                  } else if (goal.metric === 'posts') {
-                    actual = relevant.length;
-                  } else if (goal.metric === 'impression') {
-                    actual = relevant.reduce((s, p) => s + (p.impression || 0), 0);
-                  } else if (goal.metric === 'engagement' || goal.metric === 'likes' || goal.metric === 'comments') {
-                    // engagement = like + comment + share + save
-                    actual = relevant.reduce((s, p) => s + (p.like || 0) + (p.comment || 0) + (p.save || 0) + (p.share || 0), 0);
-                  }
-                  
+                  const actual = calcGoalProgress(goal, posts);
                   const progress = goal.target > 0 ? Math.min((actual / goal.target) * 100, 100) : 0;
                   
                   // Format month name

@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
-import { assertSafeExternalUrl } from '@/lib/utils/url-guard';
+import { assertSafeExternalUrl, safeFetch } from '@/lib/utils/url-guard';
 
 async function createSupabaseServer() {
   const cookieStore = await cookies();
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'URL is required' }, { status: 400 });
   }
 
-  // Prevent DOS from extremely long URLs
+  // Prevent DoS from extremely long URLs
   if (url.length > 2000) {
     return NextResponse.json({ error: 'URL too long' }, { status: 400 });
   }
@@ -37,26 +37,26 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // SSRF guard — validate before any outbound fetch
+  // SSRF guard — validate initial URL before any outbound fetch
   try {
     await assertSafeExternalUrl(url);
-  } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 400 });
+  } catch {
+    return NextResponse.json({ error: 'URL not allowed' }, { status: 400 });
   }
 
+  // P2-9: parse hostname for exact platform matching
+  let thumbnailUrl: string | null = null;
   try {
-    let thumbnailUrl = null;
+    const hostname = new URL(url).hostname.toLowerCase();
 
-    // TikTok
-    if (url.includes('tiktok.com')) {
+    if (hostname === 'tiktok.com' || hostname.endsWith('.tiktok.com')) {
       thumbnailUrl = await getTikTokThumbnail(url);
-    }
-    // Instagram
-    else if (url.includes('instagram.com')) {
+    } else if (hostname === 'instagram.com' || hostname.endsWith('.instagram.com')) {
       thumbnailUrl = await getInstagramThumbnail(url);
-    }
-    // YouTube
-    else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    } else if (
+      hostname === 'youtube.com' || hostname.endsWith('.youtube.com') ||
+      hostname === 'youtu.be'
+    ) {
       thumbnailUrl = getYouTubeThumbnail(url);
     }
 
@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ error: 'Could not fetch thumbnail' }, { status: 404 });
   } catch {
+    // Redact internal error details (P1-7)
     return NextResponse.json({ error: 'Failed to fetch thumbnail' }, { status: 500 });
   }
 }
@@ -80,15 +81,15 @@ async function getTikTokThumbnail(url: string): Promise<string | null> {
     const cleanUrl = url.trim().split('?')[0];
     const oembedUrl = `https://www.tiktok.com/oembed?url=${encodeURIComponent(cleanUrl)}`;
 
-    const response = await fetch(oembedUrl, {
+    // P0-3: use safeFetch — validates the oEmbed URL itself and any redirects
+    const response = await safeFetch(oembedUrl, {
+      timeoutMs: 5000,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       },
-      signal: AbortSignal.timeout(5000),
     });
 
     if (!response.ok) return null;
-
     const data = await response.json();
     return data.thumbnail_url || null;
   } catch {
@@ -98,8 +99,7 @@ async function getTikTokThumbnail(url: string): Promise<string | null> {
 
 async function getInstagramThumbnail(url: string): Promise<string | null> {
   try {
-    let cleanUrl = url.trim();
-    cleanUrl = cleanUrl.split('?')[0];
+    let cleanUrl = url.trim().split('?')[0];
 
     if (cleanUrl.match(/instagram\.com\/(p|reel|tv)\/[A-Za-z0-9_-]+$/)) {
       cleanUrl = cleanUrl + '/';
@@ -108,39 +108,35 @@ async function getInstagramThumbnail(url: string): Promise<string | null> {
     // Strategy 1: Instagram oEmbed API
     try {
       const oembedApiUrl = `https://api.instagram.com/oembed?url=${encodeURIComponent(cleanUrl)}`;
-
-      const response = await fetch(oembedApiUrl, {
+      const response = await safeFetch(oembedApiUrl, {
+        timeoutMs: 5000,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
-        signal: AbortSignal.timeout(5000),
       });
 
       if (response.ok) {
         const data = await response.json();
-        if (data.thumbnail_url) {
-          return data.thumbnail_url;
-        }
+        if (data.thumbnail_url) return data.thumbnail_url;
       }
     } catch {
-      // oEmbed not available, try scraping
+      // oEmbed not available
     }
 
-    // Strategy 2: Scrape og:image from the page
+    // Strategy 2: Scrape og:image (P0-3: safeFetch follows redirects safely)
     try {
-      const response = await fetch(cleanUrl, {
+      const response = await safeFetch(cleanUrl, {
+        timeoutMs: 5000,
+        maxBytes: 512 * 1024, // 512KB cap for HTML scraping
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           'Accept-Language': 'en-US,en;q=0.5',
         },
-        redirect: 'follow',
-        signal: AbortSignal.timeout(5000),
       });
 
       if (response.ok) {
         const html = await response.text();
-
         const ogImageMatch = html.match(/<meta\s+(?:property|name)="og:image"\s+content="([^"]+)"/i)
           || html.match(/<meta\s+content="([^"]+)"\s+(?:property|name)="og:image"/i);
         if (ogImageMatch?.[1]) return ogImageMatch[1];
@@ -153,39 +149,27 @@ async function getInstagramThumbnail(url: string): Promise<string | null> {
       // Scraping failed
     }
 
-    // Strategy 3: Direct media URL (works for some public posts)
-    const shortcode = extractInstagramShortcode(url);
-    if (shortcode) {
-      return `https://www.instagram.com/p/${shortcode}/media/?size=l`;
-    }
-
     return null;
   } catch {
     return null;
   }
 }
 
-function extractInstagramShortcode(url: string): string | null {
-  const match = url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/);
-  return match?.[1] || null;
-}
-
 function getYouTubeThumbnail(url: string): string | null {
   try {
-    let videoId = null;
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.toLowerCase();
+    let videoId: string | null = null;
 
-    if (url.includes('youtube.com')) {
-      const urlObj = new URL(url);
+    if (hostname === 'youtube.com' || hostname.endsWith('.youtube.com')) {
       videoId = urlObj.searchParams.get('v');
       if (!videoId) {
         const shortsMatch = url.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]+)/);
         videoId = shortsMatch?.[1] || null;
       }
-    } else if (url.includes('youtu.be')) {
-      const parts = url.split('youtu.be/');
-      if (parts[1]) {
-        videoId = parts[1].split('?')[0].split('/')[0];
-      }
+    } else if (hostname === 'youtu.be') {
+      const parts = urlObj.pathname.split('/');
+      videoId = parts[1] || null;
     }
 
     if (videoId) {
@@ -200,13 +184,14 @@ function getYouTubeThumbnail(url: string): string | null {
 
 async function getGenericOGImage(url: string): Promise<string | null> {
   try {
-    const response = await fetch(url, {
+    // P0-3: safeFetch with 512KB HTML cap
+    const response = await safeFetch(url, {
+      timeoutMs: 5000,
+      maxBytes: 512 * 1024,
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       },
-      redirect: 'follow',
-      signal: AbortSignal.timeout(5000),
     });
 
     if (!response.ok) return null;

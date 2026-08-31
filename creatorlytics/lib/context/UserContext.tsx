@@ -1,8 +1,9 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
+import type { ErMode } from '@/types';
 
 interface Profile {
   id: string;
@@ -10,7 +11,7 @@ interface Profile {
   display_name: string;
   avatar_url: string | null;
   niche: string;
-  er_mode: 'impression' | 'reach' | 'followers';
+  er_mode: ErMode;
   is_onboarded: boolean;
 }
 
@@ -30,12 +31,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const supabase = useMemo(() => createClient(), []);
 
+  // P3-A: Request versioning — only the most recent call may write state
+  const profileReqRef = useRef(0);
+
   const fetchProfile = useCallback(async (userId: string) => {
+    const myReq = ++profileReqRef.current;
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
+
+    // Discard result if a newer request has since been issued
+    if (profileReqRef.current !== myReq) return;
 
     if (!error && data) {
       setProfile(data);

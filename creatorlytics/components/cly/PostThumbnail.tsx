@@ -13,8 +13,8 @@ interface PostThumbnailProps {
 }
 
 function extractIGShortcode(url: string): string | null {
-  const match = url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/);
-  return match?.[1] || null;
+  const match = url.match(/instagram\.com\/(?:(?:share|accounts)\/)?(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/i);
+  return match ? match[1] : null;
 }
 
 export function PostThumbnail({
@@ -31,7 +31,7 @@ export function PostThumbnail({
   const showThumbnail = thumbnail && !isBrokenIgThumb;
 
   let igShortcode: string | null = null;
-  if (!showThumbnail && platform?.toLowerCase() === 'instagram' && validUrl && validUrl !== '#') {
+  if (!showThumbnail && validUrl && validUrl !== '#' && validUrl.includes('instagram.com')) {
     igShortcode = extractIGShortcode(validUrl);
   }
 
@@ -69,13 +69,13 @@ export function PostThumbnail({
               border: 'none',
             }}
             scrolling="no"
-            frameBorder="0"
+            loading="lazy"
             title={name || 'Instagram post'}
           />
         </div>
       ) : (
         <span className="text-[9px] font-bold text-cly-text-3 uppercase">
-          {name ? name.substring(0, 2) : '?'}
+          {name ? name.substring(0, 2) : (platform ? platform.substring(0, 2) : '?')}
         </span>
       )}
     </div>
@@ -97,3 +97,4 @@ export function PostThumbnail({
 
   return inner;
 }
+

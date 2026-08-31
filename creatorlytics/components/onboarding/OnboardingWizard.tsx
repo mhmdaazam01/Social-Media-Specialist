@@ -40,12 +40,12 @@ const PRESET_PLATFORMS = [
 ];
 
 const PILLAR_COLORS = [
-  { color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
-  { color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  { color: 'text-amber-500', bg: 'bg-amber-500/10' },
-  { color: 'text-rose-500', bg: 'bg-rose-500/10' },
-  { color: 'text-violet-500', bg: 'bg-violet-500/10' },
-  { color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+  { color: '#6366F1', bg: '#6366F120' },  // indigo
+  { color: '#10B981', bg: '#10B98120' },  // emerald
+  { color: '#F59E0B', bg: '#F59E0B20' },  // amber
+  { color: '#EF4444', bg: '#EF444420' },  // rose
+  { color: '#8B5CF6', bg: '#8B5CF620' },  // violet
+  { color: '#06B6D4', bg: '#06B6D420' },  // cyan
 ];
 
 const TOTAL_STEPS = 3;
@@ -109,20 +109,12 @@ export function OnboardingWizard() {
     try {
       const finalNiche = customNiche.trim() || niche;
 
-      // 1. Update profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ display_name: displayName.trim(), niche: finalNiche, is_onboarded: true })
-        .eq('id', user.id);
-
-      if (profileError) throw profileError;
-
-      // 2. Add account
+      // 1. Add account first (before marking onboarded)
       if (accountName.trim()) {
         await addAccount(accountName.trim());
       }
 
-      // 3. Add selected platform
+      // 2. Add selected platform
       if (selectedPlatform.trim()) {
         const platInfo = PRESET_PLATFORMS.find(p => p.id === selectedPlatform) || {
           id: selectedPlatform.toLowerCase().replace(/\s+/g, '-'),
@@ -136,7 +128,7 @@ export function OnboardingWizard() {
         });
       }
 
-      // 4. Add pillars
+      // 3. Add pillars
       await Promise.all(
         pillars.map((p, i) => {
           const c = PILLAR_COLORS[i % PILLAR_COLORS.length];
@@ -149,6 +141,15 @@ export function OnboardingWizard() {
           });
         })
       );
+
+      // 4. Only mark onboarded after all workspace data has been created
+      //    P1-C: prevents leaving is_onboarded=true with an empty workspace
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ display_name: displayName.trim(), niche: finalNiche, is_onboarded: true })
+        .eq('id', user.id);
+
+      if (profileError) throw profileError;
 
       // 5. Refresh profile so OnboardingGuard sees is_onboarded = true
       await refreshProfile();

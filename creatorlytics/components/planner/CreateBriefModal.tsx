@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -122,7 +122,7 @@ export function CreateBriefModal({ open, onOpenChange, editIdea }: CreateBriefMo
   const { profile } = useUser();
   const { accounts: accountList } = useAccounts();
   const { createEvent } = useEvents();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const [form, setForm] = useState<BriefFormFields>(emptyForm);
   const [loading, setLoading] = useState(false);
   const [presets, setPresets] = useState<BriefPreset[]>(DEFAULT_PRESETS);
@@ -333,27 +333,32 @@ export function CreateBriefModal({ open, onOpenChange, editIdea }: CreateBriefMo
       };
 
       if (editIdea) {
-        await updateIdea(editIdea.id, data);
-        toast.success('Brief berhasil diperbarui');
+        const ok = await updateIdea(editIdea.id, data);
+        if (ok) {
+          toast.success('Brief berhasil diperbarui');
+          onOpenChange(false);
+        }
       } else {
         const createdIdea = await createIdea(data);
-        if (createdIdea && addToCalendar && scheduleDate) {
-          await createEvent({
-            title: form.title,
-            platform: form.platforms.join(','),
-            account: form.accounts.join(','),
-            pillar: form.pillar,
-            format: form.format_video,
-            scheduled_date: scheduleDate,
-            scheduled_time: '12:00',
-            status: 'scheduled',
-            idea_id: createdIdea.id,
-            notes: form.narasi,
-          });
+        if (createdIdea) {
+          if (addToCalendar && scheduleDate) {
+            await createEvent({
+              title: form.title,
+              platform: form.platforms.join(','),
+              account: form.accounts.join(','),
+              pillar: form.pillar,
+              format: form.format_video,
+              scheduled_date: scheduleDate,
+              scheduled_time: '12:00',
+              status: 'scheduled',
+              idea_id: createdIdea.id,
+              notes: form.narasi,
+            });
+          }
+          toast.success('Brief berhasil dibuat');
+          onOpenChange(false);
         }
-        toast.success('Brief berhasil dibuat');
       }
-      onOpenChange(false);
     } catch {
       toast.error('Gagal menyimpan brief');
     } finally {

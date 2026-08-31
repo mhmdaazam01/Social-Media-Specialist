@@ -2,31 +2,41 @@
 
 import { createClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/hooks/useUser';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { APP_NAME } from '@/lib/constants';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginContent() {
   const [loading, setLoading] = useState(false);
   const { user, loading: userLoading } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+
+  // P1-A: Read and validate the `next` query parameter so share link
+  // targets are preserved through the OAuth flow.
+  const rawNext = searchParams.get('next') ?? '';
+  // Only allow same-origin relative paths (no open redirect)
+  const safeNext = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard';
 
   useEffect(() => {
     if (!userLoading && user) {
-      router.replace('/dashboard');
+      // P1-A: Forward to the intended target, not always /dashboard
+      router.replace(safeNext);
     }
-  }, [user, userLoading, router]);
+  }, [user, userLoading, router, safeNext]);
 
   async function handleGoogleLogin() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        // P1-A: Carry next= through OAuth callback so the callback
+        // route can redirect the user to the correct destination.
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(safeNext)}`,
       },
     });
     if (error) {
@@ -74,5 +84,17 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground">Memuat...</div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

@@ -142,86 +142,107 @@ export default function SettingsPage() {
     }
   }
 
-  function handleAddPlatform() {
+  async function handleAddPlatform() {
     if (!platformName.trim()) {
       toast.error('Nama platform wajib diisi');
       return;
     }
     if (editingPlatformId) {
       // Update existing platform
-      updatePlatform(editingPlatformId, { name: platformName });
-      setEditingPlatformId(null);
-      toast.success('Platform berhasil diperbarui');
+      const ok = await updatePlatform(editingPlatformId, { name: platformName });
+      if (ok) {
+        setEditingPlatformId(null);
+        setPlatformName('');
+        toast.success('Platform berhasil diperbarui');
+      }
     } else {
       // Add new platform
       const platformId = platformName.toLowerCase().replace(/\s+/g, '-');
-      addPlatform({ platform_id: platformId, name: platformName, emoji: '' });
-      toast.success('Platform berhasil ditambahkan');
+      const result = await addPlatform({ platform_id: platformId, name: platformName, emoji: '' });
+      if (result) {
+        setPlatformName('');
+        toast.success('Platform berhasil ditambahkan');
+      }
     }
-    setPlatformName('');
   }
 
-  function handleAddAccount() {
+  async function handleAddAccount() {
     if (!accountName.trim()) {
       toast.error('Nama akun wajib diisi');
       return;
     }
     if (editingAccountId) {
       // Update existing account
-      updateAccount(editingAccountId, { name: accountName });
-      setEditingAccountId(null);
-      toast.success('Akun berhasil diperbarui');
+      const ok = await updateAccount(editingAccountId, { name: accountName });
+      if (ok) {
+        setEditingAccountId(null);
+        setAccountName('');
+        toast.success('Akun berhasil diperbarui');
+      }
     } else {
       // Add new account
-      addAccount(accountName);
-      toast.success('Akun berhasil ditambahkan');
+      const result = await addAccount(accountName);
+      if (result) {
+        setAccountName('');
+        toast.success('Akun berhasil ditambahkan');
+      }
     }
-    setAccountName('');
   }
 
-  function handleAddPillar() {
+  async function handleAddPillar() {
     if (!pillarLabel.trim()) {
       toast.error('Label pilar wajib diisi');
       return;
     }
-    
-    // Default colors array
+
+    // Default colors array (hex values for CSS compatibility)
     const DEFAULT_COLORS = ['#2F6F45', '#2563A7', '#A15C07', '#B93B32', '#7C4D9D', '#13747C'];
     const pillarColor = DEFAULT_COLORS[pillars.length % DEFAULT_COLORS.length];
-    
+
     if (editingPillarId) {
       // Update existing pillar (keep existing color)
       const existingPillar = pillars.find(p => p.id === editingPillarId);
-      updatePillar(editingPillarId, {
+      const ok = await updatePillar(editingPillarId, {
         label: pillarLabel,
         color: existingPillar?.color || pillarColor,
         bg: (existingPillar?.color || pillarColor) + '20',
       });
-      setEditingPillarId(null);
-      toast.success('Pilar berhasil diperbarui');
+      if (ok) {
+        setEditingPillarId(null);
+        setPillarLabel('');
+        toast.success('Pilar berhasil diperbarui');
+      }
     } else {
       // Add new pillar with auto color
       const pillarId = pillarLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      addPillar({
+      const result = await addPillar({
         pillar_id: pillarId,
         label: pillarLabel,
         emoji: '',
         color: pillarColor,
         bg: pillarColor + '20',
       });
-      toast.success('Pilar berhasil ditambahkan');
+      if (result) {
+        setPillarLabel('');
+        toast.success('Pilar berhasil ditambahkan');
+      }
     }
-    setPillarLabel('');
   }
 
   async function handleFactoryReset() {
-    await factoryReset();
-    toast.success('Semua data berhasil direset');
-    await refreshProfile();
+    // P1-3: factoryReset now returns boolean
+    const ok = await factoryReset();
+    if (ok) {
+      toast.success('Semua data berhasil direset');
+      await refreshProfile();
+    }
   }
 
   async function handleDeleteAccount() {
-    await factoryReset();
+    // P1-3: Server-side route now handles cascade deletion atomically.
+    // Do NOT call factoryReset() here — that would delete data before
+    // the auth account is removed, leaving a zombie auth account if the
+    // API call subsequently fails.
     try {
       const res = await fetch('/api/account/delete', { method: 'POST' });
       if (!res.ok) {
@@ -233,6 +254,7 @@ export default function SettingsPage() {
       toast.error('Gagal menghapus akun');
       return;
     }
+    // Only reach here on confirmed success
     await supabase.auth.signOut();
     router.push('/login');
   }

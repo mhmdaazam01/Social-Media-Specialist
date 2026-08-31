@@ -28,7 +28,7 @@ export async function GET() {
     .eq('owner_id', user.id)
     .order('created_at', { ascending: true });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: 'Failed to load shares' }, { status: 500 });
   return NextResponse.json({ data });
 }
 
@@ -57,10 +57,22 @@ export async function POST(request: NextRequest) {
   let error;
 
   if (existing) {
-    // Update existing share
+    // P1-B: Rotate token when re-enabling a previously disabled share
+    // so that leaked/old tokens are invalidated.
+    let updatePayload: Record<string, unknown> = {
+      default_role,
+      public_enabled,
+      updated_at: new Date().toISOString(),
+    };
+    if (public_enabled && !existing.public_enabled) {
+      const crypto = await import('crypto');
+      const timestamp = Date.now().toString(36);
+      const random = crypto.randomBytes(24).toString('base64url');
+      updatePayload = { ...updatePayload, share_token: `${timestamp}_${random}` };
+    }
     const result = await supabase
       .from('planner_shares')
-      .update({ default_role, public_enabled, updated_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('id', existing.id)
       .eq('owner_id', user.id)
       .select()
@@ -83,8 +95,9 @@ export async function POST(request: NextRequest) {
   }
 
   if (error) {
+    // P1-7: Redact internal database error details
     console.error('SHARE UPSERT ERROR:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to save share settings' }, { status: 500 });
   }
   return NextResponse.json({ data });
 }
@@ -105,6 +118,6 @@ export async function DELETE(request: NextRequest) {
     .eq('id', id)
     .eq('owner_id', user.id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: 'Failed to delete share' }, { status: 500 });
   return NextResponse.json({ success: true });
 }

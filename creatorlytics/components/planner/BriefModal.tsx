@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import DOMPurify from 'isomorphic-dompurify';
+import { sanitizeHtml } from '@/lib/utils/sanitizer';
 import { getValidHref } from '@/lib/utils/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -215,7 +215,7 @@ export function BriefModal({ open, onOpenChange, idea, readOnly, initialMode = '
         durasi: form.durasi,
         ref_visual: brief.ref_visual ?? '',
       };
-      await updateIdea(idea.id, {
+      const ok = await updateIdea(idea.id, {
         title: form.title,
         pillar: form.pillar,
         priority: form.priority,
@@ -225,6 +225,10 @@ export function BriefModal({ open, onOpenChange, idea, readOnly, initialMode = '
         ref_links: form.ref_links.map(l => l.trim()).filter(Boolean),
         brief: briefData,
       });
+
+      if (!ok) {
+        return;
+      }
 
       const linkedEvent = events.find(e => e.idea_id === idea.id);
       if (addToCalendar && scheduleDate) {
@@ -693,11 +697,7 @@ function ViewRow({ label, value, multiline }: { label: string; value: string; mu
         <div
           className="text-sm leading-relaxed max-w-none [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-2 [&_li]:mb-1 [&_b]:font-bold [&_i]:italic"
           dangerouslySetInnerHTML={{
-            __html: DOMPurify.sanitize(value, {
-              ALLOWED_TAGS: ['b', 'i', 'u', 'ul', 'ol', 'li', 'p', 'br', 'span', 'strong', 'em'],
-              ALLOWED_ATTR: [],
-              KEEP_CONTENT: true,
-            })
+            __html: sanitizeHtml(value)
           }}
         />
       </div>

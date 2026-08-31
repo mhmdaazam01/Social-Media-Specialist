@@ -15,20 +15,23 @@ export function usePersistedState<T>(key: string, initialValue: T) {
     }
   });
 
-  // Return a wrapped version of useState's setter function that ...
-  // ... persists the new value to sessionStorage.
+  // Return a wrapped version of useState's setter function that
+  // persists the new value to sessionStorage.
   const setValue = (value: T | ((val: T) => T)) => {
     try {
-      // Allow value to be a function so we have same API as useState
-      const valueToStore = value instanceof Function ? value(state) : value;
-      setState(valueToStore);
-      if (typeof window !== 'undefined') {
-        window.sessionStorage.setItem(key, JSON.stringify(valueToStore));
-      }
+      // Use functional setState so rapid sequential calls don't lose updates
+      setState(prev => {
+        const valueToStore = value instanceof Function ? value(prev) : value;
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem(key, JSON.stringify(valueToStore));
+        }
+        return valueToStore;
+      });
     } catch (error) {
       console.warn(`Error setting sessionStorage key "${key}":`, error);
     }
   };
+
 
   return [state, setValue] as const;
 }

@@ -112,6 +112,18 @@ export function CalendarGrid({
   const [overflowDate, setOverflowDate] = useState<string | null>(null);
 
   const cells = useMemo(() => {
+    // Pre-group events by date string in O(N) pass to avoid O(N * 42) filtering
+    const eventMap = new Map<string, CalendarEvent[]>();
+    for (const e of events) {
+      if (!e.scheduled_date) continue;
+      const list = eventMap.get(e.scheduled_date) ?? [];
+      list.push(e);
+      eventMap.set(e.scheduled_date, list);
+    }
+    eventMap.forEach(list => {
+      list.sort((a, b) => (a.scheduled_time || '').localeCompare(b.scheduled_time || ''));
+    });
+
     const totalDays = daysInMonth(year, month);
     const startDay = firstDayOfMonth(year, month);
     const result: { date: string; day: number; isCurrentMonth: boolean; events: CalendarEvent[] }[] = [];
@@ -127,9 +139,7 @@ export function CalendarGrid({
 
     for (let d = 1; d <= totalDays; d++) {
       const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const dayEvents = events
-        .filter(e => e.scheduled_date === dateStr)
-        .sort((a, b) => (a.scheduled_time || '').localeCompare(b.scheduled_time || ''));
+      const dayEvents = eventMap.get(dateStr) ?? [];
       result.push({ date: dateStr, day: d, isCurrentMonth: true, events: dayEvents });
     }
 

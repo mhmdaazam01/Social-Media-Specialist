@@ -123,13 +123,18 @@ export function CalEventModal({ open, onOpenChange, editEvent, defaultDate, onDe
         idea_id: editEvent?.idea_id ?? null,
       };
       if (editEvent) {
-        await updateEvent(editEvent.id, data);
-        toast.success('Event berhasil diperbarui');
+        const ok = await updateEvent(editEvent.id, data);
+        if (ok) {
+          toast.success('Event berhasil diperbarui');
+          onOpenChange(false);
+        }
       } else {
-        await createEvent(data);
-        toast.success('Event berhasil ditambahkan');
+        const created = await createEvent(data);
+        if (created) {
+          toast.success('Event berhasil ditambahkan');
+          onOpenChange(false);
+        }
       }
-      onOpenChange(false);
     } catch {
       toast.error('Gagal menyimpan event');
     } finally {

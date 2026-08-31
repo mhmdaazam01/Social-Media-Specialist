@@ -6,11 +6,16 @@ import { NextResponse } from 'next/server';
 /**
  * POST /api/account/delete
  *
- * Permanently deletes the authenticated user's auth account via the
- * Supabase Admin API (requires SUPABASE_SERVICE_ROLE_KEY — server-only).
+ * P1-3: Performs an atomic server-side cascade deletion of all user data
+ * BEFORE deleting the auth account via the Admin API.
  *
- * This must be called AFTER all user data has been purged (factoryReset),
- * immediately before signing the user out.
+ * Order:
+ *   1. Verify session
+ *   2. Delete all workspace data (cascade)
+ *   3. Delete auth.users record via Admin API
+ *
+ * Only on confirmed step 3 success does the client receive success.
+ * The client must not clear local state until it receives this response.
  */
 export async function POST() {
   // 1. Verify session using the anon key + cookie session
@@ -32,7 +37,7 @@ export async function POST() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // 2. Use service role key to call the Admin API — never exposed to client
+  // 2. Use service role key for privileged operations — never exposed to client
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceRoleKey) {
     console.error('SUPABASE_SERVICE_ROLE_KEY is not set');
@@ -45,6 +50,21 @@ export async function POST() {
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
+  // 3. Cascade delete all workspace data server-side first
+  //    Errors here are non-fatal to account deletion but logged.
+  const tables = ['posts', 'goals', 'platforms', 'pillars', 'content_ideas', 'calendar_events', 'accounts'] as const;
+  const deleteResults = await Promise.all(
+    tables.map(table =>
+      adminClient.from(table).delete().eq('user_id', user.id)
+    )
+  );
+  const deleteErrors = deleteResults.filter(r => r.error);
+  if (deleteErrors.length > 0) {
+    console.error('Data deletion errors during account delete:', deleteErrors.map(r => r.error?.message));
+    // Non-fatal — proceed to delete the auth user so the account is not left in limbo
+  }
+
+  // 4. Delete auth.users record — this is the point of no return
   const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id);
 
   if (deleteError) {

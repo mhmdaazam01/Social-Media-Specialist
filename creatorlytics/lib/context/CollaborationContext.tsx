@@ -130,79 +130,22 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
     // Auto-accept any pending invites for this user's email
     await supabase.rpc('auto_accept_invites');
 
-    // SOURCE 1: Direct Access (planner_collaborators)
-    const { data: directData } = await supabase
+    // Direct Access (planner_collaborators) — only true collaborators gain workspace switcher access
+    const { data: directData, error: directErr } = await supabase
       .from('planner_collaborators')
       .select('*')
       .eq('collaborator_user_id', user.id)
       .eq('status', 'active');
 
-    // SOURCE 2: Invite Link Membership (planner_share_members → planner_shares)
-    const { data: linkData, error: linkErr } = await supabase
-      .from('planner_share_members')
-      .select('*, planner_shares!inner(id, owner_id, target_type, default_role, public_enabled)')
-      .eq('collaborator_user_id', user.id);
-
-    if (linkErr) {
-      console.error('Error fetching linkData:', linkErr);
+    if (directErr) {
+      console.error('Error fetching shared workspaces:', directErr.message);
+      setSharedWithMeLoading(false);
+      return;
     }
 
+    const collabs = (directData ?? []) as PlannerCollaborator[];
+    const ownerIds = [...new Set(collabs.map(c => c.owner_id))].filter(id => id !== user.id);
 
-    interface PlannerShareMemberWithShare {
-      id: string;
-      collaborator_email: string;
-      collaborator_user_id: string;
-      created_at: string;
-      planner_shares: {
-        id: string;
-        owner_id: string;
-        target_type: string;
-        default_role: 'viewer' | 'editor';
-        public_enabled: boolean;
-      } | null;
-    }
-
-    // Build a unified map of owner_id → { role, targetTypes, source, collaboratorRow }
-    // Direct access takes priority over link access
-    const ownerMap = new Map<string, { role: string; targetTypes: string[]; source: 'direct' | 'link'; collaboratorRow?: PlannerCollaborator }>();
-
-    // Process direct access first
-    ((directData ?? []) as PlannerCollaborator[]).forEach((c) => {
-      ownerMap.set(c.owner_id, {
-        role: c.role,
-        targetTypes: [],
-        source: 'direct',
-        collaboratorRow: c,
-      });
-    });
-
-    // Process link access (don't overwrite direct access)
-    ((linkData ?? []) as unknown as PlannerShareMemberWithShare[]).forEach((lm) => {
-      const share = lm.planner_shares;
-      if (!share) return;
-      const ownerId = share.owner_id;
-      if (ownerId === user.id) return; // skip own workspace
-      
-      if (!ownerMap.has(ownerId)) {
-        // Only link access exists → create a synthetic collaborator row for SharedWorkspace
-        ownerMap.set(ownerId, {
-          role: share.default_role,
-          targetTypes: [],
-          source: 'link',
-          collaboratorRow: {
-            id: lm.id,
-            owner_id: ownerId,
-            collaborator_email: lm.collaborator_email,
-            collaborator_user_id: lm.collaborator_user_id,
-            role: share.default_role,
-            status: 'active',
-            created_at: lm.created_at,
-          },
-        });
-      }
-    });
-
-    const ownerIds = [...ownerMap.keys()];
     if (ownerIds.length === 0) {
       setSharedWithMe([]);
       setSharedWithMeLoading(false);
@@ -210,38 +153,24 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
     }
 
     // Use RPC to get real email + display_name from auth.users
-    type UserInfo = { id: string; email: string; display_name: string };
+    type UserInfo = { id: string; email: string; display_name: string; avatar_url?: string };
     const { data: usersInfoRaw } = await supabase
       .rpc('get_users_info', { user_ids: ownerIds });
     const usersInfo = (usersInfoRaw ?? []) as UserInfo[];
     const userInfoMap = new Map(usersInfo.map((u) => [u.id, u]));
 
-    // Fetch planner_shares to know which target_types each owner shared
-    const { data: shares } = await supabase
-      .from('planner_shares')
-      .select('owner_id, target_type')
-      .in('owner_id', ownerIds)
-      .eq('public_enabled', true);
-
-    const shareMap = new Map<string, string[]>();
-    (shares ?? []).forEach((s: { owner_id: string; target_type: string }) => {
-      const existing = shareMap.get(s.owner_id) ?? [];
-      if (!existing.includes(s.target_type)) existing.push(s.target_type);
-      shareMap.set(s.owner_id, existing);
-    });
-
-    const workspaces: SharedWorkspace[] = ownerIds.map((ownerId) => {
-      const entry = ownerMap.get(ownerId)!;
-      const info = userInfoMap.get(ownerId);
-      const targetTypes = shareMap.get(ownerId) ?? [];
-      return {
-        collaboratorRow: entry.collaboratorRow as PlannerCollaborator,
-        ownerName: info?.display_name || 'Unknown',
-        ownerEmail: info?.email ?? '',
-        ownerId,
-        targetTypes,
-      };
-    });
+    const workspaces: SharedWorkspace[] = collabs
+      .filter(c => c.owner_id !== user.id)
+      .map((c) => {
+        const info = userInfoMap.get(c.owner_id);
+        return {
+          collaboratorRow: c,
+          ownerName: info?.display_name || 'Unknown',
+          ownerEmail: info?.email ?? '',
+          ownerId: c.owner_id,
+          targetTypes: ['planner', 'calendar', 'content'],
+        };
+      });
 
     setSharedWithMe(workspaces);
     setSharedWithMeLoading(false);
@@ -323,8 +252,10 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
   }, []);
 
   const deleteShare = useCallback(async (id: string) => {
-    await fetch(`/api/collab/shares?id=${id}`, { method: 'DELETE' });
-    setMyShares(prev => prev.filter(s => s.id !== id));
+    const res = await fetch(`/api/collab/shares?id=${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setMyShares(prev => prev.filter(s => s.id !== id));
+    }
   }, []);
 
   const inviteCollaborator = useCallback(async (email: string, role: 'viewer' | 'editor'): Promise<PlannerCollaborator | null> => {
@@ -344,17 +275,21 @@ export function CollaborationProvider({ children }: { children: React.ReactNode 
   }, []);
 
   const updateCollaboratorRole = useCallback(async (id: string, role: 'viewer' | 'editor') => {
-    await fetch(`/api/collab/collaborators?id=${id}`, {
+    const res = await fetch(`/api/collab/collaborators?id=${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ role }),
     });
-    setCollaborators(prev => prev.map(c => c.id === id ? { ...c, role } : c));
+    if (res.ok) {
+      setCollaborators(prev => prev.map(c => c.id === id ? { ...c, role } : c));
+    }
   }, []);
 
   const removeCollaborator = useCallback(async (id: string) => {
-    await fetch(`/api/collab/collaborators?id=${id}`, { method: 'DELETE' });
-    setCollaborators(prev => prev.filter(c => c.id !== id));
+    const res = await fetch(`/api/collab/collaborators?id=${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setCollaborators(prev => prev.filter(c => c.id !== id));
+    }
   }, []);
 
   const leaveWorkspace = useCallback(async (ownerId: string) => {

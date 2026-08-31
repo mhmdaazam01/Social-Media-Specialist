@@ -40,9 +40,15 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
-    if (error.message.includes('Invalid share token')) return NextResponse.json({ error: 'Invalid or expired share link' }, { status: 404 });
-    if (error.message.includes('owner of this workspace')) return NextResponse.json({ error: 'You are the owner of this workspace' }, { status: 400 });
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // P1-7: Redact internal database details; return stable client messages only
+    if (error.message.includes('Invalid or disabled share link')) {
+      return NextResponse.json({ error: 'Invalid or expired share link' }, { status: 404 });
+    }
+    if (error.message.includes('owner of this workspace')) {
+      return NextResponse.json({ error: 'You are the owner of this workspace' }, { status: 400 });
+    }
+    console.error('claim_workspace_share error:', error.message);
+    return NextResponse.json({ error: 'Could not claim share link' }, { status: 500 });
   }
 
   return NextResponse.json({ data });

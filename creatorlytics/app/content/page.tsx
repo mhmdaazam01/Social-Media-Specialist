@@ -5,7 +5,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { CSVImport } from '@/components/posts/CSVImport';
 import { SpreadsheetColumnHeader } from '@/components/posts/SpreadsheetColumnHeader';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { PlatformBadge } from '@/components/cly';
+import { PlatformBadge, PostThumbnail } from '@/components/cly';
 import { usePosts } from '@/lib/hooks/usePosts';
 import { useAccounts } from '@/lib/hooks/useAccounts';
 import { usePlatforms } from '@/lib/hooks/usePlatforms';
@@ -16,20 +16,13 @@ import { ShareButton } from '@/components/collaboration/ShareButton';
 import { postsToCSV } from '@/lib/utils/export';
 import { getPlatformFromUrl } from '@/lib/utils/thumbnail';
 import { getValidHref } from '@/lib/utils/link';
+import { formatDate } from '@/lib/utils/formatting';
 import { 
   Search, FileDown, 
   Plus, Link as LinkIcon,
   ChevronLeft, ChevronRight, Check, Trash2, Loader2
 } from 'lucide-react';
 import type { Post } from '@/types';
-
-
-
-// Extract Instagram shortcode from any IG URL
-const extractIGShortcode = (url: string): string | null => {
-  const match = url.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/);
-  return match?.[1] || null;
-};
 
 export default function ContentPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -76,7 +69,8 @@ export default function ContentPage() {
   // Bulk delete state
   const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set());
   const [bulkSelectMode, setBulkSelectMode] = useState(false);
-  
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+
   // Thumbnail loading state
   const [fetchingThumbnailIds, setFetchingThumbnailIds] = useState<Set<string>>(new Set());
 
@@ -98,12 +92,17 @@ export default function ContentPage() {
       const validUrl = getValidHref(post.link);
       if (!validUrl || validUrl === '#') return;
 
-      // For Instagram, we use iframe fallback instead of fetching thumbnail
+      const detectedPlatform = getPlatformFromUrl(validUrl);
+      if (detectedPlatform && !post.platform) {
+        updatePost(post.id, { platform: detectedPlatform });
+      }
+
+      // For Instagram, PostThumbnail handles the embed iframe fallback seamlessly
       if (validUrl.includes('instagram.com')) {
         return;
       }
 
-      // For TikTok/YouTube, fetch via API
+      // For TikTok/YouTube/Facebook, fetch via API
       setFetchingThumbnailIds(prev => new Set(prev).add(post.id));
       fetch(`/api/thumbnail?url=${encodeURIComponent(validUrl)}`)
         .then(res => res.ok ? res.json() : null)
@@ -234,18 +233,17 @@ export default function ContentPage() {
     }
   }
 
-  async function handleBulkDelete() {
+  function handleBulkDelete() {
     if (selectedPosts.size === 0) return;
-    
-    const confirmed = window.confirm(`Hapus ${selectedPosts.size} postingan yang dipilih?`);
-    if (!confirmed) return;
-    
-    for (const postId of selectedPosts) {
-      await deletePost(postId);
-    }
+    setBulkDeleteDialogOpen(true);
+  }
+
+  async function executeBulkDelete() {
+    const ids = Array.from(selectedPosts);
+    await Promise.all(ids.map(id => deletePost(id)));
     setSelectedPosts(new Set());
   }
-  
+
   function toggleBulkSelectMode() {
     setBulkSelectMode(!bulkSelectMode);
     setSelectedPosts(new Set());
@@ -305,10 +303,24 @@ export default function ContentPage() {
     }
     
     // If editing link, fetch thumbnail and auto-detect platform
-    if (field === 'link' && finalValue) {
-      const linkUrl = String(finalValue);
-      
+    if (field === 'link') {
+      const linkUrl = String(finalValue || '').trim();
       const currentPost = posts.find(p => p.id === postId);
+
+      // Link dikosongin — hapus link dan hapus thumbnail lama, jangan sampai nyangkut
+      if (!linkUrl) {
+        if (currentPost?.link || currentPost?.thumbnail) {
+          updatePost(postId, { link: '', thumbnail: '' });
+        }
+        if (options?.reverse !== undefined) {
+          moveToNextCell(options.reverse, postId);
+        } else {
+          setEditingCell(null);
+          setEditValue('');
+        }
+        return;
+      }
+
       // Skip if link hasn't changed
       if (currentPost?.link === linkUrl) {
         if (options?.reverse !== undefined) {
@@ -335,31 +347,28 @@ export default function ContentPage() {
       
       updatePost(postId, updates);
       
-      // Fetch thumbnail via API route (async, with loading indicator)
-      setFetchingThumbnailIds(prev => new Set(prev).add(postId));
-      fetchedThumbnailsRef.current.add(postId);
-      try {
-        // For Instagram, we use iframe fallback instead of fetching thumbnail
-        if (validUrl.includes('instagram.com')) {
-          // Do nothing, UI will render iframe fallback because thumbnail is already cleared
-        } else {
+      // If it's Instagram, PostThumbnail handles iframe fallback directly via shortcode.
+      // For other platforms (YouTube, TikTok, Facebook, etc.), fetch thumbnail via API route
+      if (!validUrl.includes('instagram.com')) {
+        setFetchingThumbnailIds(prev => new Set(prev).add(postId));
+        fetchedThumbnailsRef.current.add(postId);
+        try {
           const response = await fetch(`/api/thumbnail?url=${encodeURIComponent(validUrl)}`);
           if (response.ok) {
             const data = await response.json();
             if (data.thumbnail) {
-              // Store thumbnail URL directly (img tags don't have CORS restrictions)
               updatePost(postId, { thumbnail: data.thumbnail });
             }
           }
+        } catch (error) {
+          console.error('Failed to fetch thumbnail:', error);
+        } finally {
+          setFetchingThumbnailIds(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(postId);
+            return newSet;
+          });
         }
-      } catch (error) {
-        console.error('Failed to fetch thumbnail:', error);
-      } finally {
-        setFetchingThumbnailIds(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(postId);
-          return newSet;
-        });
       }
     } else {
       // Normal update for other fields
@@ -762,16 +771,6 @@ export default function ContentPage() {
                     const er = post.impression > 0 ? (totalEngagement / post.impression) * 100 : 0;
                     const globalIdx = (currentPage - 1) * itemsPerPage + idx + 1;
                     
-                    // Clean up broken thumbnail from previous bug
-                    const isBrokenIgThumb = post.thumbnail?.includes('/media/?size=m');
-                    
-                    // Extract IG shortcode for fallback widget
-                    let igShortcode = null;
-                    if (post.platform?.toLowerCase() === 'instagram' && (!post.thumbnail || isBrokenIgThumb) && post.link) {
-                      const validUrl = getValidHref(post.link);
-                      igShortcode = extractIGShortcode(validUrl);
-                    }
-                    
                     return (
                       <tr key={post.id} className="border-b border-cly-border hover:bg-cly-muted/30 transition-colors">
                         {bulkSelectMode && (
@@ -808,43 +807,16 @@ export default function ContentPage() {
                                 <div className="w-10 h-10 rounded bg-cly-muted flex items-center justify-center shrink-0">
                                   <Loader2 size={16} className="animate-spin text-cly-brand" />
                                 </div>
-                              ) : post.thumbnail && !isBrokenIgThumb ? (
-                                <>
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img 
-                                    src={post.thumbnail} 
-                                  alt={post.name || 'Thumbnail'} 
-                                  className="w-10 h-10 rounded object-cover shrink-0"
-                                  onError={(e) => {
-                                    // Fallback to initial if image fails to load
-                                    e.currentTarget.style.display = 'none';
-                                    e.currentTarget.nextElementSibling!.classList.remove('hidden');
-                                  }}
-                                  />
-                                </>
-                              ) : igShortcode ? (
-                                <div className="w-10 h-10 rounded overflow-hidden shrink-0 relative bg-white pointer-events-none border border-cly-border">
-                                  <iframe 
-                                    src={`https://www.instagram.com/p/${igShortcode}/embed/captioned`}
-                                    style={{
-                                      width: '320px',
-                                      height: '400px',
-                                      transform: 'scale(0.125)',
-                                      transformOrigin: 'top left',
-                                      position: 'absolute',
-                                      top: '0',
-                                      left: '0',
-                                      border: 'none',
-                                    }}
-                                    scrolling="no"
-                                  />
-                                </div>
-                              ) : null}
-                              <div 
-                                className={`w-10 h-10 rounded bg-cly-muted flex items-center justify-center text-cly-xs font-bold text-cly-text-3 shrink-0 ${(post.thumbnail && !isBrokenIgThumb) || fetchingThumbnailIds.has(post.id) || igShortcode ? 'hidden' : ''}`}
-                              >
-                                {post.name ? post.name.charAt(0).toUpperCase() : '?'}
-                              </div>
+                              ) : (
+                                <PostThumbnail
+                                  name={post.name}
+                                  thumbnail={post.thumbnail}
+                                  platform={post.platform}
+                                  link={post.link}
+                                  size={40}
+                                  asLink={false}
+                                />
+                              )}
                               <span className="text-sm text-cly-text font-medium line-clamp-2">
                                 {post.name || 'Untitled'}
                               </span>
@@ -866,7 +838,7 @@ export default function ContentPage() {
                             />
                           ) : (
                             <span className="text-sm text-cly-text-2 font-medium">
-                              {post.date ? new Date(post.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                              {post.date ? formatDate(post.date) : '-'}
                             </span>
                           )}
                         </td>
@@ -1175,6 +1147,15 @@ export default function ContentPage() {
         onConfirm={handleDeleteConfirmed}
         title="Hapus Konten"
         description={`Yakin ingin menghapus "${postToDelete?.name || 'konten ini'}"?`}
+      />
+
+      {/* Bulk Delete Confirmation Dialog (P3) */}
+      <ConfirmDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+        onConfirm={executeBulkDelete}
+        title="Hapus Masal Konten"
+        description={`Yakin ingin menghapus ${selectedPosts.size} konten yang dipilih?`}
       />
     </AppShell>
   );

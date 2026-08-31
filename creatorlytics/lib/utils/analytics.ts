@@ -11,24 +11,18 @@ export function isPostInMonth(post: Post, year: number, month: number): boolean 
 
 export function calcER(post: Post, mode: ErMode): number {
   const interactions = (post.like || 0) + (post.comment || 0) + (post.save || 0) + (post.share || 0);
-  if (mode === 'impression') return post.impression > 0 ? (interactions / post.impression) * 100 : 0;
   if (mode === 'reach') return post.reach > 0 ? (interactions / post.reach) * 100 : 0;
-  if (mode === 'followers') return post.impression > 0 ? (interactions / post.impression) * 100 : 0;
-  return 0;
+  return post.impression > 0 ? (interactions / post.impression) * 100 : 0;
 }
 
 export function calcTotalER(posts: Post[], mode: ErMode): number {
   const totalInteractions = posts.reduce((s, p) => s + (p.like || 0) + (p.comment || 0) + (p.save || 0) + (p.share || 0), 0);
-  let totalBase: number;
-  if (mode === 'impression') {
-    totalBase = posts.reduce((s, p) => s + (p.impression || 0), 0);
-  } else if (mode === 'reach') {
-    totalBase = posts.reduce((s, p) => s + (p.reach || 0), 0);
-  } else {
-    totalBase = posts.reduce((s, p) => s + (p.impression || 0), 0);
-  }
+  const totalBase = mode === 'reach'
+    ? posts.reduce((s, p) => s + (p.reach || 0), 0)
+    : posts.reduce((s, p) => s + (p.impression || 0), 0);
   return totalBase > 0 ? (totalInteractions / totalBase) * 100 : 0;
 }
+
 
 export function fmt(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}jt`;

@@ -1,5 +1,5 @@
 export type Theme = 'light' | 'dark' | 'auto';
-export type ErMode = 'impression' | 'reach' | 'followers';
+export type ErMode = 'impression' | 'reach';
 export type PostStatus = 'idea' | 'brief';
 export type Priority = 'low' | 'med' | 'high';
 export type EventStatus = 'idea' | 'scheduled' | 'published' | 'cancelled';

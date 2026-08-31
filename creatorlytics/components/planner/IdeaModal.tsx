@@ -104,13 +104,18 @@ export function IdeaModal({ open, onOpenChange, editIdea, readOnly }: IdeaModalP
         ref_links: form.ref_links.map(l => l.trim()).filter(Boolean),
       };
       if (editIdea) {
-        await updateIdea(editIdea.id, data);
-        toast.success('Ide berhasil diperbarui');
+        const ok = await updateIdea(editIdea.id, data);
+        if (ok) {
+          toast.success('Ide berhasil diperbarui');
+          onOpenChange(false);
+        }
       } else {
-        await createIdea(data);
-        toast.success('Ide berhasil ditambahkan');
+        const created = await createIdea(data);
+        if (created) {
+          toast.success('Ide berhasil ditambahkan');
+          onOpenChange(false);
+        }
       }
-      onOpenChange(false);
     } catch {
       toast.error('Gagal menyimpan ide');
     } finally {
@@ -154,14 +159,6 @@ export function IdeaModal({ open, onOpenChange, editIdea, readOnly }: IdeaModalP
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <Label>Link Referensi</Label>
-              <button
-                type="button"
-                onClick={addRefLink}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Plus className="size-3" />
-                Tambah Link
-              </button>
               {!readOnly && (
                 <button
                   type="button"

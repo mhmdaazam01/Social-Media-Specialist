@@ -10,9 +10,10 @@ import { useAccounts } from '@/lib/hooks/useAccounts';
 import { usePillars } from '@/lib/hooks/usePillars';
 import { useGoals } from '@/lib/hooks/useGoals';
 import { calcTotalER, calcER, fmt, fmtPercent, aggregateByPlatform } from '@/lib/utils/analytics';
+import { calcGoalProgress } from '@/lib/utils/insights';
 import { getValidHref } from '@/lib/utils/link';
 import { PostThumbnail } from '@/components/cly/PostThumbnail';
-import { formatMonth } from '@/lib/utils/formatting';
+import { formatMonth, formatDate } from '@/lib/utils/formatting';
 import { FileText, Printer } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
@@ -602,35 +603,7 @@ export default function ReportPage() {
                     
                     <div className="grid gap-3 sm:grid-cols-2">
                       {goals.map(goal => {
-                        const relevantPosts = filteredPosts.filter(p => {
-                          // Case-insensitive platform matching
-                          const matchPlatform = !goal.platform || goal.platform === 'all' || 
-                            (p.platform && goal.platform && p.platform.toLowerCase() === goal.platform.toLowerCase());
-                          
-                          // Date matching
-                          const matchDate = p.date && p.date.startsWith(`${goal.year}-${String(goal.month).padStart(2, '0')}`);
-                          
-                          // Account filtering
-                          const matchAccount = !goal.account || goal.account === 'all' || p.account === goal.account;
-                          
-                          return matchPlatform && matchDate && matchAccount;
-                        });
-                        
-                        // Calculate current value based on metric
-                        let current = 0;
-                        if (goal.metric === 'reach') {
-                          current = relevantPosts.reduce((s, p) => s + (p.reach || 0), 0);
-                        } else if (goal.metric === 'followers' || goal.metric === 'followers_gained') {
-                          current = relevantPosts.reduce((s, p) => s + (p.followers_gained || 0), 0);
-                        } else if (goal.metric === 'impression') {
-                          current = relevantPosts.reduce((s, p) => s + (p.impression || 0), 0);
-                        } else if (goal.metric === 'engagement' || goal.metric === 'interactions' || goal.metric === 'likes' || goal.metric === 'comments') {
-                          // engagement = like + comment + share + save
-                          current = relevantPosts.reduce((s, p) => s + (p.like || 0) + (p.comment || 0) + (p.save || 0) + (p.share || 0), 0);
-                        } else if (goal.metric === 'posts' || goal.metric === 'post') {
-                          current = relevantPosts.length;
-                        }
-                        
+                        const current = calcGoalProgress(goal, posts);
                         const progress = goal.target > 0 ? Math.min((current / goal.target) * 100, 100) : 0;
                         
                         // Calculate status
@@ -827,7 +800,7 @@ export default function ReportPage() {
                                   <td className="py-3 text-center text-cly-sm text-cly-text-2">{p.account || '-'}</td>
                                 )}
                                 <td className="py-3 text-center text-cly-xs text-cly-text-2">
-                                  {p.date ? new Date(p.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                                  {p.date ? formatDate(p.date) : '-'}
                                 </td>
                                 <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(p.impression)}</td>
                                 <td className="py-3 text-center text-cly-sm text-cly-text-2">{fmt(p.reach)}</td>

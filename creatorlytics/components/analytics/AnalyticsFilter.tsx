@@ -43,7 +43,7 @@ export function AnalyticsFilter({
           <SelectContent>
             <SelectItem value="all">Semua Platform</SelectItem>
             {platforms.map((p) => (
-              <SelectItem key={p.id} value={p.platform_id}>
+              <SelectItem key={p.id} value={p.name}>
                 {p.name}
               </SelectItem>
             ))}

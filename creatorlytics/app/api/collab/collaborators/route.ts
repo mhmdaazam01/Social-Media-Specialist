@@ -28,7 +28,10 @@ export async function GET() {
     .eq('owner_id', user.id)
     .order('created_at', { ascending: true });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('GET collaborators error:', error.message);
+    return NextResponse.json({ error: 'Gagal memuat daftar kolaborator' }, { status: 500 });
+  }
   return NextResponse.json({ data });
 }
 
@@ -80,7 +83,10 @@ export async function POST(request: NextRequest) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('POST collaborators error:', error.message);
+    return NextResponse.json({ error: 'Gagal menambahkan kolaborator' }, { status: 500 });
+  }
   return NextResponse.json({ data });
 }
 
@@ -108,7 +114,10 @@ export async function PATCH(request: NextRequest) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('PATCH collaborators error:', error.message);
+    return NextResponse.json({ error: 'Gagal memperbarui peran kolaborator' }, { status: 500 });
+  }
   return NextResponse.json({ data });
 }
 
@@ -128,6 +137,9 @@ export async function DELETE(request: NextRequest) {
     .eq('id', id)
     .eq('owner_id', user.id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('DELETE collaborators error:', error.message);
+    return NextResponse.json({ error: 'Gagal menghapus kolaborator' }, { status: 500 });
+  }
   return NextResponse.json({ success: true });
 }

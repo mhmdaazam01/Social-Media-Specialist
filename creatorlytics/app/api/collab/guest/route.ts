@@ -40,11 +40,9 @@ export async function GET(request: NextRequest) {
   const share = shareRows?.[0] ?? null;
 
   if (shareError || !share) {
-    console.error('Share fetch error:', shareError);
-    return NextResponse.json(
-      { error: shareError ? `Database error: ${shareError.message}` : 'Share token not found' },
-      { status: 404 }
-    );
+    // P1-7: Redact database error details
+    if (shareError) console.error('Share fetch error:', shareError.message);
+    return NextResponse.json({ error: 'Share token not found or link is disabled' }, { status: 404 });
   }
 
   // Strict type check: token must match exactly the requested type
@@ -52,36 +50,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'This link does not grant access to this section' }, { status: 403 });
   }
 
-  // If not public, require auth AND verify user is a valid collaborator
-  if (!share.public_enabled) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'This workspace is not public. Please log in.' }, { status: 401 });
-    }
+  // Note: get_share_by_token only returns shares where public_enabled = true.
+  // Private link handling has been removed (P1-5 — dead code elimination).
 
-    // Verify user is an active collaborator for this workspace
-    // (owner themselves are also allowed access)
-    if (user.id !== share.owner_id) {
-      const { data: collab } = await supabase
-        .from('planner_collaborators')
-        .select('id')
-        .eq('owner_id', share.owner_id)
-        .eq('collaborator_user_id', user.id)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      const { data: linkMember } = await supabase
-        .from('planner_share_members')
-        .select('id')
-        .eq('share_id', share.id)
-        .eq('collaborator_user_id', user.id)
-        .maybeSingle();
-
-      if (!collab && !linkMember) {
-        return NextResponse.json({ error: 'Access denied. You are not a collaborator of this workspace.' }, { status: 403 });
-      }
-    }
-  }
 
   // Fetch owner profile via RPC — no direct SELECT on profiles table
   const { data: ownerProfileRows } = await supabase

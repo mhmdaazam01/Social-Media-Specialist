@@ -9,6 +9,7 @@ import { useGoals } from '@/lib/hooks/useGoals';
 import { useUser } from '@/lib/hooks/useUser';
 import { useTheme } from '@/lib/context/ThemeContext';
 import { calcTotalER, fmt, isPostInMonth } from '@/lib/utils/analytics';
+import { calcGoalProgress } from '@/lib/utils/insights';
 import { getValidHref } from '@/lib/utils/link';
 import { PostThumbnail } from '@/components/cly/PostThumbnail';
 import {
@@ -685,27 +686,7 @@ export default function DashboardPage() {
                       year: 'numeric' 
                     });
                     
-                    const relevant = posts.filter(p => {
-                      const monthMatch = isPostInMonth(p, goal.year, goal.month);
-                      const platformMatch = goal.platform === 'all' || 
-                        (p.platform && goal.platform && p.platform.toLowerCase() === goal.platform.toLowerCase());
-                      const accountMatch = !goal.account || goal.account === 'all' || p.account === goal.account;
-                      return monthMatch && platformMatch && accountMatch;
-                    });
-                    
-                    let actual = 0;
-                    if (goal.metric === 'reach') {
-                      actual = relevant.reduce((s, p) => s + (p.reach || 0), 0);
-                    } else if (goal.metric === 'followers') {
-                      actual = relevant.reduce((s, p) => s + (p.followers_gained || 0), 0);
-                    } else if (goal.metric === 'posts') {
-                      actual = relevant.length;
-                    } else if (goal.metric === 'impression') {
-                      actual = relevant.reduce((s, p) => s + (p.impression || 0), 0);
-                    } else {
-                      actual = relevant.reduce((s, p) => s + (p.like || 0) + (p.comment || 0) + (p.save || 0) + (p.share || 0), 0);
-                    }
-                    
+                    const actual = calcGoalProgress(goal, posts);
                     const pct = Math.min(goal.target > 0 ? Math.round((actual / goal.target) * 100) : 0, 100);
                     const radius = 38;
                     const circumference = 2 * Math.PI * radius;

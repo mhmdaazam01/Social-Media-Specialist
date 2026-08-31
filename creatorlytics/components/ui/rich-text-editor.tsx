@@ -1,5 +1,5 @@
 import * as React from "react";
-import DOMPurify from "isomorphic-dompurify";
+import { sanitizeHtml } from "@/lib/utils/sanitizer";
 import { 
   Bold, 
   Italic, 
@@ -16,12 +16,6 @@ interface RichTextEditorProps {
   readOnly?: boolean;
 }
 
-// Allowed HTML tags for the rich text editor - no scripts, no event handlers
-const PURIFY_CONFIG = {
-  ALLOWED_TAGS: ['b', 'i', 'u', 'ul', 'ol', 'li', 'p', 'br', 'span', 'strong', 'em'],
-  ALLOWED_ATTR: [] as string[],
-  KEEP_CONTENT: true,
-};
 
 export function RichTextEditor({ value, onValueChange, placeholder, className, readOnly }: RichTextEditorProps) {
   const editorRef = React.useRef<HTMLDivElement>(null);
@@ -43,7 +37,7 @@ export function RichTextEditor({ value, onValueChange, placeholder, className, r
       // that resets the cursor position (causing "reverse typing").
       if (document.activeElement !== editorRef.current) {
         // ✅ Sanitize before writing to DOM to prevent XSS
-        editorRef.current.innerHTML = DOMPurify.sanitize(value, PURIFY_CONFIG);
+        editorRef.current.innerHTML = sanitizeHtml(value);
         lastValue.current = value;
       }
     }
@@ -52,7 +46,7 @@ export function RichTextEditor({ value, onValueChange, placeholder, className, r
   const handleInput = React.useCallback((e: React.FormEvent<HTMLDivElement>) => {
     const html = e.currentTarget.innerHTML;
     // ✅ Sanitize output before passing to parent - prevents stored XSS
-    const clean = DOMPurify.sanitize(html, PURIFY_CONFIG);
+    const clean = sanitizeHtml(html);
     lastValue.current = clean;
     onValueChangeRef.current(clean);
   }, []); // Empty dependency array = never changes
@@ -70,7 +64,7 @@ export function RichTextEditor({ value, onValueChange, placeholder, className, r
     if (editorRef.current) {
       const html = editorRef.current.innerHTML;
       // ✅ Sanitize after execCommand as well
-      const clean = DOMPurify.sanitize(html, PURIFY_CONFIG);
+      const clean = sanitizeHtml(html);
       lastValue.current = clean;
       onValueChangeRef.current(clean);
       editorRef.current.focus();
@@ -80,7 +74,7 @@ export function RichTextEditor({ value, onValueChange, placeholder, className, r
   // We only run this useMemo ONCE on mount (deps will never change).
   const [initialValue] = React.useState(
     // ✅ Sanitize initial value on mount to prevent stored XSS from DB
-    DOMPurify.sanitize(value, PURIFY_CONFIG)
+    sanitizeHtml(value)
   );
   const editorElement = React.useMemo(() => (
     <div
